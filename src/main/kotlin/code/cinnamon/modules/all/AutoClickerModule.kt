@@ -1,4 +1,4 @@
-// AutoclickerModule.kt
+// AutoClickerModule.kt
 package code.cinnamon.modules.all
 
 import code.cinnamon.modules.Module
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 import kotlin.math.max
 
-class AutoClickerModule : Module("AutoClicker", "Simulates real mouse clicks using mixins") {
+class AutoclickerModule : Module("AutoClicker", "Simulates real mouse clicks using mixins") {
 
     // Thread management
     private var executor: ScheduledExecutorService? = null
@@ -39,6 +39,10 @@ class AutoClickerModule : Module("AutoClicker", "Simulates real mouse clicks usi
     var minCPS: Float = 1.0f
         private set
     
+    // Click hold time setting
+    var clickHoldTimeMs: Int = 50
+        private set
+    
     // Statistics
     var totalClicks: Long = 0
         private set
@@ -46,7 +50,7 @@ class AutoClickerModule : Module("AutoClicker", "Simulates real mouse clicks usi
     
     companion object {
         @JvmStatic
-        var instance: AutoClickerModule? = null
+        var instance: AutoclickerModule? = null
             private set
     }
     
@@ -223,7 +227,22 @@ class AutoClickerModule : Module("AutoClicker", "Simulates real mouse clicks usi
         println("AutoClicker: Only while holding ${if (enabled) "enabled" else "disabled"}")
     }
     
-    // Getters
+    fun setClickHoldTime(holdTimeMs: Int) {
+        this.clickHoldTimeMs = holdTimeMs.coerceIn(10, 1000)
+        println("AutoClicker: Click hold time set to ${this.clickHoldTimeMs}ms")
+    }
+    
+    // Getters for GUI compatibility
+    fun getClicksPerSecond(): Float = clicksPerSecond
+    
+    fun isRandomizeClicksEnabled(): Boolean = randomizeClicks
+    
+    fun getClickHoldTimeMs(): Int = clickHoldTimeMs
+    
+    fun isLeftClickEnabled(): Boolean = leftClickEnabled
+    
+    fun isRightClickEnabled(): Boolean = rightClickEnabled
+    
     fun getSessionCPS(): Float {
         val sessionTime = (System.currentTimeMillis() - sessionStartTime) / 1000.0f
         return if (sessionTime > 0) totalClicks / sessionTime else 0.0f

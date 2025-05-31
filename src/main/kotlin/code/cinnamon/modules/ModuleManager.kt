@@ -33,7 +33,7 @@ object ModuleManager {
     
     fun initialize() {
         // Register your modules here
-        registerModule(AutoclickerModule()) // Added
+        registerModule(AutoclickerModule()) // Fixed class name
         // Add more modules as needed
     }
 }
