@@ -42,17 +42,9 @@ object Cinnamon : ModInitializer {
                 CinnamonGuiManager.openMainMenu()
             }
 
-            // Check module keybindings
-            if (KeybindingManager.wasPressed("cinnamon.toggle_speed")) {
-                ModuleManager.toggleModule("Speed")
-            }
-
-            if (KeybindingManager.wasPressed("cinnamon.toggle_flight")) {
-                ModuleManager.toggleModule("Flight")
-            }
-
-            if (KeybindingManager.wasPressed("cinnamon.toggle_nofall")) {
-                ModuleManager.toggleModule("NoFall")
+            // Check AutoClicker keybinding
+            if (KeybindingManager.wasPressed("cinnamon.toggle_autoclicker")) {
+                ModuleManager.toggleModule("AutoClicker")
             }
         }
 

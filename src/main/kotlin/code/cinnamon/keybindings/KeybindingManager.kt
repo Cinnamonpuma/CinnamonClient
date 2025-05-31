@@ -9,7 +9,7 @@ import org.lwjgl.glfw.GLFW
  * Manages the registration and state of keybindings for the Cinnamon mod.
  * 
  * **Keybinding Naming and Usage:**
- * - The `name` parameter provided to `registerKeybinding` (e.g., "cinnamon.toggle_flight")
+ * - The `name` parameter provided to `registerKeybinding` (e.g., "cinnamon.toggle_autoclicker")
  *   serves as the internal identifier for that keybinding within this manager.
  *   This exact `name` string must be used when calling `getKeybinding(name)`,
  *   `isPressed(name)`, or `wasPressed(name)`.
@@ -17,11 +17,11 @@ import org.lwjgl.glfw.GLFW
  * - The `category` parameter in `registerKeybinding` (which defaults to "CinnamonClient")
  *   determines how keybindings are grouped in Minecraft's keybinding settings menu.
  *
- * - The actual string displayed in the Minecraft settings (e.g., "Open GUI" which might
- *   correspond to a translation key like "key.cinnamon.open_gui") comes from the
+ * - The actual string displayed in the Minecraft settings (e.g., "Toggle AutoClicker" which might
+ *   correspond to a translation key like "key.cinnamon.toggle_autoclicker") comes from the
  *   first argument of the `net.minecraft.client.option.KeyBinding` constructor.
  *   This is distinct from the internal `name` used by `KeybindingManager`.
- *   For example, `KeyBinding("key.cinnamon.open_gui", ...)` uses "key.cinnamon.open_gui"
+ *   For example, `KeyBinding("key.cinnamon.toggle_autoclicker", ...)` uses "key.cinnamon.toggle_autoclicker"
  *   as its display/translation key.
  *
  * **Important for Custom Keybindings:**
@@ -61,10 +61,8 @@ object KeybindingManager {
     }
     
     fun initialize() {
-        // Register default keybindings here
-        registerKeybinding("cinnamon.toggle_speed", GLFW.GLFW_KEY_V)
-        registerKeybinding("cinnamon.toggle_flight", GLFW.GLFW_KEY_F)
-        registerKeybinding("cinnamon.toggle_nofall", GLFW.GLFW_KEY_N)
+        // Register keybindings for existing modules only
+        registerKeybinding("cinnamon.toggle_autoclicker", GLFW.GLFW_KEY_X)
     }
 
     fun updateKeybinding(name: String, newKey: Int) {
