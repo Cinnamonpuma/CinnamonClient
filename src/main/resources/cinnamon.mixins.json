@@ -3,7 +3,8 @@
 	"package": "code.cinnamon.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleMixin",
+		"AutoClickerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
