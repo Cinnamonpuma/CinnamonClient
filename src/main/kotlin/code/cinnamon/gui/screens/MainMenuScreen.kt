@@ -76,19 +76,6 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
         val centerX = guiX + guiWidth / 2
         val contentY = getContentY()
         
-
-        
-        // Draw subtitle
-        val subtitleText = Text.literal("Advanced Minecraft Client")
-        val subtitleWidth = textRenderer.getWidth(subtitleText)
-        context.drawText(
-            textRenderer,
-            subtitleText,
-            centerX - subtitleWidth / 2,
-            contentY + 40,
-            CinnamonTheme.secondaryTextColor,
-            false
-        )
     }
     
     override fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
