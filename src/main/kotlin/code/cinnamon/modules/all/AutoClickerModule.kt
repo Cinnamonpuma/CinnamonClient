@@ -12,8 +12,10 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
+import kotlin.math.max
+import kotlin.math.min
 
-class AutoclickerModule : Module("Autoclicker", "Automatically clicks the mouse") {
+class AutoclickerModule : Module("Autoclicker", "Automatically clicks the mouse with configurable settings") {
 
     // Thread management
     private var executor: ScheduledExecutorService? = null
@@ -23,83 +25,113 @@ class AutoclickerModule : Module("Autoclicker", "Automatically clicks the mouse"
     private val isClicking = AtomicBoolean(false)
     private val isKeyPressed = AtomicBoolean(false)
     
-    // Configuration options
-    private var clicksPerSecond: Float = 10.0f // CPS (clicks per second) - Fixed: Float instead of Double
-    private var randomizeClicks: Boolean = true // Add randomization to avoid detection
-    private var randomVariance: Float = 0.2f // 20% variance in timing - Fixed: Float instead of Double
-    private var clickHoldTimeMs: Long = 20 // How long to hold the click
+    // Configuration options with better defaults
+    private var clicksPerSecond: Float = 8.0f // More reasonable default CPS
+    private var randomizeClicks: Boolean = true
+    private var randomVariance: Float = 0.15f // 15% variance - less obvious
+    private var clickHoldTimeMs: Long = 25 // Slightly longer hold time
     private var leftClickEnabled: Boolean = true
     private var rightClickEnabled: Boolean = false
     
+    // New advanced settings
+    private var onlyWhileHolding: Boolean = false // Only click while holding a key
+    private var blockBreakMode: Boolean = false // Optimized for block breaking
+    private var maxCPS: Float = 20.0f // Maximum allowed CPS
+    private var minCPS: Float = 1.0f // Minimum allowed CPS
+    
+    // Statistics
+    private var totalClicks: Long = 0
+    private var sessionStartTime: Long = 0
+    
     // Calculated values
     private val baseIntervalMs: Long
-        get() = (1000.0f / clicksPerSecond).toLong() // Fixed: Use Float arithmetic
+        get() = (1000.0f / clicksPerSecond).toLong()
     
     override fun onEnable() {
-        println("Autoclicker module enabled!")
+        println("Autoclicker: Module enabled with ${clicksPerSecond} CPS")
+        sessionStartTime = System.currentTimeMillis()
+        totalClicks = 0
         
         try {
             startAutoclicker()
-            println("Autoclicker: Started with ${clicksPerSecond} CPS")
+            println("Autoclicker: Started successfully")
         } catch (e: Exception) {
             println("Autoclicker: Error starting module: ${e.message}")
-            disable() // Fixed: use disable method
+            disable()
         }
     }
     
     override fun onDisable() {
-        println("Autoclicker module disabled!")
+        println("Autoclicker: Module disabled")
         
         try {
             stopAutoclicker()
             ensureKeysReleased()
-            println("Autoclicker: Stopped successfully")
+            logSessionStats()
         } catch (e: Exception) {
             println("Autoclicker: Error stopping module: ${e.message}")
         }
     }
     
-    /**
-     * Start the autoclicker functionality
-     */
+    private fun logSessionStats() {
+        val sessionTime = (System.currentTimeMillis() - sessionStartTime) / 1000.0
+        val avgCPS = if (sessionTime > 0) totalClicks / sessionTime else 0.0
+        println("Autoclicker: Session stats - Total clicks: $totalClicks, Average CPS: %.2f".format(avgCPS))
+    }
+    
     private fun startAutoclicker() {
-        // Stop any existing tasks
         stopAutoclicker()
         
-        // Create new executor
         executor = Executors.newSingleThreadScheduledExecutor { r ->
             Thread(r, "Autoclicker-Thread").apply {
                 isDaemon = true
+                priority = Thread.NORM_PRIORITY - 1 // Slightly lower priority
             }
         }
         
         isClicking.set(true)
         
-        // Schedule the clicking task
-        clickTask = executor?.scheduleWithFixedDelay({
-            performClickCycle()
-        }, 0, baseIntervalMs, TimeUnit.MILLISECONDS)
+        // Use variable delay for better randomization
+        scheduleNextClick(0)
     }
     
-    /**
-     * Stop the autoclicker functionality
-     */
+    private fun scheduleNextClick(delay: Long) {
+        if (!isClicking.get()) return
+        
+        clickTask = executor?.schedule({
+            if (isClicking.get() && this.isEnabled) {
+                performClickCycle()
+                
+                // Calculate next delay with randomization
+                val nextDelay = calculateNextDelay()
+                scheduleNextClick(nextDelay)
+            }
+        }, delay, TimeUnit.MILLISECONDS)
+    }
+    
+    private fun calculateNextDelay(): Long {
+        var delay = baseIntervalMs
+        
+        if (randomizeClicks && randomVariance > 0) {
+            val variance = (baseIntervalMs.toFloat() * randomVariance).toLong()
+            val randomOffset = Random.nextLong(-variance, variance + 1)
+            delay = max(10L, delay + randomOffset)
+        }
+        
+        return delay
+    }
+    
     private fun stopAutoclicker() {
         isClicking.set(false)
         
-        // Cancel the clicking task
-        clickTask?.cancel(false)
+        clickTask?.cancel(true)
         clickTask = null
         
-        // Shutdown executor
         executor?.let { exec ->
             exec.shutdown()
             try {
                 if (!exec.awaitTermination(500, TimeUnit.MILLISECONDS)) {
                     exec.shutdownNow()
-                    if (!exec.awaitTermination(500, TimeUnit.MILLISECONDS)) {
-                        println("Autoclicker: Executor did not terminate cleanly")
-                    }
                 }
             } catch (e: InterruptedException) {
                 exec.shutdownNow()
@@ -109,73 +141,45 @@ class AutoclickerModule : Module("Autoclicker", "Automatically clicks the mouse"
         executor = null
     }
     
-    /**
-     * Perform a complete click cycle (press and release)
-     */
     private fun performClickCycle() {
-        if (!this.isEnabled || !isClicking.get()) return // Fixed: use property
+        if (!this.isEnabled || !isClicking.get()) return
         
         try {
             val client = MinecraftClient.getInstance()
             
-            // Validate game state
             if (!isValidGameState(client)) return
             
-            // Apply randomization if enabled
-            if (randomizeClicks) {
-                applyRandomDelay()
-            }
+            // Check if we should only click while holding a key
+            if (onlyWhileHolding && !isHoldingClickKey(client)) return
             
-            // Perform the click
             executeClick(client)
+            totalClicks++
             
         } catch (e: Exception) {
             println("Autoclicker: Error during click cycle: ${e.message}")
         }
     }
     
-    /**
-     * Check if the game state is valid for clicking
-     */
     private fun isValidGameState(client: MinecraftClient): Boolean {
         return client.player != null && 
                client.world != null && 
-               client.currentScreen == null && // No GUI open
-               client.mouse.isCursorLocked // Mouse is captured
+               client.currentScreen == null &&
+               client.mouse.isCursorLocked
     }
     
-    /**
-     * Apply random delay to avoid detection patterns
-     */
-    private fun applyRandomDelay() {
-        if (randomVariance > 0) {
-            val variance = (baseIntervalMs.toFloat() * randomVariance).toLong() // Fixed: Explicit Float conversion
-            val randomDelay = Random.nextLong(-variance, variance + 1L) // Fixed: Explicit Long literal
-            val adjustedDelay = maxOf(10L, randomDelay) // Minimum 10ms, Fixed: Long literal
-            
-            if (adjustedDelay > 0) {
-                try {
-                    Thread.sleep(adjustedDelay)
-                } catch (e: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                }
-            }
-        }
+    private fun isHoldingClickKey(client: MinecraftClient): Boolean {
+        return (leftClickEnabled && client.options.attackKey.isPressed) ||
+               (rightClickEnabled && client.options.useKey.isPressed)
     }
     
-    /**
-     * Execute the actual click on the main thread
-     */
     private fun executeClick(client: MinecraftClient) {
         client.execute {
             try {
-                if (this.isEnabled && isClicking.get()) { // Fixed: use property
-                    // Perform left click
+                if (this.isEnabled && isClicking.get()) {
                     if (leftClickEnabled) {
                         performLeftClick(client)
                     }
                     
-                    // Perform right click
                     if (rightClickEnabled) {
                         performRightClick(client)
                     }
@@ -186,49 +190,42 @@ class AutoclickerModule : Module("Autoclicker", "Automatically clicks the mouse"
         }
     }
     
-    /**
-     * Perform left click action
-     */
     private fun performLeftClick(client: MinecraftClient) {
-        // Simulate left click using Minecraft's input handling
         try {
-            // Method 1: Use the key binding's press method
-            client.options.attackKey.setPressed(true)
-            
-            // Schedule release
-            executor?.schedule({
-                client.execute {
-                    try {
+            if (blockBreakMode) {
+                // For block breaking, we want continuous holding rather than clicking
+                client.options.attackKey.setPressed(true)
+                
+                // Release after hold time for next click cycle
+                executor?.schedule({
+                    client.execute {
+                        client.options.attackKey.setPressed(false)
+                    }
+                }, clickHoldTimeMs, TimeUnit.MILLISECONDS)
+            } else {
+                // Normal clicking behavior
+                client.options.attackKey.setPressed(true)
+                isKeyPressed.set(true)
+                
+                executor?.schedule({
+                    client.execute {
                         client.options.attackKey.setPressed(false)
                         isKeyPressed.set(false)
-                    } catch (e: Exception) {
-                        println("Autoclicker: Error releasing left click: ${e.message}")
                     }
-                }
-            }, clickHoldTimeMs, TimeUnit.MILLISECONDS)
-            
-            isKeyPressed.set(true)
+                }, clickHoldTimeMs, TimeUnit.MILLISECONDS)
+            }
         } catch (e: Exception) {
             println("Autoclicker: Error performing left click: ${e.message}")
         }
     }
     
-    /**
-     * Perform right click action  
-     */
     private fun performRightClick(client: MinecraftClient) {
-        // Simulate right click using Minecraft's input handling
         try {
             client.options.useKey.setPressed(true)
             
-            // Schedule release
             executor?.schedule({
                 client.execute {
-                    try {
-                        client.options.useKey.setPressed(false)
-                    } catch (e: Exception) {
-                        println("Autoclicker: Error releasing right click: ${e.message}")
-                    }
+                    client.options.useKey.setPressed(false)
                 }
             }, clickHoldTimeMs, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {
@@ -236,109 +233,113 @@ class AutoclickerModule : Module("Autoclicker", "Automatically clicks the mouse"
         }
     }
     
-    /**
-     * Ensure all keys are released when stopping
-     */
     private fun ensureKeysReleased() {
         try {
             val client = MinecraftClient.getInstance()
             client.execute {
-                // Release attack key
-                if (leftClickEnabled) {
-                    client.options.attackKey.setPressed(false)
-                }
-                
-                // Release use key
-                if (rightClickEnabled) {
-                    client.options.useKey.setPressed(false)
-                }
-                
+                client.options.attackKey.setPressed(false)
+                client.options.useKey.setPressed(false)
                 isKeyPressed.set(false)
-                println("Autoclicker: All keys released")
             }
         } catch (e: Exception) {
             println("Autoclicker: Error releasing keys: ${e.message}")
         }
     }
     
-    /**
-     * Configuration methods
-     */
-    fun setClicksPerSecond(cps: Float) { // FIXED: Changed parameter type from Double to Float
-        if (cps > 0 && cps <= 50) { // Reasonable limits
-            this.clicksPerSecond = cps
-            if (this.isEnabled) { // Fixed: use property
-                // Restart with new settings
-                stopAutoclicker()
-                startAutoclicker()
+    // Configuration methods with proper validation
+    fun setCPS(cps: Float) {
+        val clampedCPS = cps.coerceIn(minCPS, maxCPS)
+        if (clampedCPS != this.clicksPerSecond) {
+            this.clicksPerSecond = clampedCPS
+            if (this.isEnabled) {
+                // Restart is not needed, just let the new timing take effect
+                println("Autoclicker: CPS updated to $clampedCPS")
             }
-            println("Autoclicker: CPS set to $cps")
         }
     }
     
-    fun setRandomization(enabled: Boolean, variance: Float = 0.2f) { // FIXED: Changed parameter type from Double to Float
-        this.randomizeClicks = enabled
-        this.randomVariance = variance.coerceIn(0.0f, 1.0f) // FIXED: Use Float values
-        println("Autoclicker: Randomization ${if (enabled) "enabled" else "disabled"} with ${variance * 100}% variance")
+    fun adjustCPS(delta: Float) {
+        setCPS(clicksPerSecond + delta)
     }
     
-    fun setClickModes(leftClick: Boolean, rightClick: Boolean) {
-        this.leftClickEnabled = leftClick
-        this.rightClickEnabled = rightClick
-        println("Autoclicker: Left click: $leftClick, Right click: $rightClick")
-    }
-
-    // New individual setters
-    fun setCPS(cps: Float) {
-        setClicksPerSecond(cps) // Delegates to existing clamped and side-effecting method
-    }
-
     fun setRandomizeEnabled(enabled: Boolean) {
-        setRandomization(enabled, this.randomVariance) // Keep current variance
+        this.randomizeClicks = enabled
+        println("Autoclicker: Randomization ${if (enabled) "enabled" else "disabled"}")
     }
-
+    
     fun setRandomVariance(variance: Float) {
-        setRandomization(this.randomizeClicks, variance) // Keep current enabled state
+        this.randomVariance = variance.coerceIn(0.0f, 0.5f) // Max 50% variance
+        println("Autoclicker: Random variance set to ${(variance * 100).toInt()}%")
     }
-
+    
     fun setClickHoldTime(ms: Long) {
-        // Clamp to reasonable values, e.g., 1ms to 1000ms
-        this.clickHoldTimeMs = ms.coerceIn(1, 1000)
-        println("Autoclicker: Click hold time set to ${this.clickHoldTimeMs}ms")
-        // No need to restart the autoclicker for this change if it's already running,
-        // as it's read on each click cycle by the scheduled executor.
+        this.clickHoldTimeMs = ms.coerceIn(5, 500) // 5ms to 500ms
+        println("Autoclicker: Hold time set to ${this.clickHoldTimeMs}ms")
     }
-
+    
+    fun adjustHoldTime(deltaMs: Long) {
+        setClickHoldTime(clickHoldTimeMs + deltaMs)
+    }
+    
     fun setLeftClickEnabled(enabled: Boolean) {
         this.leftClickEnabled = enabled
-        println("Autoclicker: Left click ${if (enabled) "enabled" else "disabled"}")
-        // Consider if ensureKeysReleased() or other logic needs to run if a click type is disabled while active.
-        // For now, direct update. If module is active and this is disabled, current click might complete.
+        if (!enabled && this.isEnabled) {
+            // Ensure left click is released if we're disabling it
+            MinecraftClient.getInstance().execute {
+                MinecraftClient.getInstance().options.attackKey.setPressed(false)
+            }
+        }
     }
-
+    
     fun setRightClickEnabled(enabled: Boolean) {
         this.rightClickEnabled = enabled
-        println("Autoclicker: Right click ${if (enabled) "enabled" else "disabled"}")
-        // Similar considerations as setLeftClickEnabled.
+        if (!enabled && this.isEnabled) {
+            MinecraftClient.getInstance().execute {
+                MinecraftClient.getInstance().options.useKey.setPressed(false)
+            }
+        }
     }
-
-    /**
-     * Public getters for configuration options
-     */
+    
+    fun setOnlyWhileHolding(enabled: Boolean) {
+        this.onlyWhileHolding = enabled
+        println("Autoclicker: Only while holding ${if (enabled) "enabled" else "disabled"}")
+    }
+    
+    fun setBlockBreakMode(enabled: Boolean) {
+        this.blockBreakMode = enabled
+        println("Autoclicker: Block break mode ${if (enabled) "enabled" else "disabled"}")
+    }
+    
+    // Getters
     fun getClicksPerSecond(): Float = clicksPerSecond
     fun isRandomizeClicksEnabled(): Boolean = randomizeClicks
+    fun getRandomVariance(): Float = randomVariance
     fun getClickHoldTimeMs(): Long = clickHoldTimeMs
     fun isLeftClickEnabled(): Boolean = leftClickEnabled
     fun isRightClickEnabled(): Boolean = rightClickEnabled
+    fun isOnlyWhileHolding(): Boolean = onlyWhileHolding
+    fun isBlockBreakMode(): Boolean = blockBreakMode
+    fun getTotalClicks(): Long = totalClicks
+    fun getSessionCPS(): Float {
+        val sessionTime = (System.currentTimeMillis() - sessionStartTime) / 1000.0f
+        return if (sessionTime > 0) totalClicks / sessionTime else 0.0f
+    }
     
-    /**
-     * Get current status information
-     */
+    // Utility methods
+    fun resetStats() {
+        totalClicks = 0
+        sessionStartTime = System.currentTimeMillis()
+        println("Autoclicker: Statistics reset")
+    }
+    
     fun getStatus(): String {
-        return "Autoclicker: ${if (this.isEnabled) "Enabled" else "Disabled"} | " + // Fixed: use property
-               "CPS: $clicksPerSecond | " +
-               "Randomized: $randomizeClicks | " +
-               "Left: $leftClickEnabled | Right: $rightClickEnabled | " +
-               "Clicking: ${isClicking.get()}"
+        return buildString {
+            append("Autoclicker: ${if (isEnabled) "ON" else "OFF"}")
+            if (isEnabled) {
+                append(" | CPS: %.1f".format(clicksPerSecond))
+                append(" | Clicks: $totalClicks")
+                append(" | Avg: %.1f".format(getSessionCPS()))
+            }
+        }
     }
 }

@@ -21,8 +21,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
     private var scrollOffset = 0
     internal val expandedStates = mutableMapOf<String, Boolean>()
     private val baseModuleHeight = 60
-    private val settingsModuleHeight = 160 // Changed from 120
-    private val moduleSpacing = 5
+    private val settingsModuleHeight = 180 // Increased slightly for better spacing
+    private val moduleSpacing = 8 // Increased spacing between modules
+    private val settingsAreaHeight = 100 // Fixed height for settings area
 
     private val maxScrollOffset: Int
         get() {
@@ -30,7 +31,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
             val totalHeight = modules.sumOf { module ->
                 if (expandedStates[module.name] == true) settingsModuleHeight + moduleSpacing else baseModuleHeight + moduleSpacing
             }
-            return max(0, totalHeight - getContentHeight() + 40 - moduleSpacing) // Deduct last module spacing
+            return max(0, totalHeight - getContentHeight() + 40 - moduleSpacing)
         }
     
     override fun initializeComponents() {
@@ -141,11 +142,11 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
         }
         
         // Module card background
-        drawRoundedRect(context, x, y, width, height, backgroundColor)
+        drawRoundedRect(context, x, y, width, moduleHeight, backgroundColor)
         
         // Module card border
         val borderColor = if (module.isEnabled) CinnamonTheme.accentColor else CinnamonTheme.borderColor
-        drawRoundedBorder(context, x, y, width, height, borderColor)
+        drawRoundedBorder(context, x, y, width, moduleHeight, borderColor)
         
         // Module name
         context.drawText(
@@ -179,12 +180,19 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
             false
         )
         
+        // Bottom section with controls - always at the bottom of the base height
+        val bottomSectionY = if (expandedStates[module.name] == true) {
+            y + settingsModuleHeight - 30 // Bottom of expanded module
+        } else {
+            y + baseModuleHeight - 30 // Bottom of base module
+        }
+        
         // Toggle switch
-        renderToggleSwitch(context, x + width - 50, y + moduleHeight - 20 - 16, 30, 16, module.isEnabled, mouseX, mouseY) // Adjusted Y for bottom alignment
+        renderToggleSwitch(context, x + width - 50, bottomSectionY + 6, 30, 16, module.isEnabled, mouseX, mouseY)
         
         // Status indicator
         val statusColor = if (module.isEnabled) CinnamonTheme.successColor else CinnamonTheme.moduleDisabledColor
-        context.fill(x + 12, y + moduleHeight - 12, x + 20, y + moduleHeight - 4, statusColor)
+        context.fill(x + 12, bottomSectionY + 18, x + 20, bottomSectionY + 26, statusColor)
         
         // Keybinding info (if available)
         val keybindText = getModuleKeybind(module.name)
@@ -194,89 +202,157 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
                 textRenderer,
                 Text.literal(keybindText),
                 x + width - keybindWidth - 60,
-                y + moduleHeight - 14,
+                bottomSectionY + 16,
                 CinnamonTheme.secondaryTextColor,
                 false
             )
         }
 
+        // Render settings area if expanded
         if (expandedStates[module.name] == true) {
-            // moduleHeight here is already settingsModuleHeight when expanded
-            val settingsContentY = y + 45 
-            val footerControlsTopY = y + moduleHeight - 40 // Top Y of the area reserved for bottom controls
-            val calculatedSettingsRenderHeight = footerControlsTopY - settingsContentY
-
-            if (calculatedSettingsRenderHeight > 0) { // Ensure positive height
-                renderModuleSettings(
-                    context,
-                    x + 10, // settingsRenderX
-                    settingsContentY,
-                    width - 20, // settingsRenderWidth
-                    calculatedSettingsRenderHeight,
-                    module,
-                    mouseX,
-                    mouseY,
-                    delta
-                )
-            }
+            val settingsY = y + 40 // Start after description
+            val settingsHeight = settingsAreaHeight // Fixed height
+            
+            // Settings background with subtle border
+            context.fill(x + 8, settingsY, x + width - 8, settingsY + settingsHeight, CinnamonTheme.contentBackground)
+            context.fill(x + 8, settingsY, x + width - 8, settingsY + 1, CinnamonTheme.borderColor) // Top border
+            
+            renderModuleSettings(
+                context,
+                x + 12,
+                settingsY + 5,
+                width - 24,
+                settingsHeight - 10,
+                module,
+                mouseX,
+                mouseY,
+                delta
+            )
         }
     }
 
     private fun renderModuleSettings(context: DrawContext, x: Int, y: Int, width: Int, height: Int, module: Module, mouseX: Int, mouseY: Int, delta: Float) {
-        context.fill(x, y, x + width, y + height, CinnamonTheme.contentBackground) // Example background
-        var settingY = y + 5
+        var settingY = y
 
         when (module) {
             is AutoclickerModule -> {
-                context.drawText(textRenderer, Text.literal("AutoClicker Settings:"), x + 5, settingY, CinnamonTheme.titleColor, false)
-                settingY += 12 // Line spacing after title
+                // Title
+                context.drawText(textRenderer, Text.literal("Settings"), x, settingY, CinnamonTheme.titleColor, true)
+                settingY += 15
 
-                val buttonWidth = textRenderer.getWidth("[+]") + 2 // Width of [+] or [-]
-                val settingItemX = x + 10
-                val valueXOffset = x + width - 50 // Align values and buttons to the right
-                val buttonSpacing = 2
+                val buttonWidth = 16
+                val buttonHeight = 12
+                val settingSpacing = 14
 
                 // CPS Setting
                 val cpsText = "CPS: %.1f".format(module.getClicksPerSecond())
-                context.drawText(textRenderer, Text.literal(cpsText), settingItemX, settingY + 1, CinnamonTheme.primaryTextColor, false)
-                context.drawText(textRenderer, Text.literal("[-]"), valueXOffset, settingY + 1, CinnamonTheme.primaryTextColor, true)
-                context.drawText(textRenderer, Text.literal("[+]"), valueXOffset + buttonWidth + buttonSpacing, settingY + 1, CinnamonTheme.primaryTextColor, true)
-                settingY += textRenderer.fontHeight + 4 // Line spacing
+                context.drawText(textRenderer, Text.literal(cpsText), x, settingY, CinnamonTheme.primaryTextColor, false)
+                
+                val cpsButtonsX = x + width - 40
+                // Minus button
+                drawSettingButton(context, cpsButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
+                // Plus button  
+                drawSettingButton(context, cpsButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
+                settingY += settingSpacing
 
                 // Randomize Setting
-                val randomizeText = "[${if (module.isRandomizeClicksEnabled()) "X" else " "}] Randomize"
-                context.drawText(textRenderer, Text.literal(randomizeText), settingItemX, settingY + 1, CinnamonTheme.primaryTextColor, true)
-                settingY += textRenderer.fontHeight + 4 // Line spacing
+                val randomizeEnabled = module.isRandomizeClicksEnabled()
+                val randomizeText = "Randomize Clicks"
+                drawCheckbox(context, x, settingY - 1, randomizeText, randomizeEnabled)
+                settingY += settingSpacing
 
                 // Click Hold Time Setting
-                val holdTimeText = "Hold: ${module.getClickHoldTimeMs()}ms"
-                context.drawText(textRenderer, Text.literal(holdTimeText), settingItemX, settingY + 1, CinnamonTheme.primaryTextColor, false)
-                context.drawText(textRenderer, Text.literal("[-]"), valueXOffset, settingY + 1, CinnamonTheme.primaryTextColor, true)
-                context.drawText(textRenderer, Text.literal("[+]"), valueXOffset + buttonWidth + buttonSpacing, settingY + 1, CinnamonTheme.primaryTextColor, true)
-                settingY += textRenderer.fontHeight + 4 // Line spacing
+                val holdTimeText = "Hold Time: ${module.getClickHoldTimeMs()}ms"
+                context.drawText(textRenderer, Text.literal(holdTimeText), x, settingY, CinnamonTheme.primaryTextColor, false)
                 
-                // Left Click Enabled Setting
-                val leftClickText = "[${if (module.isLeftClickEnabled()) "X" else " "}] Left Click"
-                context.drawText(textRenderer, Text.literal(leftClickText), settingItemX, settingY + 1, CinnamonTheme.primaryTextColor, true)
-                settingY += textRenderer.fontHeight + 4 // Line spacing
+                val holdButtonsX = x + width - 40
+                // Minus button
+                drawSettingButton(context, holdButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
+                // Plus button
+                drawSettingButton(context, holdButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
+                settingY += settingSpacing
+                
+                // Left Click Setting
+                val leftClickEnabled = module.isLeftClickEnabled()
+                drawCheckbox(context, x, settingY - 1, "Left Click", leftClickEnabled)
+                settingY += settingSpacing
 
-                // Right Click Enabled Setting
-                val rightClickText = "[${if (module.isRightClickEnabled()) "X" else " "}] Right Click"
-                context.drawText(textRenderer, Text.literal(rightClickText), settingItemX, settingY + 1, CinnamonTheme.primaryTextColor, true)
-                // settingY += textRenderer.fontHeight + 4 // No increment needed for the last item
+                // Right Click Setting
+                val rightClickEnabled = module.isRightClickEnabled()
+                drawCheckbox(context, x, settingY - 1, "Right Click", rightClickEnabled)
             }
-            // Add cases for other modules with settings here
             else -> {
                 context.drawText(
                     textRenderer,
-                    Text.literal("No specific settings for ${module.name}"),
-                    x + 5,
+                    Text.literal("No settings available"),
+                    x,
                     settingY,
                     CinnamonTheme.secondaryTextColor,
                     false
                 )
             }
         }
+    }
+    
+    private fun drawSettingButton(context: DrawContext, x: Int, y: Int, width: Int, height: Int, text: String, pressed: Boolean) {
+        val bgColor = if (pressed) CinnamonTheme.accentColor else CinnamonTheme.buttonBackground
+        val textColor = if (pressed) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor
+        
+        // Button background
+        context.fill(x, y, x + width, y + height, bgColor)
+        
+        // Button border
+        context.fill(x, y, x + width, y + 1, CinnamonTheme.borderColor) // Top
+        context.fill(x, y + height - 1, x + width, y + height, CinnamonTheme.borderColor) // Bottom
+        context.fill(x, y, x + 1, y + height, CinnamonTheme.borderColor) // Left
+        context.fill(x + width - 1, y, x + width, y + height, CinnamonTheme.borderColor) // Right
+        
+        // Button text (centered)
+        val textWidth = textRenderer.getWidth(text)
+        context.drawText(
+            textRenderer,
+            Text.literal(text),
+            x + (width - textWidth) / 2,
+            y + 2,
+            textColor,
+            false
+        )
+    }
+    
+    private fun drawCheckbox(context: DrawContext, x: Int, y: Int, text: String, checked: Boolean) {
+        val checkboxSize = 10
+        val checkboxBg = if (checked) CinnamonTheme.accentColor else CinnamonTheme.buttonBackground
+        
+        // Checkbox background
+        context.fill(x, y, x + checkboxSize, y + checkboxSize, checkboxBg)
+        
+        // Checkbox border
+        context.fill(x, y, x + checkboxSize, y + 1, CinnamonTheme.borderColor) // Top
+        context.fill(x, y + checkboxSize - 1, x + checkboxSize, y + checkboxSize, CinnamonTheme.borderColor) // Bottom
+        context.fill(x, y, x + 1, y + checkboxSize, CinnamonTheme.borderColor) // Left
+        context.fill(x + checkboxSize - 1, y, x + checkboxSize, y + checkboxSize, CinnamonTheme.borderColor) // Right
+        
+        // Checkmark
+        if (checked) {
+            context.drawText(
+                textRenderer,
+                Text.literal("✓"),
+                x + 1,
+                y + 1,
+                CinnamonTheme.titleColor,
+                false
+            )
+        }
+        
+        // Label text
+        context.drawText(
+            textRenderer,
+            Text.literal(text),
+            x + checkboxSize + 6,
+            y + 1,
+            CinnamonTheme.primaryTextColor,
+            false
+        )
     }
     
     private fun renderToggleSwitch(context: DrawContext, x: Int, y: Int, width: Int, height: Int, enabled: Boolean, mouseX: Int, mouseY: Int) {
@@ -343,13 +419,11 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
         return if (selectedCategory == "All") {
             allModules
         } else {
-            // Filter by category - you might want to add category property to Module class
             allModules.filter { getModuleCategory(it.name) == selectedCategory }
         }
     }
     
     private fun getModuleCategory(moduleName: String): String {
-        // Simple category mapping - you can make this more sophisticated
         return when (moduleName.lowercase()) {
             "speed", "flight", "nofall" -> "Movement"
             else -> "Player"
@@ -357,28 +431,18 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
     }
     
     private fun getModuleKeybind(moduleName: String): String {
-        // Construct the internal keybinding name (e.g., "cinnamon.toggle_speed")
-        // This assumes a naming convention. If module names in ModuleManager
-        // are "Speed", "Flight", etc., and keybinding names are "cinnamon.toggle_speed",
-        // "cinnamon.toggle_flight", we need to map them.
-        // A simple way is to lowercase and prepend:
         val internalKeybindingName = "cinnamon.toggle_${moduleName.lowercase()}"
-
         val keyBinding = KeybindingManager.getKeybinding(internalKeybindingName)
         if (keyBinding != null) {
             val boundKey = KeyBindingHelper.getBoundKeyOf(keyBinding)
-            // Use localizedText, which gives the proper name like "V", "F", "Mouse Button 1"
-            // For unknown or unbound keys, localizedText might be empty or "None"
-            // InputUtil.UNKNOWN_KEY is a Key object representing an unbound key.
             if (boundKey != InputUtil.UNKNOWN_KEY) {
                 return boundKey.localizedText.string
             }
         }
-        return "None" // Or an empty string, depending on desired display for unbound keys
+        return "None"
     }
     
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        // Handle module toggle clicks
         val contentX = getContentX()
         val contentY = getContentY()
         val contentWidth = getContentWidth()
@@ -395,9 +459,17 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
             modules.forEach { module ->
                 val moduleHeight = if (expandedStates[module.name] == true) settingsModuleHeight else baseModuleHeight
                 if (mouseY >= currentY && mouseY < currentY + moduleHeight) {
+                    
+                    // Bottom section Y position
+                    val bottomSectionY = if (expandedStates[module.name] == true) {
+                        currentY + settingsModuleHeight - 30
+                    } else {
+                        currentY + baseModuleHeight - 30
+                    }
+                    
                     // Check if clicking on toggle switch
-                    val toggleX = contentX + 10 + contentWidth - 20 - 50 // x + width - 50, relative to module card
-                    val toggleY = currentY + moduleHeight - 20 - 16 // Adjusted Y for bottom alignment
+                    val toggleX = contentX + 10 + contentWidth - 20 - 50
+                    val toggleY = bottomSectionY + 6
 
                     if (mouseX >= toggleX && mouseX < toggleX + 30 &&
                         mouseY >= toggleY && mouseY < toggleY + 16) {
@@ -408,109 +480,98 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
                     // Check if clicking on expand button
                     val expandButtonText = if (expandedStates[module.name] == true) "[-]" else "[+]"
                     val expandButtonWidth = textRenderer.getWidth(expandButtonText)
-                    val expandButtonX = contentX + 10 + contentWidth - 20 - expandButtonWidth - 12 // x + width - expandButtonWidth - 12
+                    val expandButtonX = contentX + 10 + contentWidth - 20 - expandButtonWidth - 12
                     val expandButtonY = currentY + 8
 
                     if (mouseX >= expandButtonX && mouseX < expandButtonX + expandButtonWidth &&
                         mouseY >= expandButtonY && mouseY < expandButtonY + textRenderer.fontHeight) {
                         expandedStates[module.name] = !(expandedStates[module.name] ?: false)
-                        // Recalculate scroll offset if needed, though maxScrollOffset handles overall limit
                         scrollOffset = min(scrollOffset, maxScrollOffset)
                         return true
                     }
 
-                    // If module is expanded and is AutoclickerModule, check for settings clicks
+                    // Handle settings clicks if module is expanded
                     if (expandedStates[module.name] == true && module is AutoclickerModule) {
-                        val settingsRenderX = contentX + 10 + 10 // As passed to renderModuleSettings (x + 10)
-                        val settingsRenderY = currentY + 45      // As passed to renderModuleSettings (y + 45)
-                        // val settingsRenderWidth = (contentWidth - 20) - 20 // As passed to renderModuleSettings (width - 20)
-                        // val calculatedSettingsRenderHeight = moduleHeight - 40 - 45 // moduleHeight is settingsModuleHeight
-
-                        // Check if click is within the general settings area (optional, but good for containment)
-                        // val settingsContentY_abs = currentY + 45
-                        // val footerControlsTopY_abs = currentY + moduleHeight - 40
-                        // val calculatedSettingsRenderHeight_abs = footerControlsTopY_abs - settingsContentY_abs
-                        // val settingsAreaWidth_abs = (contentX + 10 + contentWidth - 20) - (contentX + 10 + 10) // (cardX + cardWidth - padding) - (cardX + padding)
-
-
-                        // Re-calculate layout similar to renderModuleSettings to find clickable areas
-                        var checkY = settingsRenderY + 5 // Initial Y inside renderModuleSettings
+                        val settingsX = contentX + 10 + 12
+                        val settingsY = currentY + 40 + 5
+                        val settingsWidth = contentWidth - 20 - 24
                         
-                        // Title (not clickable)
-                        checkY += 12 // Line spacing after title
-
-                        val buttonWidth = textRenderer.getWidth("[+]") + 2
-                        val settingItemX_abs = settingsRenderX + 10
-                        // Width of the settings area: (contentWidth -20 for module list) -20 for settings padding = contentWidth - 40
-                        val valueXOffset_abs = settingsRenderX + ( (contentWidth - 20) - 20 ) - 50 // settings_area_x + settings_area_width - 50
-                        val buttonElementWidth = textRenderer.getWidth("[+]") // Actual width of the text "[+]" or "[-]"
-
-                        // CPS Setting
-                        val cpsMinusButtonX = valueXOffset_abs
-                        val cpsPlusButtonX = valueXOffset_abs + buttonWidth + 2
-                        if (mouseY >= checkY && mouseY < checkY + textRenderer.fontHeight) {
-                            if (mouseX >= cpsMinusButtonX && mouseX < cpsMinusButtonX + buttonElementWidth) {
-                                module.setCPS(module.getClicksPerSecond() - 1.0f)
-                                return true
-                            }
-                            if (mouseX >= cpsPlusButtonX && mouseX < cpsPlusButtonX + buttonElementWidth) {
-                                module.setCPS(module.getClicksPerSecond() + 1.0f)
-                                return true
-                            }
-                        }
-                        checkY += textRenderer.fontHeight + 4 // Line spacing
-
-                        // Randomize Setting
-                        val randomizeTextX = settingItemX_abs
-                        val randomizeTextWidth = textRenderer.getWidth("[X] Randomize") // Approx width
-                        if (mouseX >= randomizeTextX && mouseX < randomizeTextX + randomizeTextWidth &&
-                            mouseY >= checkY && mouseY < checkY + textRenderer.fontHeight) {
-                            module.setRandomizeEnabled(!module.isRandomizeClicksEnabled())
-                            return true
-                        }
-                        checkY += textRenderer.fontHeight + 4 // Line spacing
-
-                        // Click Hold Time Setting
-                        val holdMinusButtonX = valueXOffset_abs
-                        val holdPlusButtonX = valueXOffset_abs + buttonWidth + 2
-                        if (mouseY >= checkY && mouseY < checkY + textRenderer.fontHeight) {
-                            if (mouseX >= holdMinusButtonX && mouseX < holdMinusButtonX + buttonElementWidth) {
-                                module.setClickHoldTime(module.getClickHoldTimeMs() - 10)
-                                return true
-                            }
-                            if (mouseX >= holdPlusButtonX && mouseX < holdPlusButtonX + buttonElementWidth) {
-                                module.setClickHoldTime(module.getClickHoldTimeMs() + 10)
-                                return true
-                            }
-                        }
-                        checkY += textRenderer.fontHeight + 4 // Line spacing
-                        
-                        // Left Click Enabled Setting
-                        val leftClickTextX = settingItemX_abs
-                        val leftClickTextWidth = textRenderer.getWidth("[X] Left Click")
-                        if (mouseX >= leftClickTextX && mouseX < leftClickTextX + leftClickTextWidth &&
-                            mouseY >= checkY && mouseY < checkY + textRenderer.fontHeight) {
-                            module.setLeftClickEnabled(!module.isLeftClickEnabled())
-                            return true
-                        }
-                        checkY += textRenderer.fontHeight + 4 // Line spacing
-
-                        // Right Click Enabled Setting
-                        val rightClickTextX = settingItemX_abs
-                        val rightClickTextWidth = textRenderer.getWidth("[X] Right Click")
-                        if (mouseX >= rightClickTextX && mouseX < rightClickTextX + rightClickTextWidth &&
-                            mouseY >= checkY && mouseY < checkY + textRenderer.fontHeight) {
-                            module.setRightClickEnabled(!module.isRightClickEnabled())
+                        if (handleAutoClickerSettings(mouseX, mouseY, settingsX, settingsY, settingsWidth, module)) {
                             return true
                         }
                     }
-                    return@forEach // Found the clicked module, stop iterating this forEach
+                    return@forEach
                 }
                 currentY += moduleHeight + moduleSpacing
             }
         }
         
         return super.mouseClicked(mouseX, mouseY, button)
+    }
+    
+    private fun handleAutoClickerSettings(mouseX: Double, mouseY: Double, settingsX: Int, settingsY: Int, settingsWidth: Int, module: AutoclickerModule): Boolean {
+        var checkY = settingsY + 15 // Skip title
+        val buttonWidth = 16
+        val buttonHeight = 12
+        val settingSpacing = 14
+        
+        // CPS buttons
+        val cpsButtonsX = settingsX + settingsWidth - 40
+        if (mouseY >= checkY - 1 && mouseY < checkY - 1 + buttonHeight) {
+            // Minus button
+            if (mouseX >= cpsButtonsX && mouseX < cpsButtonsX + buttonWidth) {
+                module.setCPS(module.getClicksPerSecond() - 1.0f)
+                return true
+            }
+            // Plus button
+            if (mouseX >= cpsButtonsX + 20 && mouseX < cpsButtonsX + 20 + buttonWidth) {
+                module.setCPS(module.getClicksPerSecond() + 1.0f)
+                return true
+            }
+        }
+        checkY += settingSpacing
+        
+        // Randomize checkbox
+        val checkboxSize = 10
+        if (mouseX >= settingsX && mouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Randomize Clicks") &&
+            mouseY >= checkY - 1 && mouseY < checkY - 1 + checkboxSize) {
+            module.setRandomizeEnabled(!module.isRandomizeClicksEnabled())
+            return true
+        }
+        checkY += settingSpacing
+        
+        // Hold time buttons
+        val holdButtonsX = settingsX + settingsWidth - 40
+        if (mouseY >= checkY - 1 && mouseY < checkY - 1 + buttonHeight) {
+            // Minus button
+            if (mouseX >= holdButtonsX && mouseX < holdButtonsX + buttonWidth) {
+                module.setClickHoldTime(module.getClickHoldTimeMs() - 10)
+                return true
+            }
+            // Plus button
+            if (mouseX >= holdButtonsX + 20 && mouseX < holdButtonsX + 20 + buttonWidth) {
+                module.setClickHoldTime(module.getClickHoldTimeMs() + 10)
+                return true
+            }
+        }
+        checkY += settingSpacing
+        
+        // Left click checkbox
+        if (mouseX >= settingsX && mouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Left Click") &&
+            mouseY >= checkY - 1 && mouseY < checkY - 1 + checkboxSize) {
+            module.setLeftClickEnabled(!module.isLeftClickEnabled())
+            return true
+        }
+        checkY += settingSpacing
+        
+        // Right click checkbox
+        if (mouseX >= settingsX && mouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Right Click") &&
+            mouseY >= checkY - 1 && mouseY < checkY - 1 + checkboxSize) {
+            module.setRightClickEnabled(!module.isRightClickEnabled())
+            return true
+        }
+        
+        return false
     }
     
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
