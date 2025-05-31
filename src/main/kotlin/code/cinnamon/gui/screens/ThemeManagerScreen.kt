@@ -157,6 +157,9 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         // Background for color list
         context.fill(listX, listY, listX + listWidth, listY + listHeight, CinnamonTheme.contentBackground)
         context.drawBorder(listX, listY, listWidth, listHeight, CinnamonTheme.borderColor)
+
+        // Enable scissor for clipping items within the list area
+        context.enableScissor(listX, listY, listX + listWidth, listY + listHeight)
         
         // Render color items
         val colors = ColorType.values()
@@ -172,6 +175,9 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
             renderColorItem(context, colorType, listX + 10, currentY, listWidth - 20, itemHeight - 5, mouseX, mouseY)
             currentY += itemHeight
         }
+
+        // Disable scissor after rendering items
+        context.disableScissor()
         
         // Scroll indicators
         if (scrollOffset > 0) {
@@ -437,18 +443,57 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         }
         
         // Handle color list clicks
-        val listX = guiX + 40
-        val listY = getContentY() + 80
-        val listWidth = guiWidth - 80
-        val listHeight = getContentHeight() - 170
-        
-        if (mouseX >= listX && mouseX < listX + listWidth && mouseY >= listY && mouseY < listY + listHeight) {
+        val listOuterX = guiX + 40
+        val listOuterY = getContentY() + 20 // Matches renderColorList's contentYPos + 20
+        val listContentWidth = guiWidth - 80
+        val listContentHeight = getContentHeight() - 170 // Matches renderColorList
+
+        // Check if click is within the general list scrollable area first
+        if (mouseX >= listOuterX && mouseX < listOuterX + listContentWidth && 
+            mouseY >= listOuterY && mouseY < listOuterY + listContentHeight) {
+
             val colors = ColorType.values()
-            val clickedIndex = ((mouseY - listY - 10 + scrollOffset) / itemHeight).toInt()
+            // Calculate the base Y for items within the list (where items start rendering, considering scrolling)
+            // renderColorList renders items starting at listOuterY + 10 - scrollOffset
+            // mouse Y needs to be adjusted by this same offset to find the relative click position
             
-            if (clickedIndex >= 0 && clickedIndex < colors.size) {
-                openColorPicker(colors[clickedIndex])
-                return true
+            val relativeMouseY = mouseY - (listOuterY + 10 - scrollOffset)
+            
+            if (relativeMouseY >= 0) { // Ensure click is not in the padding area above items
+                val clickedIndex = (relativeMouseY / itemHeight).toInt()
+
+                if (clickedIndex >= 0 && clickedIndex < colors.size) {
+                    val colorType = colors[clickedIndex]
+                    
+                    // Calculate the specific item's rendering coordinates
+                    // renderColorItem is called with x = listOuterX + 10, y = (listOuterY + 10 - scrollOffset) + clickedIndex * itemHeight
+                    val itemX = listOuterX + 10 // This is the 'x' passed to renderColorItem
+                    val itemY = (listOuterY + 10 - scrollOffset) + clickedIndex * itemHeight // This is the 'y' passed to renderColorItem
+                    
+                    // colorSquareSize = (itemHeight - 5) - 10 = 30 - 10 = 20
+                    val colorSquareSize = (itemHeight - 5) - 10 
+                    // squareRenderX = itemX + 10
+                    val squareRenderX = itemX + 10
+                    // squareRenderY = itemY + 5
+                    val squareRenderY = itemY + 5
+
+                    // Temporarily comment out precise check for diagnostics
+                    // if (mouseX >= squareRenderX && mouseX < squareRenderX + colorSquareSize &&
+                    //     mouseY >= squareRenderY && mouseY < squareRenderY + colorSquareSize) {
+                    //     openColorPicker(colorType)
+                    //     return true
+                    // }
+
+                    // Replace with broader click check for the entire item row
+                    val itemRenderWidth = listContentWidth - 20 // listContentWidth is guiWidth - 80, width in renderColorItem is listWidth - 20
+                    val itemRenderHeight = itemHeight - 5       // height in renderColorItem is itemHeight - 5
+
+                    if (mouseX >= itemX && mouseX < itemX + itemRenderWidth &&
+                        mouseY >= itemY && mouseY < itemY + itemRenderHeight) {
+                        openColorPicker(colorType)
+                        return true
+                    }
+                }
             }
         }
         

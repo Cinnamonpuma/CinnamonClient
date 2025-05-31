@@ -287,6 +287,49 @@ class AutoclickerModule : Module("Autoclicker", "Automatically clicks the mouse"
         this.rightClickEnabled = rightClick
         println("Autoclicker: Left click: $leftClick, Right click: $rightClick")
     }
+
+    // New individual setters
+    fun setCPS(cps: Float) {
+        setClicksPerSecond(cps) // Delegates to existing clamped and side-effecting method
+    }
+
+    fun setRandomizeEnabled(enabled: Boolean) {
+        setRandomization(enabled, this.randomVariance) // Keep current variance
+    }
+
+    fun setRandomVariance(variance: Float) {
+        setRandomization(this.randomizeClicks, variance) // Keep current enabled state
+    }
+
+    fun setClickHoldTime(ms: Long) {
+        // Clamp to reasonable values, e.g., 1ms to 1000ms
+        this.clickHoldTimeMs = ms.coerceIn(1, 1000)
+        println("Autoclicker: Click hold time set to ${this.clickHoldTimeMs}ms")
+        // No need to restart the autoclicker for this change if it's already running,
+        // as it's read on each click cycle by the scheduled executor.
+    }
+
+    fun setLeftClickEnabled(enabled: Boolean) {
+        this.leftClickEnabled = enabled
+        println("Autoclicker: Left click ${if (enabled) "enabled" else "disabled"}")
+        // Consider if ensureKeysReleased() or other logic needs to run if a click type is disabled while active.
+        // For now, direct update. If module is active and this is disabled, current click might complete.
+    }
+
+    fun setRightClickEnabled(enabled: Boolean) {
+        this.rightClickEnabled = enabled
+        println("Autoclicker: Right click ${if (enabled) "enabled" else "disabled"}")
+        // Similar considerations as setLeftClickEnabled.
+    }
+
+    /**
+     * Public getters for configuration options
+     */
+    fun getClicksPerSecond(): Float = clicksPerSecond
+    fun isRandomizeClicksEnabled(): Boolean = randomizeClicks
+    fun getClickHoldTimeMs(): Long = clickHoldTimeMs
+    fun isLeftClickEnabled(): Boolean = leftClickEnabled
+    fun isRightClickEnabled(): Boolean = rightClickEnabled
     
     /**
      * Get current status information
