@@ -164,11 +164,11 @@ class AutoclickerModule : Module("AutoClicker", "Simulates real mouse clicks usi
             
             client.execute {
                 if (leftClickEnabled) {
-                    AutoClickerMixin.simulateLeftClick()
+                    AutoClickerMixin.AutoClickerAccess.triggerLeftClick()
                 }
                 
                 if (rightClickEnabled) {
-                    AutoClickerMixin.simulateRightClick()
+                    AutoClickerMixin.AutoClickerAccess.triggerRightClick()
                 }
                 
                 totalClicks++
@@ -233,11 +233,7 @@ class AutoclickerModule : Module("AutoClicker", "Simulates real mouse clicks usi
     }
     
     // Getters for GUI compatibility
-    fun getClicksPerSecond(): Float = clicksPerSecond
-    
     fun isRandomizeClicksEnabled(): Boolean = randomizeClicks
-    
-    fun getClickHoldTimeMs(): Int = clickHoldTimeMs
     
     fun isLeftClickEnabled(): Boolean = leftClickEnabled
     

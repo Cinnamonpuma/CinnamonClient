@@ -245,7 +245,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
                 val settingSpacing = 14
 
                 // CPS Setting
-                val cpsText = "CPS: %.1f".format(module.getClicksPerSecond())
+                val cpsText = "CPS: %.1f".format(module.clicksPerSecond)
                 context.drawText(textRenderer, Text.literal(cpsText), x, settingY, CinnamonTheme.primaryTextColor, false)
                 
                 val cpsButtonsX = x + width - 40
@@ -262,7 +262,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
                 settingY += settingSpacing
 
                 // Click Hold Time Setting
-                val holdTimeText = "Hold Time: ${module.getClickHoldTimeMs()}ms"
+                val holdTimeText = "Hold Time: ${module.clickHoldTimeMs}ms"
                 context.drawText(textRenderer, Text.literal(holdTimeText), x, settingY, CinnamonTheme.primaryTextColor, false)
                 
                 val holdButtonsX = x + width - 40
@@ -520,12 +520,12 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
         if (mouseY >= checkY - 1 && mouseY < checkY - 1 + buttonHeight) {
             // Minus button
             if (mouseX >= cpsButtonsX && mouseX < cpsButtonsX + buttonWidth) {
-                module.setCPS(module.getClicksPerSecond() - 1.0f)
+                module.setCPS(module.clicksPerSecond - 1.0f)
                 return true
             }
             // Plus button
             if (mouseX >= cpsButtonsX + 20 && mouseX < cpsButtonsX + 20 + buttonWidth) {
-                module.setCPS(module.getClicksPerSecond() + 1.0f)
+                module.setCPS(module.clicksPerSecond + 1.0f)
                 return true
             }
         }
@@ -545,12 +545,12 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
         if (mouseY >= checkY - 1 && mouseY < checkY - 1 + buttonHeight) {
             // Minus button
             if (mouseX >= holdButtonsX && mouseX < holdButtonsX + buttonWidth) {
-                module.setClickHoldTime(module.getClickHoldTimeMs() - 10)
+                module.setClickHoldTime(module.clickHoldTimeMs - 10)
                 return true
             }
             // Plus button
             if (mouseX >= holdButtonsX + 20 && mouseX < holdButtonsX + 20 + buttonWidth) {
-                module.setClickHoldTime(module.getClickHoldTimeMs() + 10)
+                module.setClickHoldTime(module.clickHoldTimeMs + 10)
                 return true
             }
         }
