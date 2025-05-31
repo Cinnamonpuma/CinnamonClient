@@ -2,7 +2,7 @@
 package code.cinnamon.modules.all
 
 import code.cinnamon.modules.Module
-import code.cinnamon.mixin.AutoClickerMixin
+import code.cinnamon.util.AutoClickerAccess
 import net.minecraft.client.MinecraftClient
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -81,6 +81,8 @@ class AutoclickerModule : Module("AutoClicker", "Simulates real mouse clicks usi
         try {
             stopAutoClicker()
             logSessionStats()
+            // Clear any pending clicks when disabling
+            AutoClickerAccess.clearAllPendingClicks()
         } catch (e: Exception) {
             println("AutoClicker: Error stopping module: ${e.message}")
         }
@@ -164,11 +166,11 @@ class AutoclickerModule : Module("AutoClicker", "Simulates real mouse clicks usi
             
             client.execute {
                 if (leftClickEnabled) {
-                    AutoClickerMixin.AutoClickerAccess.triggerLeftClick()
+                    AutoClickerAccess.triggerLeftClick()
                 }
                 
                 if (rightClickEnabled) {
-                    AutoClickerMixin.AutoClickerAccess.triggerRightClick()
+                    AutoClickerAccess.triggerRightClick()
                 }
                 
                 totalClicks++

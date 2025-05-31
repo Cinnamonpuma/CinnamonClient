@@ -1,6 +1,7 @@
 // AutoClickerMixin.java
 package code.cinnamon.mixin;
 
+import code.cinnamon.util.AutoClickerAccess;
 import net.minecraft.client.Mouse;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Hand;
@@ -19,28 +20,6 @@ public class AutoClickerMixin {
     @Shadow
     private MinecraftClient client;
     
-    private static boolean pendingLeftClick = false;
-    private static boolean pendingRightClick = false;
-    
-    private static void simulateLeftClick() {
-        pendingLeftClick = true;
-    }
-    
-    private static void simulateRightClick() {
-        pendingRightClick = true;
-    }
-    
-    // Public accessor methods that can be called from outside
-    public static class AutoClickerAccess {
-        public static void triggerLeftClick() {
-            simulateLeftClick();
-        }
-        
-        public static void triggerRightClick() {
-            simulateRightClick();
-        }
-    }
-    
     @Inject(method = "onMouseButton", at = @At("HEAD"))
     private void onMouseButton(long window, int button, int action, int mods, CallbackInfo info) {
         // This injection allows us to intercept mouse events
@@ -52,13 +31,13 @@ public class AutoClickerMixin {
         if (client == null) return;
         
         // Process pending clicks during mouse tick
-        if (pendingLeftClick) {
-            pendingLeftClick = false;
+        if (AutoClickerAccess.hasPendingLeftClick()) {
+            AutoClickerAccess.clearPendingLeftClick();
             performLeftClick();
         }
         
-        if (pendingRightClick) {
-            pendingRightClick = false;
+        if (AutoClickerAccess.hasPendingRightClick()) {
+            AutoClickerAccess.clearPendingRightClick();
             performRightClick();
         }
     }
