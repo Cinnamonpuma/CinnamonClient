@@ -4,9 +4,9 @@ package code.cinnamon.modules.all
 import code.cinnamon.modules.Module
 import code.cinnamon.util.PacketCombinerAccess
 import net.minecraft.client.MinecraftClient
-import net.minecraft.network.packet.c2s.handshake.ClientIntentionPacket
-import net.minecraft.network.packet.c2s.login.LoginStartPacket
-import net.minecraft.network.packet.s2c.login.LoginSuccessPacket
+import net.minecraft.network.packet.c2s.handshake.HandshakeC2SPacket
+import net.minecraft.network.packet.c2s.login.LoginHelloC2SPacket
+import net.minecraft.network.packet.s2c.login.LoginSuccessS2CPacket
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
@@ -16,6 +16,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import java.util.*
 import kotlin.random.Random
 
 class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual client logins into single server connection") {
@@ -57,11 +58,16 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
         RANDOM_SELECTION  // Randomly pick between clients
     }
     
+    data class LoginData(
+        val username: String,
+        val uuid: UUID?
+    )
+    
     data class ClientConnection(
         val id: String,
         val channel: Channel,
-        var loginPacket: LoginStartPacket? = null,
-        var intentionPacket: ClientIntentionPacket? = null,
+        var loginData: LoginData? = null,
+        var handshakePacket: HandshakeC2SPacket? = null,
         var isAuthenticated: Boolean = false,
         val connectTime: Long = System.currentTimeMillis()
     )
@@ -180,17 +186,17 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
     }
     
     // Core packet combination logic
-    fun handleClientLogin(clientId: String, loginPacket: LoginStartPacket, intentionPacket: ClientIntentionPacket?) {
+    fun handleClientLogin(clientId: String, loginData: LoginData, handshakePacket: HandshakeC2SPacket?) {
         val client = clientConnections[clientId] ?: return
         
-        client.loginPacket = loginPacket
-        client.intentionPacket = intentionPacket
+        client.loginData = loginData
+        client.handshakePacket = handshakePacket
         
-        println("JoinPacketCombiner: Received login from client $clientId: ${loginPacket.name}")
+        println("JoinPacketCombiner: Received login from client $clientId: ${loginData.username}")
         
         // Check if we have enough clients to proceed
         val readyClients = clientConnections.values.filter { 
-            it.loginPacket != null && it.intentionPacket != null 
+            it.loginData != null && it.handshakePacket != null 
         }
         
         if (readyClients.size >= 2 || (readyClients.size == 1 && shouldProceedWithSingleClient())) {
@@ -214,7 +220,7 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
             
             println("JoinPacketCombiner: Processing combined login for ${clients.size} clients")
             println("JoinPacketCombiner: Selected primary client: ${selectedClient.id}")
-            println("JoinPacketCombiner: Combined username: ${combinedData.name}")
+            println("JoinPacketCombiner: Combined username: ${combinedData.username}")
             
             // Establish server connection
             connectToServer(combinedData, selectedClient)
@@ -227,12 +233,12 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
         }
     }
     
-    private fun combineLoginData(clients: List<ClientConnection>): LoginStartPacket {
+    private fun combineLoginData(clients: List<ClientConnection>): LoginData {
         return when (combinationMode) {
             CombinationMode.PRIMARY_WINS -> {
                 val primary = clients.find { it.id == primaryClientId } 
                     ?: clients.first()
-                primary.loginPacket!!
+                primary.loginData!!
             }
             
             CombinationMode.FUSE_DATA -> {
@@ -240,15 +246,15 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
             }
             
             CombinationMode.RANDOM_SELECTION -> {
-                clients.random().loginPacket!!
+                clients.random().loginData!!
             }
         }
     }
     
-    private fun fuseLoginData(clients: List<ClientConnection>): LoginStartPacket {
+    private fun fuseLoginData(clients: List<ClientConnection>): LoginData {
         // Attempt to create a meaningful fusion of login data
-        val names = clients.mapNotNull { it.loginPacket?.name }.distinct()
-        val uuids = clients.mapNotNull { it.loginPacket?.profileId }.distinct()
+        val names = clients.mapNotNull { it.loginData?.username }.distinct()
+        val uuids = clients.mapNotNull { it.loginData?.uuid }.distinct()
         
         val fusedName = when {
             names.size == 1 -> names.first()
@@ -256,11 +262,9 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
             else -> "CombinedUser_${Random.nextInt(1000, 9999)}"
         }
         
-        val fusedUuid = uuids.firstOrNull() ?: java.util.UUID.randomUUID()
+        val fusedUuid = uuids.firstOrNull() ?: UUID.randomUUID()
         
-        // Create new login packet with fused data
-        val basePacket = clients.first().loginPacket!!
-        return LoginStartPacket(fusedName, fusedUuid)
+        return LoginData(fusedName, fusedUuid)
     }
     
     private fun selectPrimaryClient(clients: List<ClientConnection>): ClientConnection {
@@ -272,12 +276,12 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
         }
     }
     
-    private fun connectToServer(loginPacket: LoginStartPacket, primaryClient: ClientConnection) {
+    private fun connectToServer(loginData: LoginData, primaryClient: ClientConnection) {
         // Implementation would create actual server connection
         // This is a simplified version showing the structure
         
         println("JoinPacketCombiner: Connecting to server $targetServerHost:$targetServerPort")
-        println("JoinPacketCombiner: Using login data: ${loginPacket.name}")
+        println("JoinPacketCombiner: Using login data: ${loginData.username}")
         
         // Set up server connection tracking
         // In real implementation, this would establish the actual network connection
@@ -287,11 +291,11 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
         
         // Mirror packets to other clients if enabled
         if (enablePacketMirror) {
-            mirrorAuthenticationToClients(loginPacket, primaryClient)
+            mirrorAuthenticationToClients(loginData, primaryClient)
         }
     }
     
-    private fun mirrorAuthenticationToClients(loginPacket: LoginStartPacket, primaryClient: ClientConnection) {
+    private fun mirrorAuthenticationToClients(loginData: LoginData, primaryClient: ClientConnection) {
         clientConnections.values.forEach { client ->
             if (client.id != primaryClient.id) {
                 try {
@@ -302,6 +306,20 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
                     println("JoinPacketCombiner: Error mirroring to client ${client.id}: ${e.message}")
                 }
             }
+        }
+    }
+    
+    // Helper function to extract login data from LoginHelloC2SPacket
+    private fun extractLoginData(packet: LoginHelloC2SPacket): LoginData {
+        // Access packet data using reflection or available methods
+        return try {
+            // Assuming the packet has getName() method
+            val username = packet.name
+            val uuid = packet.profileId
+            LoginData(username, uuid)
+        } catch (e: Exception) {
+            println("JoinPacketCombiner: Error extracting login data: ${e.message}")
+            LoginData("UnknownUser_${Random.nextInt(1000)}", UUID.randomUUID())
         }
     }
     
@@ -331,14 +349,15 @@ class JoinPacketCombinerModule : Module("JoinPacketCombiner", "Combines dual cli
             val clientId = "client_${ctx.channel().id()}"
             
             when (msg) {
-                is ClientIntentionPacket -> {
-                    println("JoinPacketCombiner: Received intention packet from $clientId")
-                    clientConnections[clientId]?.intentionPacket = msg
+                is HandshakeC2SPacket -> {
+                    println("JoinPacketCombiner: Received handshake packet from $clientId")
+                    clientConnections[clientId]?.handshakePacket = msg
                 }
                 
-                is LoginStartPacket -> {
-                    println("JoinPacketCombiner: Received login packet from $clientId")
-                    handleClientLogin(clientId, msg, clientConnections[clientId]?.intentionPacket)
+                is LoginHelloC2SPacket -> {
+                    println("JoinPacketCombiner: Received login hello packet from $clientId")
+                    val loginData = extractLoginData(msg)
+                    handleClientLogin(clientId, loginData, clientConnections[clientId]?.handshakePacket)
                 }
                 
                 else -> {
