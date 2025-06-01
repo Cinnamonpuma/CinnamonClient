@@ -252,4 +252,167 @@ object PacketCombinerCommands {
                     return false
                 }
                 PacketCombinerConfigManager.quickSetupRemote(args[1])
-                sendMessage("Configured for remote server ${args[1]}",
+                sendMessage("Configured for remote server ${args[1]}", Formatting.GREEN)
+                true
+            }
+            else -> {
+                sendMessage("Unknown setup type: ${args[0]}", Formatting.RED)
+                sendMessage("Available: local, remote", Formatting.YELLOW)
+                false
+            }
+        }
+    }
+    
+    private fun handlePresetCommand(args: List<String>): Boolean {
+        if (args.isEmpty()) {
+            sendMessage("Available presets:", Formatting.YELLOW)
+            sendMessage("  vanilla - Standard Minecraft server", Formatting.WHITE)
+            sendMessage("  paper - Paper/Spigot server optimized", Formatting.WHITE)
+            sendMessage("  forge - Forge server with mod support", Formatting.WHITE)
+            sendMessage("  fabric - Fabric server configuration", Formatting.WHITE)
+            sendMessage("  custom - Custom server preset", Formatting.WHITE)
+            return true
+        }
+        
+        return when (args[0].lowercase()) {
+            "vanilla" -> {
+                PacketCombinerConfigManager.loadPreset("VANILLA")
+                sendMessage("Loaded vanilla server preset", Formatting.GREEN)
+                true
+            }
+            "paper" -> {
+                PacketCombinerConfigManager.loadPreset("PAPER")
+                sendMessage("Loaded Paper server preset", Formatting.GREEN)
+                true
+            }
+            "forge" -> {
+                PacketCombinerConfigManager.loadPreset("FORGE")
+                sendMessage("Loaded Forge server preset", Formatting.GREEN)
+                true
+            }
+            "fabric" -> {
+                PacketCombinerConfigManager.loadPreset("FABRIC")
+                sendMessage("Loaded Fabric server preset", Formatting.GREEN)
+                true
+            }
+            "custom" -> {
+                PacketCombinerConfigManager.loadPreset("CUSTOM")
+                sendMessage("Loaded custom server preset", Formatting.GREEN)
+                true
+            }
+            else -> {
+                sendMessage("Unknown preset: ${args[0]}", Formatting.RED)
+                false
+            }
+        }
+    }
+    
+    private fun handleDebugCommand(args: List<String>): Boolean {
+        if (args.isEmpty()) {
+            sendMessage("Usage: /combiner debug <on|off|packets|clear>", Formatting.YELLOW)
+            return false
+        }
+        
+        return when (args[0].lowercase()) {
+            "on" -> {
+                PacketCombinerConfigManager.setDebugMode(true)
+                sendMessage("Debug mode enabled", Formatting.GREEN)
+                true
+            }
+            "off" -> {
+                PacketCombinerConfigManager.setDebugMode(false)
+                sendMessage("Debug mode disabled", Formatting.RED)
+                true
+            }
+            "packets" -> {
+                showPacketDebugInfo()
+                true
+            }
+            "clear" -> {
+                PacketCombinerAccess.clearPendingPackets()
+                sendMessage("Cleared all pending packets", Formatting.GREEN)
+                true
+            }
+            else -> {
+                sendMessage("Unknown debug command: ${args[0]}", Formatting.RED)
+                false
+            }
+        }
+    }
+    
+    private fun showPacketDebugInfo() {
+        sendMessage("=== Packet Debug Information ===", Formatting.GOLD)
+        sendMessage("Handshake Interception: ${PacketCombinerAccess.isInterceptingHandshake()}", Formatting.WHITE)
+        sendMessage("Login Interception: ${PacketCombinerAccess.isInterceptingLogin()}", Formatting.WHITE)
+        sendMessage("Pending Packets: ${PacketCombinerAccess.getPendingPacketCount()}", Formatting.WHITE)
+        sendMessage("Last Packet Time: ${PacketCombinerAccess.getLastPacketTime()}", Formatting.WHITE)
+        
+        val interceptStats = PacketCombinerAccess.getInterceptionStats()
+        sendMessage("Total Intercepted: ${interceptStats.totalIntercepted}", Formatting.CYAN)
+        sendMessage("Successfully Combined: ${interceptStats.successfullyCombined}", Formatting.GREEN)
+        sendMessage("Failed Combinations: ${interceptStats.failedCombinations}", Formatting.RED)
+    }
+    
+    // Configuration setter methods
+    private fun setConfigPort(portStr: String): Boolean {
+        return try {
+            val port = portStr.toInt()
+            if (port !in 1024..65535) {
+                sendMessage("Port must be between 1024 and 65535", Formatting.RED)
+                return false
+            }
+            PacketCombinerConfigManager.setProxyPort(port)
+            sendMessage("Proxy port set to $port", Formatting.GREEN)
+            true
+        } catch (e: NumberFormatException) {
+            sendMessage("Invalid port number: $portStr", Formatting.RED)
+            false
+        }
+    }
+    
+    private fun setConfigServer(serverStr: String): Boolean {
+        return try {
+            val parts = serverStr.split(":")
+            val host = parts[0]
+            val port = if (parts.size > 1) parts[1].toInt() else 25565
+            
+            PacketCombinerConfigManager.setTargetServer(host, port)
+            sendMessage("Target server set to $host:$port", Formatting.GREEN)
+            true
+        } catch (e: Exception) {
+            sendMessage("Invalid server format. Use host:port or just host", Formatting.RED)
+            false
+        }
+    }
+    
+    private fun setConfigMode(modeStr: String): Boolean {
+        return try {
+            PacketCombinerConfigManager.setCombinationMode(modeStr.uppercase())
+            sendMessage("Combination mode set to ${modeStr.uppercase()}", Formatting.GREEN)
+            true
+        } catch (e: Exception) {
+            sendMessage("Invalid mode. Use PRIMARY_WINS, FUSE_DATA, or RANDOM_SELECTION", Formatting.RED)
+            false
+        }
+    }
+    
+    private fun setConfigMirror(mirrorStr: String): Boolean {
+        return try {
+            val mirror = mirrorStr.lowercase().toBooleanStrict()
+            PacketCombinerConfigManager.setMirrorMode(mirror)
+            sendMessage("Mirror mode ${if (mirror) "enabled" else "disabled"}", Formatting.GREEN)
+            true
+        } catch (e: Exception) {
+            sendMessage("Invalid boolean value. Use 'true' or 'false'", Formatting.RED)
+            false
+        }
+    }
+    
+    // Utility method for sending messages to the player
+    private fun sendMessage(message: String, formatting: Formatting) {
+        client.player?.sendMessage(
+            Text.literal(message).formatted(formatting),
+            false
+        )
+    }
+}
