@@ -84,7 +84,7 @@ object PacketCombinerCommands {
             if (module.isEnabled) Formatting.GREEN else Formatting.RED)
         
         val config = PacketCombinerConfigManager.getConfig()
-        sendMessage("Proxy: ${config.targetServerHost}:${config.targetServerPort} <- :${config.proxyPort}", Formatting.CYAN)
+        sendMessage("Proxy: ${config.targetServerHost}:${config.targetServerPort} <- :${config.proxyPort}", Formatting.AQUA)
         sendMessage("Mode: ${config.combinationMode}", Formatting.YELLOW)
         sendMessage("Connections: ${module.activeConnections}/2", Formatting.WHITE)
         sendMessage("Combined Logins: ${module.totalCombinedLogins}", Formatting.WHITE)
@@ -348,7 +348,7 @@ object PacketCombinerCommands {
         sendMessage("Last Packet Time: ${PacketCombinerAccess.getLastPacketTime()}", Formatting.WHITE)
         
         val interceptStats = PacketCombinerAccess.getInterceptionStats()
-        sendMessage("Total Intercepted: ${interceptStats.totalIntercepted}", Formatting.CYAN)
+        sendMessage("Total Intercepted: ${interceptStats.totalIntercepted}", Formatting.AQUA)
         sendMessage("Successfully Combined: ${interceptStats.successfullyCombined}", Formatting.GREEN)
         sendMessage("Failed Combinations: ${interceptStats.failedCombinations}", Formatting.RED)
     }
