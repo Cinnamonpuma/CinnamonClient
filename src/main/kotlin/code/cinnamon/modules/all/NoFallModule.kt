@@ -8,6 +8,7 @@ import net.minecraft.util.math.Vec3d
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import net.minecraft.entity.player.PlayerEntity
 
 class NoFallModule : Module("NoFall", "Prevents fall damage using various advanced methods") {
 
@@ -543,7 +544,7 @@ class NoFallModule : Module("NoFall", "Prevents fall damage using various advanc
             val isOnGround = player.isOnGround
             val isInWater = player.isTouchingWater
             val isInLava = player.isInLava
-            val isFallFlying = player.isFallFlying()
+            val isFallFlying = player.isGliding
 
             
             return buildString {
