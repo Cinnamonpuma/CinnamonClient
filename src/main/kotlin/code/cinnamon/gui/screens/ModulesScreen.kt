@@ -21,9 +21,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
     private var scrollOffset = 0
     internal val expandedStates = mutableMapOf<String, Boolean>()
     private val baseModuleHeight = 60
-    private val settingsModuleHeight = 180 // Increased slightly for better spacing
+    private val settingsModuleHeight = 200 // Increased to accommodate more settings
     private val moduleSpacing = 8 // Increased spacing between modules
-    private val settingsAreaHeight = 100 // Fixed height for settings area
+    private val settingsAreaHeight = 120 // Fixed height for settings area
 
     private val maxScrollOffset: Int
         get() {
@@ -244,41 +244,45 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
                 val buttonHeight = 12
                 val settingSpacing = 14
 
-                // CPS Setting
-                val cpsText = "CPS: %.1f".format(module.clicksPerSecond)
-                context.drawText(textRenderer, Text.literal(cpsText), x, settingY, CinnamonTheme.primaryTextColor, false)
+                // Min CPS Setting
+                val minCpsText = "Min CPS: %.1f".format(module.minCPS)
+                context.drawText(textRenderer, Text.literal(minCpsText), x, settingY, CinnamonTheme.primaryTextColor, false)
                 
-                val cpsButtonsX = x + width - 40
+                val minCpsButtonsX = x + width - 40
                 // Minus button
-                drawSettingButton(context, cpsButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
+                drawSettingButton(context, minCpsButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
                 // Plus button  
-                drawSettingButton(context, cpsButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
+                drawSettingButton(context, minCpsButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
                 settingY += settingSpacing
 
-                // Randomize Setting
-                val randomizeEnabled = module.isRandomizeClicksEnabled()
-                val randomizeText = "Randomize Clicks"
-                drawCheckbox(context, x, settingY - 1, randomizeText, randomizeEnabled)
-                settingY += settingSpacing
-
-                // Click Hold Time Setting
-                val holdTimeText = "Hold Time: ${module.clickHoldTimeMs}ms"
-                context.drawText(textRenderer, Text.literal(holdTimeText), x, settingY, CinnamonTheme.primaryTextColor, false)
+                // Max CPS Setting
+                val maxCpsText = "Max CPS: %.1f".format(module.maxCPS)
+                context.drawText(textRenderer, Text.literal(maxCpsText), x, settingY, CinnamonTheme.primaryTextColor, false)
                 
-                val holdButtonsX = x + width - 40
+                val maxCpsButtonsX = x + width - 40
                 // Minus button
-                drawSettingButton(context, holdButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
-                // Plus button
-                drawSettingButton(context, holdButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
+                drawSettingButton(context, maxCpsButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
+                // Plus button  
+                drawSettingButton(context, maxCpsButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
                 settingY += settingSpacing
-                
+
+                // Humanization Setting
+                val humanizationEnabled = module.enableHumanization
+                drawCheckbox(context, x, settingY - 1, "Humanization", humanizationEnabled)
+                settingY += settingSpacing
+
+                // Burst Mode Setting
+                val burstModeEnabled = module.burstMode
+                drawCheckbox(context, x, settingY - 1, "Burst Mode", burstModeEnabled)
+                settingY += settingSpacing
+
                 // Left Click Setting
-                val leftClickEnabled = module.isLeftClickEnabled()
+                val leftClickEnabled = module.leftClickEnabled
                 drawCheckbox(context, x, settingY - 1, "Left Click", leftClickEnabled)
                 settingY += settingSpacing
 
                 // Right Click Setting
-                val rightClickEnabled = module.isRightClickEnabled()
+                val rightClickEnabled = module.rightClickEnabled
                 drawCheckbox(context, x, settingY - 1, "Right Click", rightClickEnabled)
             }
             else -> {
@@ -425,6 +429,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
     
     private fun getModuleCategory(moduleName: String): String {
         return when (moduleName.lowercase()) {
+            "autoclicker" -> "Player"
             "speed", "flight", "nofall" -> "Movement"
             else -> "Player"
         }
@@ -514,52 +519,60 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
         val buttonWidth = 16
         val buttonHeight = 12
         val settingSpacing = 14
+        val checkboxSize = 10
         
-        // CPS buttons
-        val cpsButtonsX = settingsX + settingsWidth - 40
+        // Min CPS buttons
+        val minCpsButtonsX = settingsX + settingsWidth - 40
         if (mouseY >= checkY - 1 && mouseY < checkY - 1 + buttonHeight) {
             // Minus button
-            if (mouseX >= cpsButtonsX && mouseX < cpsButtonsX + buttonWidth) {
-                module.setCPS(module.clicksPerSecond - 1.0f)
+            if (mouseX >= minCpsButtonsX && mouseX < minCpsButtonsX + buttonWidth) {
+                module.setMinCPS(module.minCPS - 1.0f)
                 return true
             }
             // Plus button
-            if (mouseX >= cpsButtonsX + 20 && mouseX < cpsButtonsX + 20 + buttonWidth) {
-                module.setCPS(module.clicksPerSecond + 1.0f)
+            if (mouseX >= minCpsButtonsX + 20 && mouseX < minCpsButtonsX + 20 + buttonWidth) {
+                module.setMinCPS(module.minCPS + 1.0f)
                 return true
             }
         }
         checkY += settingSpacing
         
-        // Randomize checkbox
-        val checkboxSize = 10
-        if (mouseX >= settingsX && mouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Randomize Clicks") &&
+        // Max CPS buttons
+        val maxCpsButtonsX = settingsX + settingsWidth - 40
+        if (mouseY >= checkY - 1 && mouseY < checkY - 1 + buttonHeight) {
+            // Minus button
+            if (mouseX >= maxCpsButtonsX && mouseX < maxCpsButtonsX + buttonWidth) {
+                module.setMaxCPS(module.maxCPS - 1.0f)
+                return true
+            }
+            // Plus button
+            if (mouseX >= maxCpsButtonsX + 20 && mouseX < maxCpsButtonsX + 20 + buttonWidth) {
+                module.setMaxCPS(module.maxCPS + 1.0f)
+                return true
+            }
+        }
+        checkY += settingSpacing
+        
+        // Humanization checkbox
+        if (mouseX >= settingsX && mouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Humanization") &&
             mouseY >= checkY - 1 && mouseY < checkY - 1 + checkboxSize) {
-            module.setRandomizeEnabled(!module.isRandomizeClicksEnabled())
+            module.setHumanizationEnabled(!module.enableHumanization)
             return true
         }
         checkY += settingSpacing
         
-        // Hold time buttons
-        val holdButtonsX = settingsX + settingsWidth - 40
-        if (mouseY >= checkY - 1 && mouseY < checkY - 1 + buttonHeight) {
-            // Minus button
-            if (mouseX >= holdButtonsX && mouseX < holdButtonsX + buttonWidth) {
-                module.setClickHoldTime(module.clickHoldTimeMs - 10)
-                return true
-            }
-            // Plus button
-            if (mouseX >= holdButtonsX + 20 && mouseX < holdButtonsX + 20 + buttonWidth) {
-                module.setClickHoldTime(module.clickHoldTimeMs + 10)
-                return true
-            }
+        // Burst Mode checkbox
+        if (mouseX >= settingsX && mouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Burst Mode") &&
+            mouseY >= checkY - 1 && mouseY < checkY - 1 + checkboxSize) {
+            module.setBurstMode(!module.burstMode)
+            return true
         }
         checkY += settingSpacing
         
         // Left click checkbox
         if (mouseX >= settingsX && mouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Left Click") &&
             mouseY >= checkY - 1 && mouseY < checkY - 1 + checkboxSize) {
-            module.setLeftClickEnabled(!module.isLeftClickEnabled())
+            module.setLeftClickEnabled(!module.leftClickEnabled)
             return true
         }
         checkY += settingSpacing
@@ -567,7 +580,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules")) {
         // Right click checkbox
         if (mouseX >= settingsX && mouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Right Click") &&
             mouseY >= checkY - 1 && mouseY < checkY - 1 + checkboxSize) {
-            module.setRightClickEnabled(!module.isRightClickEnabled())
+            module.setRightClickEnabled(!module.rightClickEnabled)
             return true
         }
         
