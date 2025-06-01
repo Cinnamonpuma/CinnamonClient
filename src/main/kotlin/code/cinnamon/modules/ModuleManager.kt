@@ -34,7 +34,6 @@ object ModuleManager {
     fun initialize() {
         // Register your modules here
         registerModule(AutoclickerModule())
-        registerModule(NoFallModule())
         // Add more modules as needed
     }
 }
