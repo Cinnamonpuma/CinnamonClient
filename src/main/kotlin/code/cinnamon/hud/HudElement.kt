@@ -1,3 +1,4 @@
+// file: src/main/kotlin/code/cinnamon/hud/HudElement.kt
 package code.cinnamon.hud
 
 import net.minecraft.client.MinecraftClient
@@ -6,64 +7,67 @@ import kotlin.math.max
 import kotlin.math.min
 
 abstract class HudElement(
-    protected var x: Float,
-    protected var y: Float
+    initialX: Float,
+    initialY: Float
 ) {
+    private var _x: Float = initialX
+    private var _y: Float = initialY
+
     var scale: Float = 1.0f
         set(value) {
             field = max(0.5f, min(3.0f, value))
         }
-    
+
     var isEnabled: Boolean = true
     private var isDragging: Boolean = false
     private var dragOffsetX: Float = 0f
     private var dragOffsetY: Float = 0f
-    
+
     abstract fun render(context: DrawContext, tickDelta: Float)
     abstract fun getWidth(): Int
     abstract fun getHeight(): Int
     abstract fun getName(): String
-    
+
     fun renderBackground(context: DrawContext) {
         if (HudManager.isEditMode) {
             context.fill(
-                x.toInt(),
-                y.toInt(),
-                (x + getWidth() * scale).toInt(),
-                (y + getHeight() * scale).toInt(),
+                _x.toInt(),
+                _y.toInt(),
+                (_x + getWidth() * scale).toInt(),
+                (_y + getHeight() * scale).toInt(),
                 0x80000000.toInt()
             )
         }
     }
-    
+
     fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
-        return mouseX >= x && mouseX <= x + getWidth() * scale &&
-               mouseY >= y && mouseY <= y + getHeight() * scale
+        return mouseX >= _x && mouseX <= _x + getWidth() * scale &&
+               mouseY >= _y && mouseY <= _y + getHeight() * scale
     }
-    
+
     fun startDragging(mouseX: Double, mouseY: Double) {
         isDragging = true
-        dragOffsetX = (mouseX - x).toFloat()
-        dragOffsetY = (mouseY - y).toFloat()
+        dragOffsetX = (mouseX - _x).toFloat()
+        dragOffsetY = (mouseY - _y).toFloat()
     }
-    
+
     fun updateDragging(mouseX: Double, mouseY: Double) {
         if (isDragging) {
-            x = (mouseX - dragOffsetX).toFloat()
-            y = (mouseY - dragOffsetY).toFloat()
-            
+            _x = (mouseX - dragOffsetX).toFloat()
+            _y = (mouseY - dragOffsetY).toFloat()
+
             val mc = MinecraftClient.getInstance()
-            x = max(0f, min(x, mc.window.scaledWidth - getWidth() * scale))
-            y = max(0f, min(y, mc.window.scaledHeight - getHeight() * scale))
+            _x = max(0f, min(_x, mc.window.scaledWidth - getWidth() * scale))
+            _y = max(0f, min(_y, mc.window.scaledHeight - getHeight() * scale))
         }
     }
-    
+
     fun stopDragging() {
         isDragging = false
     }
-    
-    fun getX(): Float = x
-    fun getY(): Float = y
-    fun setX(x: Float) { this.x = x }
-    fun setY(y: Float) { this.y = y }
+
+    fun getX(): Float = _x
+    fun getY(): Float = _y
+    fun setX(newX: Float) { _x = newX }
+    fun setY(newY: Float) { _y = newY }
 }

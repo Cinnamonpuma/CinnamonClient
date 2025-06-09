@@ -16,7 +16,7 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
         
         context.matrices.push()
         context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate((x / scale).toDouble(), (y / scale).toDouble(), 0.0)
+        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
         
         context.drawText(mc.textRenderer, fps, 0, 0, 0xFFFFFF, true)
         
