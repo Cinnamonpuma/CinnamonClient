@@ -1,5 +1,6 @@
 package code.cinnamon.gui
 
+import net.minecraft.text.Style
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
@@ -21,6 +22,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     protected var guiY = 0
     
     companion object {
+        val CINNA_FONT: Identifier = Identifier.of("cinnamon", "cinna")
         const val HEADER_HEIGHT = 50
         const val FOOTER_HEIGHT = 35
         const val SIDEBAR_WIDTH = 180
@@ -54,6 +56,9 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
     
     abstract fun initializeComponents()
+    
+    // Add this abstract method - subclasses must implement their own content rendering
+    protected abstract fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float)
     
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         super.render(context, mouseX, mouseY, delta)
@@ -111,21 +116,18 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
     
     private fun renderGuiBox(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        // Main GUI background with rounded corners - REMOVED
-        // drawRoundedRect(context, guiX, guiY, guiWidth, guiHeight, theme.guiBackground)
+        // Draw single unified background with rounded corners for the entire GUI
+        drawRoundedRect(context, guiX, guiY, guiWidth, guiHeight, theme.coreBackgroundPrimary)
         
-        // Header
+        // Header (no background drawing, just content)
         renderHeader(context, mouseX, mouseY, delta)
         
-        // Fill the background of the content area (between header and footer) - Moved before renderContent
-        context.fill(guiX, guiY + HEADER_HEIGHT, guiX + guiWidth, guiY + guiHeight - FOOTER_HEIGHT, theme.coreBackgroundPrimary)
-
-        // Main content area
-        renderContent(context, mouseX, mouseY, delta)
-        
-        // Footer
+        // Footer (no background drawing, just content)
         renderFooter(context, mouseX, mouseY, delta)
-
+        
+        // Main content area (no background fill needed, unified background handles it)
+        renderContent(context, mouseX, mouseY, delta)
+    
         // GUI border (drawn last to be on top of all sections)
         drawRoundedBorder(context, guiX, guiY, guiWidth, guiHeight, theme.borderColor) 
     }
@@ -133,11 +135,11 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     protected open fun renderHeader(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         val headerY = guiY
         
-        // Header background with top rounded corners
-        drawRoundedRect(
-            context, guiX, headerY, guiWidth, HEADER_HEIGHT,
-            theme.headerBackground, true, false
-        )
+        // REMOVED: Header background drawing - let the unified background show through
+        // drawRoundedRect(
+        //     context, guiX, headerY, guiWidth, HEADER_HEIGHT,
+        //     theme.headerBackground, true, false
+        // )
 
         // Define Logo Size and Position
         val logoPadding = PADDING / 2 
@@ -173,7 +175,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
             true
         )
         
-        // Header border
+        // Header border (bottom border only)
         context.fill(
             guiX + CORNER_RADIUS, headerY + HEADER_HEIGHT - 1,
             guiX + guiWidth - CORNER_RADIUS, headerY + HEADER_HEIGHT,
@@ -201,47 +203,81 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         context.drawHorizontalLine(closeButtonX + 4, closeButtonX + 12, closeButtonY + 11, closeButtonColor)
         context.drawHorizontalLine(closeButtonX + 3, closeButtonX + 13, closeButtonY + 12, closeButtonColor)
     }
-    
-    protected abstract fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float)
-    
+
     protected open fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         val footerY = guiY + guiHeight - FOOTER_HEIGHT
         
-        // Footer background with bottom rounded corners
-        drawRoundedRect(
-            context, guiX, footerY, guiWidth, FOOTER_HEIGHT,
-            theme.footerBackground, false, true
-        )
+        // REMOVED: Footer background drawing - let the unified background show through
+        // drawRoundedRect(
+        //     context, guiX, footerY, guiWidth, FOOTER_HEIGHT,
+        //     theme.footerBackground, false, true
+        // )
         
-        // Footer border
+        // Footer border (top border only)
         context.fill(
             guiX + CORNER_RADIUS, footerY,
             guiX + guiWidth - CORNER_RADIUS, footerY + 1,
             theme.borderColor
         )
     }
-    
+        
     private fun drawRoundedRect(
         context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int,
         topRounded: Boolean = true, bottomRounded: Boolean = true
     ) {
-        // Main rectangle
-        context.fill(x + CORNER_RADIUS, y, x + width - CORNER_RADIUS, y + height, color)
+        val radius = CORNER_RADIUS
         
+        // Draw the main rectangle (excluding corner areas)
+        // Center rectangle (full width, excluding top/bottom corner areas)
+        val centerY = if (topRounded) y + radius else y
+        val centerHeight = height - (if (topRounded) radius else 0) - (if (bottomRounded) radius else 0)
+        context.fill(x, centerY, x + width, centerY + centerHeight, color)
+        
+        // Top rectangle (if top corners are rounded, exclude corner areas)
         if (topRounded) {
-            context.fill(x, y + CORNER_RADIUS, x + width, y + height, color)
-            // Top corners
-            drawCorner(context, x, y, CORNER_RADIUS, color, true, true)
-            drawCorner(context, x + width - CORNER_RADIUS, y, CORNER_RADIUS, color, false, true)
+            context.fill(x + radius, y, x + width - radius, y + radius, color)
         } else {
-            context.fill(x, y, x + width, y + height, color)
+            context.fill(x, y, x + width, y + radius, color)
         }
         
-        if (bottomRounded && !topRounded) {
-            context.fill(x, y, x + width, y + height - CORNER_RADIUS, color)
-            // Bottom corners
-            drawCorner(context, x, y + height - CORNER_RADIUS, CORNER_RADIUS, color, true, false)
-            drawCorner(context, x + width - CORNER_RADIUS, y + height - CORNER_RADIUS, CORNER_RADIUS, color, false, false)
+        // Bottom rectangle (if bottom corners are rounded, exclude corner areas)  
+        if (bottomRounded) {
+            context.fill(x + radius, y + height - radius, x + width - radius, y + height, color)
+        } else {
+            context.fill(x, y + height - radius, x + width, y + height, color)
+        }
+        
+        // Draw rounded corners
+        if (topRounded) {
+            drawRoundedCorner(context, x, y, radius, color, true, true)  // top-left
+            drawRoundedCorner(context, x + width - radius, y, radius, color, false, true)  // top-right
+        } else {
+            // Draw square corners for top
+            context.fill(x, y, x + radius, y + radius, color)
+            context.fill(x + width - radius, y, x + width, y + radius, color)
+        }
+        
+        if (bottomRounded) {
+            drawRoundedCorner(context, x, y + height - radius, radius, color, true, false)  // bottom-left
+            drawRoundedCorner(context, x + width - radius, y + height - radius, radius, color, false, false)  // bottom-right
+        } else {
+            // Draw square corners for bottom
+            context.fill(x, y + height - radius, x + radius, y + height, color)
+            context.fill(x + width - radius, y + height - radius, x + width, y + height, color)
+        }
+    }
+    
+    private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, left: Boolean, top: Boolean) {
+        // Draw only the pixels that are inside the rounded corner
+        for (i in 0 until radius) {
+            for (j in 0 until radius) {
+                val distance = kotlin.math.sqrt((i * i + j * j).toDouble())
+                if (distance <= radius - 0.5) {  // Only draw pixels inside the circle
+                    val pixelX = if (left) x + radius - 1 - i else x + i
+                    val pixelY = if (top) y + radius - 1 - j else y + j
+                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)
+                }
+            }
         }
     }
     
@@ -262,26 +298,13 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         drawCornerBorder(context, x + width - CORNER_RADIUS, y + height - CORNER_RADIUS, CORNER_RADIUS, color, false, false)
     }
     
-    private fun drawCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, left: Boolean, top: Boolean) {
-        // Simplified rounded corner using pixels
-        for (i in 0 until radius) {
-            for (j in 0 until radius) {
-                val distance = kotlin.math.sqrt((i * i + j * j).toDouble())
-                if (distance <= radius) {
-                    val pixelX = if (left) x + radius - 1 - i else x + i
-                    val pixelY = if (top) y + radius - 1 - j else y + j
-                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)
-                }
-            }
-        }
-    }
-    
     private fun drawCornerBorder(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, left: Boolean, top: Boolean) {
-        // Simplified rounded corner border
+        // Draw rounded corner border by checking distance from corner center
         for (i in 0 until radius) {
             for (j in 0 until radius) {
                 val distance = kotlin.math.sqrt((i * i + j * j).toDouble())
-                if (distance >= radius - 1 && distance <= radius) {
+                // Only draw border pixels that are within the rounded area
+                if (distance >= radius - 1.5 && distance <= radius - 0.5) {
                     val pixelX = if (left) x + radius - 1 - i else x + i
                     val pixelY = if (top) y + radius - 1 - j else y + j
                     context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)

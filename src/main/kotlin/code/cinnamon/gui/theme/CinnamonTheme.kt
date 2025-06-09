@@ -87,9 +87,9 @@ object CinnamonTheme {
     val backgroundTop: Int get() = coreBackgroundPrimary 
     val backgroundBottom: Int get() = adjustBrightness(coreBackgroundPrimary, -0.05f) // Slight adjustment for depth
     
-    val headerBackground: Int get() = coreBackgroundSecondary
-    val footerBackground: Int get() = coreBackgroundSecondary
-    val contentBackground: Int get() = coreBackgroundSecondary
+    val headerBackground: Int get() = coreBackgroundPrimary  // Changed from coreBackgroundSecondary
+    val footerBackground: Int get() = coreBackgroundPrimary  // Changed from coreBackgroundSecondary
+    val contentBackground: Int get() = coreBackgroundPrimary // This already points to primary
     val sidebarBackground: Int get() = coreBackgroundSecondary 
     
     // Content Area

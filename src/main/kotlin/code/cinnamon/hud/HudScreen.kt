@@ -1,12 +1,16 @@
 package code.cinnamon.hud
 
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.screen.Screen
-import net.minecraft.text.Text
+import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.gui.theme.CinnamonTheme
+import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.screen.Screen
+import net.minecraft.text.Style
+import net.minecraft.text.Text
+import net.minecraft.util.Identifier
+import code.cinnamon.gui.CinnamonGuiManager
 
-class HudScreen : Screen(Text.literal("HUD Editor")) {
+class HudScreen : Screen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
     private val buttons = mutableListOf<CinnamonButton>()
 
     override fun init() {
@@ -34,7 +38,7 @@ class HudScreen : Screen(Text.literal("HUD Editor")) {
                 currentY,
                 buttonWidth,
                 buttonHeight,
-                Text.literal("${element.getName()}: ${if (element.isEnabled) "ON" else "OFF"}"),
+                Text.literal("${element.getName()}: ${if (element.isEnabled) "ON" else "OFF"}").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
                 { _, _ -> 
                     element.isEnabled = !element.isEnabled
                     refreshButtons()
@@ -49,8 +53,8 @@ class HudScreen : Screen(Text.literal("HUD Editor")) {
             currentY,
             buttonWidth,
             buttonHeight,
-            Text.literal("Done"),
-            { _, _ -> close() }
+            Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            { _, _ -> CinnamonGuiManager.openMainMenu() }
         ))
     }
     
@@ -76,10 +80,10 @@ class HudScreen : Screen(Text.literal("HUD Editor")) {
         
         // Instructions at top
         context.drawCenteredTextWithShadow(
-            textRenderer, 
-            "Drag elements to move them - Scroll on elements to scale them", 
-            width / 2, 
-            15, 
+            textRenderer,
+            Text.literal("Drag elements to move them - Scroll on elements to scale them").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            width / 2,
+            15,
             0xFFFFFF
         )
     }

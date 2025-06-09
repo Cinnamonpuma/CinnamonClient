@@ -17,7 +17,7 @@ import code.cinnamon.modules.Module
 import kotlin.math.max
 import kotlin.math.min
 
-class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default")))) {
+class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
     private var selectedCategory = "All"
     private val categories = listOf("All", "Combat", "Movement", "Render", "Player", "World")
     private var scrollOffset = 0
@@ -46,7 +46,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             getFooterY() + 8,
             60,
             CinnamonTheme.BUTTON_HEIGHT_SMALL,
-            Text.literal("Back").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+            Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             { _, _ -> CinnamonGuiManager.openMainMenu() }
         ))
         
@@ -63,7 +63,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 getContentY() + 10,
                 categoryButtonWidth,
                 CinnamonTheme.BUTTON_HEIGHT_SMALL,
-                Text.literal(category).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+                Text.literal(category).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
                 { _, _ -> selectedCategory = category },
                 selectedCategory == category
             ))
@@ -153,7 +153,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         // Module name
         context.drawText(
             textRenderer,
-            Text.literal(module.name).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+            Text.literal(module.name).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             x + 12,
             y + 8,
             if (module.isEnabled) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor,
@@ -165,7 +165,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val expandButtonWidth = textRenderer.getWidth(expandButtonText)
         context.drawText(
             textRenderer,
-            Text.literal(expandButtonText).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+            Text.literal(expandButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             x + width - expandButtonWidth - 12,
             y + 8,
             CinnamonTheme.primaryTextColor,
@@ -175,7 +175,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         // Module description
         context.drawText(
             textRenderer,
-            Text.literal(module.description).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+            Text.literal(module.description).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             x + 12,
             y + 22,
             CinnamonTheme.secondaryTextColor,
@@ -202,7 +202,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             val keybindWidth = textRenderer.getWidth(keybindText)
             context.drawText(
                 textRenderer,
-                Text.literal(keybindText).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+                Text.literal(keybindText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
                 x + width - keybindWidth - 60,
                 bottomSectionY + 16,
                 CinnamonTheme.secondaryTextColor,
@@ -239,7 +239,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         when (module) {
             is AutoclickerModule -> {
                 // Title
-                context.drawText(textRenderer, Text.literal("Settings").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))), x, settingY, CinnamonTheme.titleColor, true)
+                context.drawText(textRenderer, Text.literal("Settings").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.titleColor, true)
                 settingY += 15
 
                 val buttonWidth = 16
@@ -248,7 +248,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
                 // Min CPS Setting
                 val minCpsText = "Min CPS: %.1f".format(module.minCPS)
-                context.drawText(textRenderer, Text.literal(minCpsText).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))), x, settingY, CinnamonTheme.primaryTextColor, false)
+                context.drawText(textRenderer, Text.literal(minCpsText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.primaryTextColor, false)
                 
                 val minCpsButtonsX = x + width - 40
                 // Minus button
@@ -259,7 +259,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
                 // Max CPS Setting
                 val maxCpsText = "Max CPS: %.1f".format(module.maxCPS)
-                context.drawText(textRenderer, Text.literal(maxCpsText).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))), x, settingY, CinnamonTheme.primaryTextColor, false)
+                context.drawText(textRenderer, Text.literal(maxCpsText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.primaryTextColor, false)
                 
                 val maxCpsButtonsX = x + width - 40
                 // Minus button
@@ -290,7 +290,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             else -> {
                 context.drawText(
                     textRenderer,
-                    Text.literal("No settings available").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+                    Text.literal("No settings available").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
                     x,
                     settingY,
                     CinnamonTheme.secondaryTextColor,
@@ -317,7 +317,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val textWidth = textRenderer.getWidth(text)
         context.drawText(
             textRenderer,
-            Text.literal(text).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+            Text.literal(text).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             x + (width - textWidth) / 2,
             y + 2,
             textColor,
@@ -342,7 +342,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         if (checked) {
             context.drawText(
                 textRenderer,
-                Text.literal("✓").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+                Text.literal("✓").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
                 x + 1,
                 y + 1,
                 CinnamonTheme.titleColor,
@@ -353,7 +353,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         // Label text
         context.drawText(
             textRenderer,
-            Text.literal(text).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
+            Text.literal(text).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             x + checkboxSize + 6,
             y + 1,
             CinnamonTheme.primaryTextColor,

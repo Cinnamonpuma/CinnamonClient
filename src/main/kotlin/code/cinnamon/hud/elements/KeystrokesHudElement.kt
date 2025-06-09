@@ -1,8 +1,11 @@
 package code.cinnamon.hud.elements
 
+import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.hud.HudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.text.Style
+import net.minecraft.text.Text
 
 class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
@@ -46,9 +49,10 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.fill(x + width - 1, y, x + width, y + height, 0xFF000000.toInt()) // Right border
         context.fill(x, y + height - 1, x + width, y + height, 0xFF000000.toInt()) // Bottom border
         
-        val textX = x + (width - mc.textRenderer.getWidth(key)) / 2
+        val keyText = Text.literal(key).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val textX = x + (width - mc.textRenderer.getWidth(keyText)) / 2
         val textY = y + (height - mc.textRenderer.fontHeight) / 2
-        context.drawText(mc.textRenderer, key, textX, textY, textColor, false)
+        context.drawText(mc.textRenderer, keyText, textX, textY, textColor, false)
     }
     
     override fun getWidth(): Int = keySize * 3 + spacing * 2
