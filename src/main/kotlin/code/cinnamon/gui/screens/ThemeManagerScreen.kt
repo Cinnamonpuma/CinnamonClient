@@ -2,6 +2,8 @@ package code.cinnamon.gui.screens
 
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Text
+import net.minecraft.text.Style
+import net.minecraft.util.Identifier
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.gui.CinnamonGuiManager
 import code.cinnamon.gui.components.CinnamonButton
@@ -9,7 +11,7 @@ import code.cinnamon.gui.theme.CinnamonTheme
 import kotlin.math.*
 import code.cinnamon.gui.theme.ThemeConfigManager
 
-class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
+class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default")))) {
     
     private var showColorPicker = false
     private var selectedColorType: ColorType? = null
@@ -97,7 +99,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
             buttonY,
             100,
             CinnamonTheme.BUTTON_HEIGHT,
-            Text.literal("Back"),
+            Text.literal("Back").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             { _, _ -> CinnamonGuiManager.openMainMenu() } // Changed to openMainMenu
         ))
         
@@ -107,7 +109,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
             buttonY,
             100,
             CinnamonTheme.BUTTON_HEIGHT,
-            Text.literal("Reset"),
+            Text.literal("Reset").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             { _, _ -> resetToDefaults() }
         ))
         
@@ -117,7 +119,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
             buttonY,
             100,
             CinnamonTheme.BUTTON_HEIGHT,
-            Text.literal("Save"),
+            Text.literal("Save").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             { _, _ -> saveTheme() },
             false // Changed from true to false
         ))
@@ -181,10 +183,10 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         
         // Scroll indicators
         if (scrollOffset > 0) {
-            context.drawText(textRenderer, Text.literal("▲"), listX + listWidth - 20, listY + 5, CinnamonTheme.accentColor, false)
+            context.drawText(textRenderer, Text.literal("▲").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))), listX + listWidth - 20, listY + 5, CinnamonTheme.accentColor, false)
         }
         if (colors.size * itemHeight > listHeight + scrollOffset) {
-            context.drawText(textRenderer, Text.literal("▼"), listX + listWidth - 20, listY + listHeight - 15, CinnamonTheme.accentColor, false)
+            context.drawText(textRenderer, Text.literal("▼").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))), listX + listWidth - 20, listY + listHeight - 15, CinnamonTheme.accentColor, false)
         }
     }
     
@@ -205,7 +207,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         // Color name
         context.drawText(
             textRenderer,
-            Text.literal(colorType.displayName),
+            Text.literal(colorType.displayName).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             x + 20 + colorSquareSize,
             y + (height - textRenderer.fontHeight) / 2,
             CinnamonTheme.primaryTextColor,
@@ -217,7 +219,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         val hexWidth = textRenderer.getWidth(hexValue)
         context.drawText(
             textRenderer,
-            Text.literal(hexValue),
+            Text.literal(hexValue).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             x + width - hexWidth - 10,
             y + (height - textRenderer.fontHeight) / 2,
             CinnamonTheme.secondaryTextColor,
@@ -250,7 +252,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         val titleWidth = textRenderer.getWidth(title)
         context.drawText(
             textRenderer,
-            Text.literal(title),
+            Text.literal(title).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             pickerX + (pickerWidth - titleWidth) / 2,
             titleY_render, // Use new title Y
             CinnamonTheme.primaryTextColor,
@@ -294,7 +296,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         )
         context.drawText(
             textRenderer,
-            Text.literal("Apply"),
+            Text.literal("Apply").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             buttonStartX + (buttonWidth - textRenderer.getWidth("Apply")) / 2,
             buttonsY_render + 8,
             0xFFFFFFFF.toInt(),
@@ -311,7 +313,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         )
         context.drawText(
             textRenderer,
-            Text.literal("Cancel"),
+            Text.literal("Cancel").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             cancelX + (buttonWidth - textRenderer.getWidth("Cancel")) / 2,
             buttonsY_render + 8,
             CinnamonTheme.primaryTextColor,
@@ -418,8 +420,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         val textY = y + (height - textRenderer.fontHeight) / 2
         
         // Draw text with outline for better visibility
-        context.drawText(textRenderer, Text.literal(hexValue), textX + 1, textY + 1, 0xFF000000.toInt(), false)
-        context.drawText(textRenderer, Text.literal(hexValue), textX, textY, 0xFFFFFFFF.toInt(), false)
+        context.drawText(textRenderer, Text.literal(hexValue).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))), textX + 1, textY + 1, 0xFF000000.toInt(), false)
+        context.drawText(textRenderer, Text.literal(hexValue).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))), textX, textY, 0xFFFFFFFF.toInt(), false)
     }
     
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
@@ -680,7 +682,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         super.renderFooter(context, mouseX, mouseY, delta)
         
         // Draw theme status
-        val statusText = Text.literal("Theme Editor")
+        val statusText = Text.literal("Theme Editor").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default")))
         context.drawText(
             textRenderer,
             statusText,
@@ -691,7 +693,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager")) {
         )
         
         // Draw color count
-        val colorCountText = Text.literal("${ColorType.values().size} Colors Available")
+        val colorCountText = Text.literal("${ColorType.values().size} Colors Available").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default")))
         val colorCountWidth = textRenderer.getWidth(colorCountText)
         context.drawText(
             textRenderer,

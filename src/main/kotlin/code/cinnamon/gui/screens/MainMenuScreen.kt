@@ -2,13 +2,20 @@ package code.cinnamon.gui.screens
 
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Text
+import net.minecraft.text.Style
+import net.minecraft.util.Identifier
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.gui.CinnamonGuiManager
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudScreen
 
-class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
+class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "cinna")))) {
+    
+    // Create a reusable font identifier
+    companion object {
+        private val CINNA_FONT = Identifier.of("cinnamon", "cinna")
+    }
     
     override fun initializeComponents() {
         val centerX = guiX + guiWidth / 2
@@ -30,7 +37,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
             actualButtonsStartY, // Use new startY
             buttonWidth,
             buttonHeight,
-            Text.literal("Modules"),
+            Text.literal("Modules").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
             { _, _ -> CinnamonGuiManager.openModulesScreen() },
             false // Changed from true to false
         ))
@@ -40,7 +47,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
             actualButtonsStartY + spacing, // Use new startY
             buttonWidth,
             buttonHeight,
-            Text.literal("Keybindings"),
+            Text.literal("Keybindings").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
             { _, _ -> CinnamonGuiManager.openKeybindingsScreen() }
         ))
         
@@ -49,7 +56,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
             actualButtonsStartY + spacing * 2, // New Y position for HUD Editor
             buttonWidth,
             buttonHeight,
-            Text.literal("HUD Editor"),
+            Text.literal("HUD Editor").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
             { _, _ -> client?.setScreen(HudScreen()) } // Action to open HudScreen
         ))
         
@@ -59,7 +66,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
             actualButtonsStartY + spacing * 3, // Use new startY
             buttonWidth,
             buttonHeight,
-            Text.literal("Theme Manager"),
+            Text.literal("Theme Manager").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
             { _, _ -> CinnamonGuiManager.openThemeManagerScreen() }
         ))
         
@@ -68,7 +75,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
             actualButtonsStartY + spacing * 4, // Use new startY
             buttonWidth,
             buttonHeight,
-            Text.literal("Close"),
+            Text.literal("Close").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
             { _, _ -> CinnamonGuiManager.closeCurrentScreen() }
         ))
     }
@@ -83,7 +90,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
         super.renderFooter(context, mouseX, mouseY, delta)
         
         // Draw version info in footer area
-        val versionText = Text.literal("v1.0.0 - Minecraft 1.21.5")
+        val versionText = Text.literal("v1.0.0 - Minecraft 1.21.5").fillStyle(Style.EMPTY.withFont(CINNA_FONT))
         val versionWidth = textRenderer.getWidth(versionText)
         context.drawText(
             textRenderer,
@@ -95,7 +102,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
         )
         
         // Draw status indicator
-        val statusText = Text.literal("Ready")
+        val statusText = Text.literal("Ready").fillStyle(Style.EMPTY.withFont(CINNA_FONT))
         context.drawText(
             textRenderer,
             statusText,

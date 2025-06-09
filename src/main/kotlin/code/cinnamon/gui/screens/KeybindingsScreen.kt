@@ -2,6 +2,8 @@ package code.cinnamon.gui.screens
 
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Text
+import net.minecraft.text.Style
+import net.minecraft.util.Identifier
 import net.minecraft.client.util.InputUtil
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
 import org.lwjgl.glfw.GLFW
@@ -13,7 +15,7 @@ import code.cinnamon.keybindings.KeybindingManager
 import kotlin.math.max
 import kotlin.math.min
 
-class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
+class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default")))) {
     private var selectedKeybinding: String? = null
     private var isListening = false
     private var scrollOffset = 0
@@ -35,7 +37,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
             getFooterY() + 8,
             60,
             CinnamonTheme.BUTTON_HEIGHT_SMALL,
-            Text.literal("Back"),
+            Text.literal("Back").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             { _, _ -> CinnamonGuiManager.openMainMenu() }
         ))
         
@@ -45,7 +47,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
             getFooterY() + 8,
             80,
             CinnamonTheme.BUTTON_HEIGHT_SMALL,
-            Text.literal("Reset All"),
+            Text.literal("Reset All").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             { _, _ -> resetAllKeybindings() }
         ))
         
@@ -55,7 +57,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
             getFooterY() + 8,
             80,
             CinnamonTheme.BUTTON_HEIGHT_SMALL,
-            Text.literal("Save"),
+            Text.literal("Save").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             { _, _ -> saveKeybindings() },
             false // Changed from true to false
         ))
@@ -89,7 +91,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
         // Title
         context.drawText(
             textRenderer,
-            Text.literal("Key Bindings"),
+            Text.literal("Key Bindings").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             contentX + 15,
             contentY + 12,
             CinnamonTheme.titleColor,
@@ -99,7 +101,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
         // Subtitle
         context.drawText(
             textRenderer,
-            Text.literal("Click on a keybinding to change it"),
+            Text.literal("Click on a keybinding to change it").setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             contentX + 15,
             contentY + 28,
             CinnamonTheme.secondaryTextColor,
@@ -133,7 +135,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
             
             context.drawText(
                 textRenderer,
-                Text.literal(indicatorText),
+                Text.literal(indicatorText).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
                 indicatorX,
                 indicatorY,
                 CinnamonTheme.titleColor,
@@ -198,7 +200,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
         val nameColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor
         context.drawText(
             textRenderer,
-            Text.literal(entry.displayName),
+            Text.literal(entry.displayName).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             x + 12,
             y + 8,
             nameColor,
@@ -209,7 +211,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
         val descColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.secondaryTextColor
         context.drawText(
             textRenderer,
-            Text.literal(entry.description),
+            Text.literal(entry.description).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             x + 12,
             y + 22,
             descColor,
@@ -237,7 +239,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings")) {
         val keyTextColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor
         context.drawText(
             textRenderer,
-            Text.literal(keyName),
+            Text.literal(keyName).setStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "default"))),
             keyButtonX + (keyButtonWidth - keyWidth) / 2,
             keyButtonY + 8,
             keyTextColor,
