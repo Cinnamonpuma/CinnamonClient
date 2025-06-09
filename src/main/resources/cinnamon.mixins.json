@@ -5,7 +5,8 @@
 	"mixins": [
 		"ExampleMixin",
 		"AutoClickerMixin",
-		"client.TitleScreenMixin"
+		"client.TitleScreenMixin",
+		"client.PanoramaRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
