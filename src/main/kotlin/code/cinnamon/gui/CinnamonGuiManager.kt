@@ -6,7 +6,6 @@ import net.minecraft.text.Text
 import code.cinnamon.gui.screens.MainMenuScreen
 import code.cinnamon.gui.screens.ModulesScreen
 import code.cinnamon.gui.screens.KeybindingsScreen
-import code.cinnamon.gui.screens.SettingsScreen
 import code.cinnamon.modules.ModuleManager
 import code.cinnamon.keybindings.KeybindingManager
 import code.cinnamon.gui.screens.ThemeManagerScreen
@@ -27,10 +26,6 @@ object CinnamonGuiManager {
     
     fun openKeybindingsScreen() {
         client.setScreen(KeybindingsScreen())
-    }
-    
-    fun openSettingsScreen() {
-        client.setScreen(SettingsScreen())
     }
     
     fun closeCurrentScreen() {

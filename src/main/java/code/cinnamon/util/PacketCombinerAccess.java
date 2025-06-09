@@ -2,8 +2,8 @@
 package code.cinnamon.util;
 
 import code.cinnamon.modules.all.JoinPacketCombinerModule;
-import net.minecraft.network.packet.c2s.handshake.ClientIntentionPacket;
-import net.minecraft.network.packet.c2s.login.LoginStartPacket;
+import net.minecraft.network.packet.c2s.handshake.HandshakeC2SPacket;
+import net.minecraft.network.packet.c2s.login.LoginHelloC2SPacket;
 
 /**
  * Public interface for interacting with the JoinPacketCombiner module.
@@ -20,8 +20,8 @@ public class PacketCombinerAccess {
     private static volatile boolean bypassNextPacket = false;
     
     // Temporary packet storage for combination
-    private static ClientIntentionPacket pendingIntention = null;
-    private static LoginStartPacket pendingLogin = null;
+    private static HandshakeC2SPacket pendingIntention = null;
+    private static LoginHelloC2SPacket pendingLogin = null;
     private static String currentClientId = null;
     
     /**
@@ -45,7 +45,7 @@ public class PacketCombinerAccess {
     /**
      * Intercept and process a handshake packet
      */
-    public static boolean interceptHandshake(ClientIntentionPacket packet) {
+    public static boolean interceptHandshake(HandshakeC2SPacket packet) {
         synchronized (LOCK) {
             if (!isActive() || bypassNextPacket) {
                 if (bypassNextPacket) bypassNextPacket = false;
@@ -63,7 +63,7 @@ public class PacketCombinerAccess {
     /**
      * Intercept and process a login start packet
      */
-    public static boolean interceptLogin(LoginStartPacket packet, String clientId) {
+    public static boolean interceptLogin(LoginHelloC2SPacket packet, String clientId) {
         synchronized (LOCK) {
             if (!isActive() || bypassNextPacket) {
                 if (bypassNextPacket) bypassNextPacket = false;
@@ -130,10 +130,10 @@ public class PacketCombinerAccess {
     public static void forceSendPacket(Object packet, String clientId) {
         synchronized (LOCK) {
             if (moduleInstance != null) {
-                if (packet instanceof ClientIntentionPacket) {
-                    interceptHandshake((ClientIntentionPacket) packet);
-                } else if (packet instanceof LoginStartPacket) {
-                    interceptLogin((LoginStartPacket) packet, clientId);
+                if (packet instanceof HandshakeC2SPacket) {
+                    interceptHandshake((HandshakeC2SPacket) packet);
+                } else if (packet instanceof LoginHelloC2SPacket) {
+                    interceptLogin((LoginHelloC2SPacket) packet, clientId);
                 }
             }
         }
@@ -163,7 +163,7 @@ public class PacketCombinerAccess {
     /**
      * Get the current pending intention packet
      */
-    public static ClientIntentionPacket getPendingIntention() {
+    public static HandshakeC2SPacket getPendingIntention() {
         synchronized (LOCK) {
             return pendingIntention;
         }
@@ -172,7 +172,7 @@ public class PacketCombinerAccess {
     /**
      * Get the current pending login packet
      */
-    public static LoginStartPacket getPendingLogin() {
+    public static LoginHelloC2SPacket getPendingLogin() {
         synchronized (LOCK) {
             return pendingLogin;
         }
