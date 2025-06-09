@@ -13,7 +13,6 @@ object HudManager {
     private var selectedElement: HudElement? = null
     
     fun init() {
-    fun init() {
         hudElements.apply {
             add(FpsHudElement(10f, 10f))
             add(PingHudElement(10f, 30f))

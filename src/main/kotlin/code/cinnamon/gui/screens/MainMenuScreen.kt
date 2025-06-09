@@ -6,6 +6,7 @@ import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.gui.CinnamonGuiManager
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.gui.theme.CinnamonTheme
+import code.cinnamon.hud.HudScreen
 
 class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
     
@@ -20,7 +21,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
         val logoAreaHeight = 80 // Configurable estimate for logo and subtitle area
         val buttonsStartYAnchor = contentY + logoAreaHeight
         val availableHeightForButtons = getContentHeight() - logoAreaHeight
-        val totalButtonsHeight = (buttonHeight * 4) + (spacing * 3) // buttonHeight is CinnamonTheme.BUTTON_HEIGHT_LARGE
+        val totalButtonsHeight = (buttonHeight * 5) + (spacing * 4) // buttonHeight is CinnamonTheme.BUTTON_HEIGHT_LARGE
         val actualButtonsStartY = buttonsStartYAnchor + (availableHeightForButtons - totalButtonsHeight) / 2
         
         // Main navigation buttons
@@ -43,10 +44,19 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
             { _, _ -> CinnamonGuiManager.openKeybindingsScreen() }
         ))
         
+        addButton(CinnamonButton(
+            centerX - buttonWidth / 2,
+            actualButtonsStartY + spacing * 2, // New Y position for HUD Editor
+            buttonWidth,
+            buttonHeight,
+            Text.literal("HUD Editor"),
+            { _, _ -> client?.setScreen(HudScreen()) } // Action to open HudScreen
+        ))
+        
         // New Theme Manager button
         addButton(CinnamonButton(
             centerX - buttonWidth / 2,
-            actualButtonsStartY + spacing * 2, // Use new startY
+            actualButtonsStartY + spacing * 3, // Use new startY
             buttonWidth,
             buttonHeight,
             Text.literal("Theme Manager"),
@@ -55,7 +65,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client")) {
         
         addButton(CinnamonButton(
             centerX - buttonWidth / 2,
-            actualButtonsStartY + spacing * 3, // Use new startY
+            actualButtonsStartY + spacing * 4, // Use new startY
             buttonWidth,
             buttonHeight,
             Text.literal("Close"),

@@ -18,7 +18,6 @@ import code.cinnamon.hud.HudScreen
 object Cinnamon : ModInitializer {
     private val logger = LoggerFactory.getLogger("cinnamon")
     private lateinit var openGuiKeybinding: KeyBinding
-    private lateinit var hudEditorKey: KeyBinding
 
     override fun onInitialize() {
         // This code runs as soon as Minecraft is in a mod-load-ready state.
@@ -43,27 +42,11 @@ object Cinnamon : ModInitializer {
             )
         )
 
-        // Register HUD editor keybinding
-        hudEditorKey = KeyBindingHelper.registerKeyBinding(
-            KeyBinding(
-                "key.cinnamon.hud_editor",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_H,
-                "CinnamonClient"
-            )
-        )
-
         // Register tick event to check for key presses
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             // Check if GUI key was pressed
             if (openGuiKeybinding.wasPressed()) {
                 CinnamonGuiManager.openMainMenu()
-            }
-
-            // Check if HUD editor key was pressed
-            while (hudEditorKey.wasPressed()) {
-                client.setScreen(HudScreen())
-                HudManager.toggleEditMode()
             }
 
             // Check AutoClicker keybinding
@@ -73,8 +56,10 @@ object Cinnamon : ModInitializer {
         }
 
         // Register HUD rendering
-        HudRenderCallback.EVENT.register { drawContext, tickDelta ->
-            HudManager.render(drawContext, tickDelta)
+        HudRenderCallback.EVENT.register { drawContext, renderTickCounter ->
+            // Extract the float value from RenderTickCounter using the 1.21.5 API
+            val partialTick = renderTickCounter.getTickProgress(false)
+            HudManager.render(drawContext, partialTick)
         }
 
         logger.info("Cinnamon mod initialized successfully!")

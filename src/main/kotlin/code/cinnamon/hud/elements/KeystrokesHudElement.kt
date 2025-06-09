@@ -16,7 +16,7 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         
         context.matrices.push()
         context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate(x / scale, y / scale, 0.0)
+        context.matrices.translate((x / scale).toDouble(), (y / scale).toDouble(), 0.0)
         
         // W key
         drawKey(context, "W", keySize, 0, mc.options.forwardKey.isPressed)

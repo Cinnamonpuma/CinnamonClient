@@ -16,7 +16,7 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
         
         context.matrices.push()
         context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate(x / scale, y / scale, 0.0)
+        context.matrices.translate((x / scale).toDouble(), (y / scale).toDouble(), 0.0)
         
         context.drawText(mc.textRenderer, ping, 0, 0, 0xFFFFFF, true)
         
