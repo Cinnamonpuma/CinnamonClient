@@ -1,8 +1,6 @@
 package code.cinnamon.hud
 
 import code.cinnamon.gui.CinnamonScreen
-import code.cinnamon.gui.components.CinnamonButton
-import code.cinnamon.gui.theme.CinnamonTheme
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Style
@@ -11,58 +9,14 @@ import net.minecraft.util.Identifier
 import code.cinnamon.gui.CinnamonGuiManager
 
 class HudScreen : Screen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
-    private val buttons = mutableListOf<CinnamonButton>()
 
     override fun init() {
         super.init()
-        buttons.clear()
-        initializeButtons()
         
         // Enable edit mode when screen opens
         HudManager.toggleEditMode()
     }
     
-    private fun initializeButtons() {
-        val centerX = width / 2
-        val startY = 50
-        val buttonWidth = 200
-        val buttonHeight = CinnamonTheme.BUTTON_HEIGHT_LARGE
-        val spacing = 50
-        
-        var currentY = startY
-        
-        // Add toggle buttons for each HUD element
-        HudManager.getElements().forEach { element ->
-            buttons.add(CinnamonButton(
-                centerX - buttonWidth / 2,
-                currentY,
-                buttonWidth,
-                buttonHeight,
-                Text.literal("${element.getName()}: ${if (element.isEnabled) "ON" else "OFF"}").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
-                { _, _ -> 
-                    element.isEnabled = !element.isEnabled
-                    refreshButtons()
-                }
-            ))
-            currentY += spacing
-        }
-        
-        // Add Done button
-        buttons.add(CinnamonButton(
-            centerX - buttonWidth / 2,
-            currentY,
-            buttonWidth,
-            buttonHeight,
-            Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
-            { _, _ -> CinnamonGuiManager.openMainMenu() }
-        ))
-    }
-    
-    private fun refreshButtons() {
-        buttons.clear()
-        initializeButtons()
-    }
-
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         // Call super.render() FIRST to prevent blur/dimming effect
         super.render(context, mouseX, mouseY, delta)
@@ -72,11 +26,6 @@ class HudScreen : Screen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFon
         
         // Render HUD elements so user can see them while editing
         HudManager.render(context, delta)
-        
-        // Render buttons
-        buttons.forEach { button ->
-            button.render(context, mouseX, mouseY, delta)
-        }
         
         // Instructions at top
         context.drawCenteredTextWithShadow(
@@ -89,14 +38,6 @@ class HudScreen : Screen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFon
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        // Check button clicks first
-        buttons.forEach { btn ->
-            if (btn.isMouseOver(mouseX, mouseY)) {
-                btn.onClick(mouseX, mouseY)
-                return true
-            }
-        }
-        
         // Then check HUD element interactions
         return HudManager.onMouseClicked(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button)
     }
@@ -114,9 +55,6 @@ class HudScreen : Screen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFon
     }
     
     override fun mouseMoved(mouseX: Double, mouseY: Double) {
-        buttons.forEach { btn ->
-            btn.setHovered(btn.isMouseOver(mouseX, mouseY))
-        }
         super.mouseMoved(mouseX, mouseY)
     }
 

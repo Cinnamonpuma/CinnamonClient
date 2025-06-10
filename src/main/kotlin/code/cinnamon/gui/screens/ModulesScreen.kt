@@ -14,6 +14,8 @@ import code.cinnamon.gui.CinnamonGuiManager
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.modules.ModuleManager
 import code.cinnamon.modules.Module
+import code.cinnamon.hud.HudManager
+import code.cinnamon.hud.HudElement
 import kotlin.math.max
 import kotlin.math.min
 
@@ -29,9 +31,13 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
     private val maxScrollOffset: Int
         get() {
-            val modules = getFilteredModules()
-            val totalHeight = modules.sumOf { module ->
-                if (expandedStates[module.name] == true) settingsModuleHeight + moduleSpacing else baseModuleHeight + moduleSpacing
+            val items = getFilteredModules() // ensure this is called to get the mixed list
+            val totalHeight = items.sumOf { item ->
+                when (item) {
+                    is Module -> if (expandedStates[item.name] == true) settingsModuleHeight + moduleSpacing else baseModuleHeight + moduleSpacing
+                    is HudElement -> baseModuleHeight + moduleSpacing // Use baseModuleHeight for HUD elements
+                    else -> 0
+                }
             }
             return max(0, totalHeight - getContentHeight() + 40 - moduleSpacing)
         }
@@ -118,21 +124,63 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     }
     
     private fun renderModuleList(context: DrawContext, x: Int, y: Int, width: Int, height: Int, mouseX: Int, mouseY: Int, delta: Float) {
-        val modules = getFilteredModules()
+        val items = getFilteredModules()
         var currentY = y - scrollOffset
         
         // Enable scissor test for clipping
         context.enableScissor(x, y, x + width, y + height)
         
-        modules.forEach { module ->
-            val moduleHeight = if (expandedStates[module.name] == true) settingsModuleHeight else baseModuleHeight
-            if (currentY + moduleHeight >= y && currentY <= y + height) {
-                renderModuleCard(context, x, currentY, width, moduleHeight, module, mouseX, mouseY, delta)
+        items.forEach { item ->
+            val itemHeight = when (item) {
+                is Module -> if (expandedStates[item.name] == true) settingsModuleHeight else baseModuleHeight
+                is HudElement -> baseModuleHeight // Fixed height for HUD elements
+                else -> 0 // Should not happen with current logic
             }
-            currentY += moduleHeight + moduleSpacing
+            if (currentY + itemHeight >= y && currentY <= y + height) { // Check if visible before rendering
+                if (item is Module) {
+                    renderModuleCard(context, x, currentY, width, itemHeight, item, mouseX, mouseY, delta)
+                } else if (item is HudElement) {
+                    renderHudElementCard(context, x, currentY, width, baseModuleHeight, item, mouseX, mouseY, delta)
+                }
+            }
+            currentY += itemHeight + moduleSpacing
         }
         
         context.disableScissor()
+    }
+
+    private fun renderHudElementCard(context: DrawContext, x: Int, y: Int, width: Int, height: Int, element: HudElement, mouseX: Int, mouseY: Int, delta: Float) {
+        val isHovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height
+        val backgroundColor = if (element.isEnabled) {
+            if (isHovered) CinnamonTheme.moduleBackgroundEnabled else CinnamonTheme.moduleEnabledColor
+        } else {
+            if (isHovered) CinnamonTheme.cardBackgroundHover else CinnamonTheme.cardBackground
+        }
+
+        // Module card background
+        drawRoundedRect(context, x, y, width, height, backgroundColor)
+
+        // Module card border
+        val borderColor = if (element.isEnabled) CinnamonTheme.accentColor else CinnamonTheme.borderColor
+        drawRoundedBorder(context, x, y, width, height, borderColor)
+
+        // Element name (ensure CINNA_FONT is accessible, e.g., CinnamonScreen.CINNA_FONT)
+        context.drawText(
+            textRenderer,
+            Text.literal(element.getName()).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            x + 12,
+            y + 8, // Adjust Y for name to be similar to module cards
+            if (element.isEnabled) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor,
+            true
+        )
+
+        // Toggle switch - position it similarly to module cards' toggles
+        val toggleWidth = 30
+        val toggleHeight = 16
+        val toggleX = x + width - toggleWidth - 12 // 12 pixels padding from right edge
+        val toggleY = y + (height - toggleHeight) / 2 // Vertically centered in the card
+
+        renderToggleSwitch(context, toggleX, toggleY, toggleWidth, toggleHeight, element.isEnabled, mouseX, mouseY)
     }
     
     private fun renderModuleCard(context: DrawContext, x: Int, y: Int, width: Int, moduleHeight: Int, module: Module, mouseX: Int, mouseY: Int, delta: Float) {
@@ -420,13 +468,24 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         context.fill(x + width - 2, y + height - 2, x + width - 1, y + height - 1, color)
     }
     
-    private fun getFilteredModules(): List<Module> {
+    private fun getFilteredModules(): List<Any> {
         val allModules = ModuleManager.getModules()
-        return if (selectedCategory == "All") {
-            allModules
+        val items = mutableListOf<Any>()
+
+        // Add modules based on category
+        if (selectedCategory == "All") {
+            items.addAll(allModules)
         } else {
-            allModules.filter { getModuleCategory(it.name) == selectedCategory }
+            // Ensure only Module types are passed to getModuleCategory
+            items.addAll(allModules.filter { module -> getModuleCategory(module.name) == selectedCategory })
         }
+
+        // Add HUD elements if "All" or "Render" category is selected
+        if (selectedCategory == "All" || selectedCategory == "Render") {
+            items.addAll(HudManager.getElements())
+        }
+        // Using a Set temporarily to ensure distinctness if elements could come from multiple sources, then back to List.
+        return items.distinct() 
     }
     
     private fun getModuleCategory(moduleName: String): String {
@@ -460,56 +519,80 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         if (mouseX >= contentX && mouseX < contentX + contentWidth &&
             mouseY >= moduleListY && mouseY < moduleListY + moduleListHeight) {
             
-            val modules = getFilteredModules()
+            val items = getFilteredModules()
             var currentY = moduleListY - scrollOffset
+            val cardX = contentX + 10 // X position of cards in the list
+            val cardWidth = contentWidth - 20 // Width of cards in the list
             
-            modules.forEach { module ->
-                val moduleHeight = if (expandedStates[module.name] == true) settingsModuleHeight else baseModuleHeight
-                if (mouseY >= currentY && mouseY < currentY + moduleHeight) {
-                    
-                    // Bottom section Y position
-                    val bottomSectionY = if (expandedStates[module.name] == true) {
-                        currentY + settingsModuleHeight - 30
-                    } else {
-                        currentY + baseModuleHeight - 30
-                    }
-                    
-                    // Check if clicking on toggle switch
-                    val toggleX = contentX + 10 + contentWidth - 20 - 50
-                    val toggleY = bottomSectionY + 6
+            items.forEach { item ->
+                val itemHeight = when (item) {
+                    is Module -> if (expandedStates[item.name] == true) settingsModuleHeight else baseModuleHeight
+                    is HudElement -> baseModuleHeight
+                    else -> 0 // Should not happen
+                }
 
-                    if (mouseX >= toggleX && mouseX < toggleX + 30 &&
-                        mouseY >= toggleY && mouseY < toggleY + 16) {
-                        ModuleManager.toggleModule(module.name)
-                        return true
-                    }
+                // Check if the click is within the Y bounds of the current item's card
+                if (mouseY >= currentY && mouseY < currentY + itemHeight) {
+                    if (item is Module) {
+                        // --- Begin Existing Module Click Logic ---
+                        // Bottom section Y position for Module
+                        val bottomSectionYModule = if (expandedStates[item.name] == true) {
+                            currentY + settingsModuleHeight - 30
+                        } else {
+                            currentY + baseModuleHeight - 30
+                        }
+                        // Toggle switch for Module
+                        val toggleXModule = cardX + cardWidth - 50 // Relative to card's x and width
+                        val toggleYModule = bottomSectionYModule + 6
 
-                    // Check if clicking on expand button
-                    val expandButtonText = if (expandedStates[module.name] == true) "[-]" else "[+]"
-                    val expandButtonWidth = textRenderer.getWidth(expandButtonText)
-                    val expandButtonX = contentX + 10 + contentWidth - 20 - expandButtonWidth - 12
-                    val expandButtonY = currentY + 8
+                        if (mouseX >= toggleXModule && mouseX < toggleXModule + 30 &&
+                            mouseY >= toggleYModule && mouseY < toggleYModule + 16) {
+                            ModuleManager.toggleModule(item.name)
+                            return true // Click handled
+                        }
 
-                    if (mouseX >= expandButtonX && mouseX < expandButtonX + expandButtonWidth &&
-                        mouseY >= expandButtonY && mouseY < expandButtonY + textRenderer.fontHeight) {
-                        expandedStates[module.name] = !(expandedStates[module.name] ?: false)
-                        scrollOffset = min(scrollOffset, maxScrollOffset)
-                        return true
-                    }
+                        // Expand button for Module
+                        val expandButtonText = if (expandedStates[item.name] == true) "[-]" else "[+]"
+                        val expandButtonWidthText = textRenderer.getWidth(expandButtonText)
+                        val expandButtonX = cardX + cardWidth - expandButtonWidthText - 12 
+                        val expandButtonY = currentY + 8 
 
-                    // Handle settings clicks if module is expanded
-                    if (expandedStates[module.name] == true && module is AutoclickerModule) {
-                        val settingsX = contentX + 10 + 12
-                        val settingsY = currentY + 40 + 5
-                        val settingsWidth = contentWidth - 20 - 24
+                        if (mouseX >= expandButtonX && mouseX < expandButtonX + expandButtonWidthText &&
+                            mouseY >= expandButtonY && mouseY < expandButtonY + textRenderer.fontHeight) {
+                            expandedStates[item.name] = !(expandedStates[item.name] ?: false)
+                            scrollOffset = min(scrollOffset, maxScrollOffset) // Recalculate scroll
+                            return true // Click handled
+                        }
                         
-                        if (handleAutoClickerSettings(mouseX, mouseY, settingsX, settingsY, settingsWidth, module)) {
-                            return true
+                        // Handle settings clicks if module is expanded (e.g., AutoclickerModule)
+                        if (expandedStates[item.name] == true && item is AutoclickerModule) {
+                            val settingsContentX = cardX + 12 // Settings area relative to card
+                            val settingsContentY = currentY + 40 + 5 // Settings area relative to card
+                            // Pass cardWidth - 24 as settingsWidth, consistent with renderModuleSettings
+                            if (handleAutoClickerSettings(mouseX, mouseY, settingsContentX, settingsContentY, cardWidth - 24, item)) {
+                                return true // Click handled
+                            }
+                        }
+                        // --- End Existing Module Click Logic ---
+                    } else if (item is HudElement) {
+                        // Click logic for HUD Element Card (Toggle Switch only)
+                        val toggleWidth = 30
+                        val toggleHeight = 16
+                        // Consistent positioning with renderHudElementCard:
+                        val toggleX = cardX + cardWidth - toggleWidth - 12 // Relative to card's x and width
+                        val toggleY = currentY + (baseModuleHeight - toggleHeight) / 2 // Vertically centered in the card
+
+                        if (mouseX >= toggleX && mouseX < toggleX + toggleWidth &&
+                            mouseY >= toggleY && mouseY < toggleY + toggleHeight) {
+                            item.isEnabled = !item.isEnabled
+                            return true // Click handled
                         }
                     }
-                    return@forEach
+                    // If click was on this card's area but not on a specific interactive element,
+                    // it's consumed by this loop iteration.
+                    return true 
                 }
-                currentY += moduleHeight + moduleSpacing
+                currentY += itemHeight + moduleSpacing
             }
         }
         

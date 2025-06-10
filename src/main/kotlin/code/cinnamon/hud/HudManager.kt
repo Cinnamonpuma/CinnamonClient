@@ -5,6 +5,7 @@ import code.cinnamon.hud.elements.PingHudElement
 import code.cinnamon.hud.elements.KeystrokesHudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
+import code.cinnamon.hud.HudScreen
 
 object HudManager {
     private val hudElements = mutableListOf<HudElement>()
@@ -23,14 +24,20 @@ object HudManager {
     fun render(context: DrawContext, tickDelta: Float) {
         hudElements.filter { it.isEnabled }.forEach { it.render(context, tickDelta) }
         
-        if (isEditMode) {
+        // Get the current screen
+        val mc = MinecraftClient.getInstance()
+        val currentScreen = mc.currentScreen
+        
+        // Only render edit mode overlay if isEditMode is true AND current screen is HudScreen
+        if (isEditMode && currentScreen is HudScreen) {
             renderEditModeOverlay(context)
         }
     }
     
     private fun renderEditModeOverlay(context: DrawContext) {
         val mc = MinecraftClient.getInstance()
-        val text = "HUD Edit Mode - ESC to exit"
+        val text = Text.literal("HUD Edit Mode - ESC to exit").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+
         val x = (mc.window.scaledWidth - mc.textRenderer.getWidth(text)) / 2
         context.drawText(mc.textRenderer, text, x, 5, 0xFFFFFF, true)
     }
