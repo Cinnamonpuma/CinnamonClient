@@ -1,6 +1,8 @@
 package code.cinnamon.mixin.client;
 
-import code.cinnamon.client.gui.GlobalBackgroundRenderer;
+// Updated import to use the new shader renderer
+import code.cinnamon.client.gui.NewGlobalShaderBackgroundRenderer; 
+
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,9 +22,10 @@ public class ScreenMixin {
         // Cancel the original background rendering
         ci.cancel();
         
-        // Render our custom wave background
+        // Render our NEW custom shader background
         int width = context.getScaledWindowWidth();
         int height = context.getScaledWindowHeight();
-        GlobalBackgroundRenderer.INSTANCE.render(context, width, height);
+        // Updated call to the new renderer
+        NewGlobalShaderBackgroundRenderer.INSTANCE.render(context, width, height);
     }
 }

@@ -6,6 +6,6 @@ class CustomTitleScreenRenderer {
 
     fun render(context: DrawContext, width: Int, height: Int) {
         // Use the global background renderer
-        GlobalBackgroundRenderer.render(context, width, height)
+        NewGlobalShaderBackgroundRenderer.render(context, width, height)
     }
 }
