@@ -6,6 +6,9 @@ import code.cinnamon.hud.elements.KeystrokesHudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import code.cinnamon.hud.HudScreen
+import code.cinnamon.gui.CinnamonScreen
+import net.minecraft.text.Style
+import net.minecraft.text.Text
 
 object HudManager {
     private val hudElements = mutableListOf<HudElement>()

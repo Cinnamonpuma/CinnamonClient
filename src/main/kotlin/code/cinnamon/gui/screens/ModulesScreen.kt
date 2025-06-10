@@ -31,15 +31,29 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
     private val maxScrollOffset: Int
         get() {
-            val items = getFilteredModules() // ensure this is called to get the mixed list
-            val totalHeight = items.sumOf { item ->
+            val items = getFilteredModules()
+            if (items.isEmpty()) {
+                return 0
+            }
+
+            val totalHeightIncludingSpacing = items.sumOf { item ->
                 when (item) {
                     is Module -> if (expandedStates[item.name] == true) settingsModuleHeight + moduleSpacing else baseModuleHeight + moduleSpacing
-                    is HudElement -> baseModuleHeight + moduleSpacing // Use baseModuleHeight for HUD elements
+                    is HudElement -> baseModuleHeight + moduleSpacing
                     else -> 0
                 }
             }
-            return max(0, totalHeight - getContentHeight() + 40 - moduleSpacing)
+
+            // Subtract spacing for the last item as it doesn't contribute to scrollable length after it
+            val effectiveTotalHeight = totalHeightIncludingSpacing - moduleSpacing
+
+            // Define moduleListHeight (visible area for the list)
+            // categoryAreaHeight is effectively 50 (area above the module list)
+            // 20 is another padding/margin below the list or for the scrollbar itself.
+            val categoryAreaHeight = 50 
+            val moduleListHeight = getContentHeight() - categoryAreaHeight - 20
+            
+            return max(0, effectiveTotalHeight - moduleListHeight)
         }
     
     override fun initializeComponents() {
@@ -674,16 +688,22 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
         val contentX = getContentX()
-        val contentY = getContentY() + 60
         val contentWidth = getContentWidth()
-        val contentHeight = getContentHeight() - 70
         
-        if (mouseX >= contentX && mouseX < contentX + contentWidth &&
-            mouseY >= contentY && mouseY < contentY + contentHeight) {
-            
-            val scrollAmount = (verticalAmount * 20).toInt()
-            scrollOffset = max(0, min(maxScrollOffset, scrollOffset - scrollAmount))
-            return true
+        // categoryAreaHeight is 50. moduleListY starts after this and a 10px padding.
+        val categoryAreaHeight = 50 
+        val moduleListY = getContentY() + categoryAreaHeight + 10
+        val moduleListHeight = getContentHeight() - categoryAreaHeight - 20
+
+       // Check if mouse is within the scrollable list bounds
+        if (mouseX >= contentX && mouseX < contentX + contentWidth && // Check X bounds of the content area
+            mouseY >= moduleListY && mouseY < moduleListY + moduleListHeight) { // Check Y bounds of the list itself
+           
+            if (maxScrollOffset > 0) { // Only allow scrolling if there's something to scroll
+                val scrollAmount = (verticalAmount * 20).toInt() // Sensitivity factor
+                scrollOffset = max(0, min(maxScrollOffset, scrollOffset - scrollAmount))
+                return true
+            }
         }
         
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
