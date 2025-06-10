@@ -29,60 +29,37 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.matrices.scale(scale, scale, 1.0f)
         context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
         
-        // Simple background - no border
+        // Background matching the image style
         val width = getWidth()
         val height = getHeight()
-        val padding = 4
+        val padding = 6
         
-        // Clean background only
-        drawSimpleBackground(context, -padding, -padding, width + padding * 2, height + padding * 2)
+        // Dark gray background with rounded corners like in the image
+        drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2)
         
-        // Ping color coding - clean and readable
-        val pingColor = when {
-            currentPing <= 50 -> 0x4CAF50   // Green
-            currentPing <= 100 -> 0xFFC107  // Amber
-            currentPing <= 200 -> 0xFF9800  // Orange
-            else -> 0xF44336                // Red
-        }
-        
-        // Clean ping text
+        // Clean white ping text with slight shadow for readability
         val pingText = Text.literal("${currentPing}ms").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
         
-        // Simple drop shadow
+        // Subtle shadow for better readability
         context.drawText(mc.textRenderer, pingText, 1, 1, 0x40000000, false)
         
-        // Main text with subtle change animation
-        val alpha = (0xFF - (pingChangeAnimation * 100).toInt()).coerceIn(0xAA, 0xFF)
-        val finalColor = (alpha shl 24) or (pingColor and 0xFFFFFF)
-        context.drawText(mc.textRenderer, pingText, 0, 0, finalColor, false)
+        // White text
+        val textColor = 0xFFFFFF
+        context.drawText(mc.textRenderer, pingText, 0, 0, textColor, false)
         
         context.matrices.pop()
     }
     
-    private fun drawSimpleBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
-        val cornerRadius = 3
-        
-        // Simple dark background only - no border
-        drawRoundedRect(context, x, y, width, height, cornerRadius, 0xCC000000.toInt())
+    private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
+        // Simple clean rectangle - no rounded corners to avoid jaggedness
+        context.fill(x, y, x + width, y + height, 0x80000000.toInt())
     }
     
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
         if (color == 0) return
         
-        // Main rectangles
-        context.fill(x + radius, y, x + width - radius, y + height, color)
-        context.fill(x, y + radius, x + width, y + height - radius, color)
-        
-        // Simple corner approximation
-        for (i in 0 until radius) {
-            val w = sqrt(maxOf(0f, (radius * radius - i * i).toFloat())).toInt()
-            if (w > 0) {
-                context.fill(x + radius - w, y + i, x + radius + w, y + i + 1, color)
-                context.fill(x + radius - w, y + height - i - 1, x + radius + w, y + height - i, color)
-                context.fill(x + width - radius - w, y + i, x + width - radius + w, y + i + 1, color)
-                context.fill(x + width - radius - w, y + height - i - 1, x + width - radius + w, y + height - i, color)
-            }
-        }
+        // Just draw a simple rectangle - clean and sharp
+        context.fill(x, y, x + width, y + height, color)
     }
     
     private fun getPing(): Int {

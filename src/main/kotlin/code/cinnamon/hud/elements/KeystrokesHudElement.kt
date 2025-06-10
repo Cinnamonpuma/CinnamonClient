@@ -10,15 +10,14 @@ import kotlin.math.*
 
 class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
-    private val keySize = 24
-    private val spacing = 2
+    private val keySize = 32
+    private val spacing = 4
     
     // Simple press states
     private var wPressed = false
     private var aPressed = false
     private var sPressed = false
     private var dPressed = false
-    private var spacePressed = false
     
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
@@ -32,16 +31,12 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         
         // W key (centered)
         val wX = keySize + spacing
-        drawCleanKey(context, "W", wX, 0, wPressed)
+        drawKey(context, "W", wX, 0, wPressed)
         
         // A S D keys
-        drawCleanKey(context, "A", 0, keySize + spacing, aPressed)
-        drawCleanKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
-        drawCleanKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
-        
-        // Space bar
-        val spaceWidth = keySize * 3 + spacing * 2
-        drawCleanKey(context, "━━━", 0, (keySize + spacing) * 2, spaceWidth, keySize, spacePressed)
+        drawKey(context, "A", 0, keySize + spacing, aPressed)
+        drawKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
+        drawKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
         
         context.matrices.pop()
     }
@@ -51,60 +46,46 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         aPressed = mc.options.leftKey.isPressed
         sPressed = mc.options.backKey.isPressed
         dPressed = mc.options.rightKey.isPressed
-        spacePressed = mc.options.jumpKey.isPressed
     }
     
-    private fun drawCleanKey(context: DrawContext, key: String, x: Int, y: Int, pressed: Boolean) {
-        drawCleanKey(context, key, x, y, keySize, keySize, pressed)
-    }
-    
-    private fun drawCleanKey(context: DrawContext, key: String, x: Int, y: Int, width: Int, height: Int, pressed: Boolean) {
-        val cornerRadius = 2
-        
-        // Simple background - no border
+    private fun drawKey(context: DrawContext, key: String, x: Int, y: Int, pressed: Boolean) {
+        // Semi-transparent background that blends better
         val bgColor = if (pressed) {
-            0xDDFFFFFF.toInt() // White when pressed
+            0xAAFFFFFF.toInt() // Semi-transparent white when pressed
         } else {
-            0xCC2A2A2A.toInt() // Dark gray when not pressed
+            0x80000000.toInt() // Semi-transparent black when not pressed
         }
         
-        // Draw key background only
-        drawRoundedRect(context, x, y, width, height, cornerRadius, bgColor)
+        // Draw clean rectangular key background
+        context.fill(x, y, x + keySize, y + keySize, bgColor)
         
-        // Key text - clean and simple
+        // Key text with good contrast
         val keyText = Text.literal(key).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
-        val textColor = if (pressed) 0x000000 else 0xFFFFFF
+        val textColor = if (pressed) 0x000000 else 0xFFFFFF // Black on white, white on dark
         
         // Center the text
         val textWidth = mc.textRenderer.getWidth(keyText)
         val textHeight = mc.textRenderer.fontHeight
-        val textX = x + (width - textWidth) / 2
-        val textY = y + (height - textHeight) / 2
+        val textX = x + (keySize - textWidth) / 2
+        val textY = y + (keySize - textHeight) / 2
         
-        // Draw text without shadow for cleaner look
+        // Add subtle shadow for unpressed keys
+        if (!pressed) {
+            context.drawText(mc.textRenderer, keyText, textX + 1, textY + 1, 0x40000000, false)
+        }
+        
+        // Draw main text
         context.drawText(mc.textRenderer, keyText, textX, textY, textColor, false)
     }
     
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
         if (color == 0) return
         
-        // Main rectangles
-        context.fill(x + radius, y, x + width - radius, y + height, color)
-        context.fill(x, y + radius, x + width, y + height - radius, color)
-        
-        // Simple corner approximation for minimal radius
-        for (i in 0 until radius) {
-            val w = sqrt(maxOf(0f, (radius * radius - i * i).toFloat())).toInt()
-            if (w > 0) {
-                context.fill(x + radius - w, y + i, x + radius + w, y + i + 1, color)
-                context.fill(x + radius - w, y + height - i - 1, x + radius + w, y + height - i, color)
-                context.fill(x + width - radius - w, y + i, x + width - radius + w, y + i + 1, color)
-                context.fill(x + width - radius - w, y + height - i - 1, x + width - radius + w, y + height - i, color)
-            }
-        }
+        // Just draw a simple rectangle - clean and sharp
+        context.fill(x, y, x + width, y + height, color)
     }
     
     override fun getWidth(): Int = keySize * 3 + spacing * 2
-    override fun getHeight(): Int = keySize * 3 + spacing * 2
+    override fun getHeight(): Int = keySize * 2 + spacing
     override fun getName(): String = "Keystrokes"
 }
