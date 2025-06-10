@@ -12,6 +12,7 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
     private var lastFps = 0
     private var fpsChangeAnimation = 0f
+    private val cornerRadius = 6 // Rounded corner radius
     
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
@@ -29,12 +30,12 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.matrices.scale(scale, scale, 1.0f)
         context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
         
-        // Background matching the image style
+        // Background with rounded corners
         val width = getWidth()
         val height = getHeight()
         val padding = 6
         
-        // Dark gray background with rounded corners like in the image
+        // Draw rounded background
         drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2)
         
         // Clean white FPS text with slight shadow for readability
@@ -51,15 +52,66 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
     }
     
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
-        // Simple clean rectangle - no rounded corners to avoid jaggedness
-        context.fill(x, y, x + width, y + height, 0x80000000.toInt())
+        drawRoundedRect(context, x, y, width, height, cornerRadius, 0x80000000.toInt())
     }
     
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
         if (color == 0) return
         
-        // Just draw a simple rectangle - clean and sharp
-        context.fill(x, y, x + width, y + height, color)
+        val r = minOf(radius, minOf(width / 2, height / 2))
+        
+        if (r <= 0) {
+            context.fill(x, y, x + width, y + height, color)
+            return
+        }
+        
+        // Draw the main body (center rectangle)
+        context.fill(x + r, y, x + width - r, y + height, color)
+        
+        // Draw the side rectangles (no overlap with corners)
+        context.fill(x, y + r, x + r, y + height - r, color)
+        context.fill(x + width - r, y + r, x + width, y + height - r, color)
+        
+        // Draw the four rounded corners
+        drawRoundedCorner(context, x, y, r, color, 0) // Top-left
+        drawRoundedCorner(context, x + width - r, y, r, color, 1) // Top-right
+        drawRoundedCorner(context, x, y + height - r, r, color, 2) // Bottom-left
+        drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3) // Bottom-right
+    }
+    
+    private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, corner: Int) {
+        // Use proper circle equation: x² + y² <= r²
+        for (dy in 0 until radius) {
+            for (dx in 0 until radius) {
+                val distanceSquared = dx * dx + dy * dy
+                if (distanceSquared <= radius * radius) {
+                    val pixelX: Int
+                    val pixelY: Int
+                    
+                    when (corner) {
+                        0 -> { // Top-left: draw in 3rd quadrant relative to corner
+                            pixelX = x + (radius - 1 - dx)
+                            pixelY = y + (radius - 1 - dy)
+                        }
+                        1 -> { // Top-right: draw in 4th quadrant relative to corner
+                            pixelX = x + dx
+                            pixelY = y + (radius - 1 - dy)
+                        }
+                        2 -> { // Bottom-left: draw in 2nd quadrant relative to corner
+                            pixelX = x + (radius - 1 - dx)
+                            pixelY = y + dy
+                        }
+                        3 -> { // Bottom-right: draw in 1st quadrant relative to corner
+                            pixelX = x + dx
+                            pixelY = y + dy
+                        }
+                        else -> continue
+                    }
+                    
+                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)
+                }
+            }
+        }
     }
     
     override fun getWidth(): Int {

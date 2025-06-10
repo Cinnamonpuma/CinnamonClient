@@ -12,6 +12,7 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
     private val keySize = 32
     private val spacing = 4
+    private val cornerRadius = 4 // Smaller radius for individual keys
     
     // Simple press states
     private var wPressed = false
@@ -56,8 +57,8 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
             0x80000000.toInt() // Semi-transparent black when not pressed
         }
         
-        // Draw clean rectangular key background
-        context.fill(x, y, x + keySize, y + keySize, bgColor)
+        // Draw rounded rectangular key background
+        drawRoundedRect(context, x, y, keySize, keySize, cornerRadius, bgColor)
         
         // Key text with good contrast
         val keyText = Text.literal(key).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
@@ -80,9 +81,63 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
         if (color == 0) return
+
+        val r = minOf(radius, minOf(width / 2, height / 2))
         
-        // Just draw a simple rectangle - clean and sharp
-        context.fill(x, y, x + width, y + height, color)
+        val clampedRadius = minOf(radius, minOf(width / 2, height / 2))
+        
+        if (clampedRadius <= 0) {
+            context.fill(x, y, x + width, y + height, color)
+            return
+        }
+        
+        // Draw main rectangle (middle section)
+        context.fill(x + clampedRadius, y, x + width - clampedRadius, y + height, color)
+        
+        // Draw left and right rectangles
+        context.fill(x, y + clampedRadius, x + clampedRadius, y + height - clampedRadius, color)
+        context.fill(x + width - clampedRadius, y + clampedRadius, x + width, y + height - clampedRadius, color)
+        
+        // Draw the four rounded corners
+        drawRoundedCorner(context, x, y, r, color, 0) // Top-left
+        drawRoundedCorner(context, x + width - r, y, r, color, 1) // Top-right
+        drawRoundedCorner(context, x, y + height - r, r, color, 2) // Bottom-left
+        drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3) // Bottom-right
+    }
+    
+    private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, corner: Int) {
+        // Use proper circle equation: x² + y² <= r²
+        for (dy in 0 until radius) {
+            for (dx in 0 until radius) {
+                val distanceSquared = dx * dx + dy * dy
+                if (distanceSquared <= radius * radius) {
+                    val pixelX: Int
+                    val pixelY: Int
+                    
+                    when (corner) {
+                        0 -> { // Top-left: draw in 3rd quadrant relative to corner
+                            pixelX = x + (radius - 1 - dx)
+                            pixelY = y + (radius - 1 - dy)
+                        }
+                        1 -> { // Top-right: draw in 4th quadrant relative to corner
+                            pixelX = x + dx
+                            pixelY = y + (radius - 1 - dy)
+                        }
+                        2 -> { // Bottom-left: draw in 2nd quadrant relative to corner
+                            pixelX = x + (radius - 1 - dx)
+                            pixelY = y + dy
+                        }
+                        3 -> { // Bottom-right: draw in 1st quadrant relative to corner
+                            pixelX = x + dx
+                            pixelY = y + dy
+                        }
+                        else -> continue
+                    }
+                    
+                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)
+                }
+            }
+        }
     }
     
     override fun getWidth(): Int = keySize * 3 + spacing * 2
