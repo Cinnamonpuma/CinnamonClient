@@ -29,12 +29,12 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.matrices.scale(scale, scale, 1.0f)
         context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
         
-        // Minimal background
+        // Simple background - no border
         val width = getWidth()
         val height = getHeight()
         val padding = 4
         
-        // Clean rounded background
+        // Clean background only
         drawSimpleBackground(context, -padding, -padding, width + padding * 2, height + padding * 2)
         
         // Ping color coding - clean and readable
@@ -62,11 +62,8 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
     private fun drawSimpleBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
         val cornerRadius = 3
         
-        // Main background - dark with slight transparency
+        // Simple dark background only - no border
         drawRoundedRect(context, x, y, width, height, cornerRadius, 0xCC000000.toInt())
-        
-        // Subtle border
-        drawRoundedRectBorder(context, x, y, width, height, cornerRadius, 0x33FFFFFF)
     }
     
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
@@ -84,32 +81,6 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
                 context.fill(x + radius - w, y + height - i - 1, x + radius + w, y + height - i, color)
                 context.fill(x + width - radius - w, y + i, x + width - radius + w, y + i + 1, color)
                 context.fill(x + width - radius - w, y + height - i - 1, x + width - radius + w, y + height - i, color)
-            }
-        }
-    }
-    
-    private fun drawRoundedRectBorder(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
-        // Top and bottom borders
-        context.fill(x + radius, y, x + width - radius, y + 1, color)
-        context.fill(x + radius, y + height - 1, x + width - radius, y + height, color)
-        
-        // Left and right borders
-        context.fill(x, y + radius, x + 1, y + height - radius, color)
-        context.fill(x + width - 1, y + radius, x + width, y + height - radius, color)
-        
-        // Corner borders
-        for (i in 0 until radius) {
-            val w = sqrt(maxOf(0f, (radius * radius - i * i).toFloat())).toInt()
-            if (w > 0) {
-                context.fill(x + radius - w, y + i, x + radius - w + 1, y + i + 1, color)
-                context.fill(x + radius + w - 1, y + i, x + radius + w, y + i + 1, color)
-                context.fill(x + width - radius - w, y + i, x + width - radius - w + 1, y + i + 1, color)
-                context.fill(x + width - radius + w - 1, y + i, x + width - radius + w, y + i + 1, color)
-                
-                context.fill(x + radius - w, y + height - i - 1, x + radius - w + 1, y + height - i, color)
-                context.fill(x + radius + w - 1, y + height - i - 1, x + radius + w, y + height - i, color)
-                context.fill(x + width - radius - w, y + height - i - 1, x + width - radius - w + 1, y + height - i, color)
-                context.fill(x + width - radius + w - 1, y + height - i - 1, x + width - radius + w, y + height - i, color)
             }
         }
     }

@@ -32,16 +32,16 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         
         // W key (centered)
         val wX = keySize + spacing
-        drawMinimalKey(context, "W", wX, 0, wPressed)
+        drawCleanKey(context, "W", wX, 0, wPressed)
         
         // A S D keys
-        drawMinimalKey(context, "A", 0, keySize + spacing, aPressed)
-        drawMinimalKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
-        drawMinimalKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
+        drawCleanKey(context, "A", 0, keySize + spacing, aPressed)
+        drawCleanKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
+        drawCleanKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
         
         // Space bar
         val spaceWidth = keySize * 3 + spacing * 2
-        drawMinimalKey(context, "━━━", 0, (keySize + spacing) * 2, spaceWidth, keySize, spacePressed)
+        drawCleanKey(context, "━━━", 0, (keySize + spacing) * 2, spaceWidth, keySize, spacePressed)
         
         context.matrices.pop()
     }
@@ -54,26 +54,22 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         spacePressed = mc.options.jumpKey.isPressed
     }
     
-    private fun drawMinimalKey(context: DrawContext, key: String, x: Int, y: Int, pressed: Boolean) {
-        drawMinimalKey(context, key, x, y, keySize, keySize, pressed)
+    private fun drawCleanKey(context: DrawContext, key: String, x: Int, y: Int, pressed: Boolean) {
+        drawCleanKey(context, key, x, y, keySize, keySize, pressed)
     }
     
-    private fun drawMinimalKey(context: DrawContext, key: String, x: Int, y: Int, width: Int, height: Int, pressed: Boolean) {
+    private fun drawCleanKey(context: DrawContext, key: String, x: Int, y: Int, width: Int, height: Int, pressed: Boolean) {
         val cornerRadius = 2
         
-        // Background color - clean and minimal
+        // Simple background - no border
         val bgColor = if (pressed) {
             0xDDFFFFFF.toInt() // White when pressed
         } else {
             0xCC2A2A2A.toInt() // Dark gray when not pressed
         }
         
-        // Draw key background
+        // Draw key background only
         drawRoundedRect(context, x, y, width, height, cornerRadius, bgColor)
-        
-        // Subtle border
-        val borderColor = if (pressed) 0x66000000 else 0x44FFFFFF
-        drawRoundedRectBorder(context, x, y, width, height, cornerRadius, borderColor)
         
         // Key text - clean and simple
         val keyText = Text.literal(key).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
@@ -104,30 +100,6 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
                 context.fill(x + radius - w, y + height - i - 1, x + radius + w, y + height - i, color)
                 context.fill(x + width - radius - w, y + i, x + width - radius + w, y + i + 1, color)
                 context.fill(x + width - radius - w, y + height - i - 1, x + width - radius + w, y + height - i, color)
-            }
-        }
-    }
-    
-    private fun drawRoundedRectBorder(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
-        // Straight borders
-        context.fill(x + radius, y, x + width - radius, y + 1, color)
-        context.fill(x + radius, y + height - 1, x + width - radius, y + height, color)
-        context.fill(x, y + radius, x + 1, y + height - radius, color)
-        context.fill(x + width - 1, y + radius, x + width, y + height - radius, color)
-        
-        // Corner borders
-        for (i in 0 until radius) {
-            val w = sqrt(maxOf(0f, (radius * radius - i * i).toFloat())).toInt()
-            if (w > 0) {
-                context.fill(x + radius - w, y + i, x + radius - w + 1, y + i + 1, color)
-                context.fill(x + radius + w - 1, y + i, x + radius + w, y + i + 1, color)
-                context.fill(x + width - radius - w, y + i, x + width - radius - w + 1, y + i + 1, color)
-                context.fill(x + width - radius + w - 1, y + i, x + width - radius + w, y + i + 1, color)
-                
-                context.fill(x + radius - w, y + height - i - 1, x + radius - w + 1, y + height - i, color)
-                context.fill(x + radius + w - 1, y + height - i - 1, x + radius + w, y + height - i, color)
-                context.fill(x + width - radius - w, y + height - i - 1, x + width - radius - w + 1, y + height - i, color)
-                context.fill(x + width - radius + w - 1, y + height - i - 1, x + width - radius + w, y + height - i, color)
             }
         }
     }
