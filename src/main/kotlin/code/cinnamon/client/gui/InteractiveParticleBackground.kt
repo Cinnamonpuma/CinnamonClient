@@ -26,10 +26,12 @@ class InteractiveParticleBackground {
             private const val MIN_SIZE = 1.0f
             private const val MAX_SIZE = 3.0f // Slightly smaller max size for typical stars
             private val STAR_COLORS = intArrayOf(
+                0xFFADD8E6.toInt(), // Light Blue
+                0xFFAFEEEE.toInt(), // Pale Turquoise
+                0xFFE0FFFF.toInt(), // Light Cyan
                 0xFFFFFFFF.toInt(), // White
-                0xFFFFFFA0.toInt(), // Pale Yellow
-                0xFFA0A0FF.toInt(), // Pale Blue
-                0xFFFFE0E0.toInt()  // Pale Pinkish/Reddish
+                0xFFB0E0E6.toInt(), // Powder Blue
+                0xFF7FFFD4.toInt()  // Aquamarine (a bit greener, for variety)
             )
         }
 
@@ -42,6 +44,10 @@ class InteractiveParticleBackground {
             this.y = random.nextFloat() * screenHeight
             this.vx = (random.nextFloat() * 2 * MAX_INITIAL_SPEED) - MAX_INITIAL_SPEED
             this.vy = (random.nextFloat() * 2 * MAX_INITIAL_SPEED) - MAX_INITIAL_SPEED
+
+            // Add collective drift
+            this.vx += 0.05f // All stars drift slightly to the right
+
             this.size = MIN_SIZE + random.nextFloat() * (MAX_SIZE - MIN_SIZE)
             
             this.coreColor = STAR_COLORS[random.nextInt(STAR_COLORS.size)]
@@ -64,6 +70,7 @@ class InteractiveParticleBackground {
 
         fun update(mouseX: Int, mouseY: Int, screenWidth: Int, screenHeight: Int) {
             // Mouse Interaction
+            /*
             val dxMouse = x - mouseX
             val dyMouse = y - mouseY
             val distMouseSq = dxMouse * dxMouse + dyMouse * dyMouse // Using squared distance to avoid sqrt
@@ -77,6 +84,7 @@ class InteractiveParticleBackground {
                 vx += (dxMouse / distMouse) * repelForce
                 vy += (dyMouse / distMouse) * repelForce
             }
+            */
 
             // Movement & Friction
             x += vx
@@ -170,7 +178,7 @@ class InteractiveParticleBackground {
 
         // Optional: Draw a solid background (dark gray)
         // Ensure an alpha component is included if you want it to be opaque, e.g., 0xFF for the first component.
-        context.fill(0, 0, width, height, 0xFF030512.toInt()) 
+        context.fill(0, 0, width, height, 0xFF02030A.toInt()) 
 
         // Update and draw each particle
         for (particle in particles) {
