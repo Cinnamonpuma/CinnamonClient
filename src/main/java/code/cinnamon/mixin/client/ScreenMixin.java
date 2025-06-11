@@ -26,13 +26,9 @@ public class ScreenMixin {
         Screen screen = (Screen)(Object)this;
         String screenClassName = screen.getClass().getName();
 
-        System.out.println("[Cinnamon/ScreenMixin] Checking screen: " + screenClassName);
-
         if (screenClassName.startsWith("code.cinnamon.")) {
-            System.out.println("[Cinnamon/ScreenMixin] Excluding screen (code.cinnamon): " + screenClassName);
             // Do nothing, let original background render for mod's own screens
         } else {
-            System.out.println("[Cinnamon/ScreenMixin] Rendering particles for screen: " + screenClassName);
             ci.cancel();
             NewGlobalShaderBackgroundRenderer.INSTANCE.render(context, context.getScaledWindowWidth(), context.getScaledWindowHeight());
         }
@@ -40,7 +36,5 @@ public class ScreenMixin {
 
     @Inject(method = "<init>(Lnet/minecraft/text/Text;)V", at = @At("RETURN"))
     private void cinnamon$onScreenConstructed(Text title, CallbackInfo ci) {
-        System.out.println("[Cinnamon/ScreenMixin] Screen constructor called! Title: " + title.getString() + 
-                          " | Class: " + ((Screen)(Object)this).getClass().getName());
     }
 }

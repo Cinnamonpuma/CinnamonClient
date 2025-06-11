@@ -9,12 +9,22 @@ import code.cinnamon.hud.HudScreen
 import code.cinnamon.gui.CinnamonScreen
 import net.minecraft.text.Style
 import net.minecraft.text.Text
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
+import java.io.File
+import java.nio.file.Paths
 
 object HudManager {
     private val hudElements = mutableListOf<HudElement>()
     var isEditMode = false
         private set
     private var selectedElement: HudElement? = null
+    private var hasUnsavedChanges = false
+
+    private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
+    private val configDir = Paths.get("config", "cinnamon").toFile()
+    private val configFile = File(configDir, "hud.json")
     
     fun init() {
         hudElements.apply {
@@ -22,6 +32,7 @@ object HudManager {
             add(PingHudElement(10f, 30f))
             add(KeystrokesHudElement(10f, 60f))
         }
+        loadHudConfig()
     }
     
     fun render(context: DrawContext, tickDelta: Float) {
@@ -59,7 +70,10 @@ object HudManager {
     fun onMouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
         if (!isEditMode) return false
         
-        selectedElement?.updateDragging(mouseX, mouseY)
+        selectedElement?.let {
+            it.updateDragging(mouseX, mouseY)
+            hasUnsavedChanges = true // Mark as having unsaved changes
+        }
         return selectedElement != null
     }
     
@@ -79,17 +93,77 @@ object HudManager {
         
         hudElements.firstOrNull { it.isMouseOver(mouseX, mouseY) }?.let { element ->
             element.scale += (delta * 0.1).toFloat()
+            hasUnsavedChanges = true // Mark as having unsaved changes
             return true
         }
         return false
     }
     
     fun toggleEditMode() {
+        // If exiting edit mode and there are unsaved changes, save them
+        if (isEditMode && hasUnsavedChanges) {
+            saveHudConfig()
+            hasUnsavedChanges = false
+        }
+        
         isEditMode = !isEditMode
         if (!isEditMode) {
             selectedElement = null
         }
     }
     
+    // New method to be called when the HUD edit menu is closed
+    fun onEditMenuClosed() {
+        if (hasUnsavedChanges) {
+            saveHudConfig()
+            hasUnsavedChanges = false
+            println("[HudManager] HUD configuration saved on menu close")
+        }
+    }
+    
     fun getElements(): List<HudElement> = hudElements.toList()
+
+    fun saveHudConfig() {
+        try {
+            configDir.mkdirs()
+            val configs = hudElements.map { element ->
+                HudElementConfig(
+                    name = element.getName(),
+                    x = element.getX(),
+                    y = element.getY(),
+                    scale = element.scale,
+                    isEnabled = element.isEnabled
+                )
+            }
+            val jsonString = json.encodeToString(configs)
+            configFile.writeText(jsonString)
+            println("[HudManager] HUD config saved successfully to ${configFile.absolutePath}")
+        } catch (e: Exception) {
+            println("[HudManager] Failed to save HUD config: ${e.message}")
+        }
+    }
+
+    fun loadHudConfig() {
+        if (!configFile.exists()) {
+            println("[HudManager] HUD config file not found. Loading default HUD elements.")
+            return
+        }
+
+        try {
+            val jsonString = configFile.readText()
+            val configs = json.decodeFromString<List<HudElementConfig>>(jsonString)
+
+            configs.forEach { config ->
+                hudElements.find { it.getName() == config.name }?.let { element ->
+                    element.setX(config.x)
+                    element.setY(config.y)
+                    element.scale = config.scale
+                    element.isEnabled = config.isEnabled
+                }
+            }
+            println("[HudManager] HUD config loaded successfully from ${configFile.absolutePath}")
+        } catch (e: Exception) {
+            println("[HudManager] Failed to load HUD config: ${e.message}. Loading default HUD elements.")
+        }
+    }
 }

@@ -59,9 +59,9 @@ class HudScreen : Screen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFon
     }
 
     override fun close() {
-        // Disable edit mode when screen closes
-        HudManager.toggleEditMode()
-        super.close()
+        HudManager.onEditMenuClosed()
+        // Instead of calling super.close(), open the main menu
+        CinnamonGuiManager.openMainMenu()
     }
 
     override fun shouldCloseOnEsc(): Boolean = true
