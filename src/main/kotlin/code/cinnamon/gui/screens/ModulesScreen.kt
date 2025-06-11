@@ -19,6 +19,7 @@ import code.cinnamon.hud.HudElement
 import kotlin.math.max
 import kotlin.math.min
 
+
 class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
     private var selectedCategory = "All"
     private val categories = listOf("All", "Combat", "Movement", "Render", "Player", "World")
@@ -599,6 +600,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     private fun handleHudElementSettingsClick(mouseX: Double, mouseY: Double, settingsX: Int, settingsY: Int, settingsWidth: Int, element: HudElement): Boolean {
         // val config = HudManager.getConfig(element.getName()) ?: return false // No longer needed
         var currentSettingY = settingsY 
+        currentSettingY += 15 // Account for the "Settings" title height, same as in renderHudElementSettings
+
         val textElementHeight = textRenderer.fontHeight
 
         val setTextColorButtonText = "[Set]"

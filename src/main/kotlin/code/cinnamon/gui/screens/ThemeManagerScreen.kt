@@ -10,6 +10,8 @@ import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.gui.theme.CinnamonTheme
 import kotlin.math.*
 import code.cinnamon.gui.theme.ThemeConfigManager
+import net.minecraft.client.MinecraftClient
+import net.minecraft.client.util.math.MatrixStack
 
 class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
     
@@ -29,6 +31,10 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     private var saturation = 1f
     private var brightness = 1f
     private var alpha = 1f
+    private var hexCursorPosition = 0
+    private var hexCursorBlinkTime = 0f
+    private var lastMouseX = 0
+    private var lastMouseY = 0
     
     // Scroll offset for color list
     private var scrollOffset = 0
@@ -129,6 +135,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         // Always render the base screen
+        lastMouseX = mouseX
+        lastMouseY = mouseY
         super.render(context, mouseX, mouseY, delta)
         
         // Render color picker on top if open
@@ -401,8 +409,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
     
     private fun renderColorPreview(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
-        val previewWidth = width / 2 - 5
-        val inputWidth = width / 2 - 5
+        val previewWidth = width / 2 - 35 // Made smaller to fit buttons
+        val inputWidth = width / 2 - 35
         
         // Color preview (left half)
         val checkerSize = 8
@@ -421,8 +429,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         context.fill(x, y, x + previewWidth, y + height, finalColor)
         context.drawBorder(x, y, previewWidth, height, CinnamonTheme.borderColor)
         
-        // Hex input field (right half)
-        val inputX = x + previewWidth + 10
+        // Hex input field (middle)
+        val inputX = x + previewWidth + 5
         val inputBgColor = if (hexInputFocused) CinnamonTheme.contentBackground else CinnamonTheme.cardBackground
         val inputBorderColor = if (hexInputFocused) CinnamonTheme.accentColor else CinnamonTheme.borderColor
         
@@ -434,17 +442,69 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val textY = y + (height - textRenderer.fontHeight) / 2
         val textColor = if (hexInputText.isNotEmpty()) CinnamonTheme.primaryTextColor else CinnamonTheme.secondaryTextColor
         
+        val fullText = "#$displayText"
         context.drawText(
             textRenderer, 
-            Text.literal("#$displayText").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), 
+            Text.literal(fullText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), 
             inputX + 5, textY, textColor, false
         )
         
-        // Cursor for focused input
+        // Improved cursor for focused input
         if (hexInputFocused) {
-            val cursorX = inputX + 5 + textRenderer.getWidth("#$displayText")
-            context.fill(cursorX, y + 2, cursorX + 1, y + height - 2, CinnamonTheme.primaryTextColor)
+            // Update cursor blink time
+            hexCursorBlinkTime += 0.05f
+            if (hexCursorBlinkTime % 1.0f < 0.5f) { // Blink every half second
+                val textBeforeCursor = "#" + displayText.substring(0, minOf(hexCursorPosition, displayText.length))
+                val cursorX = inputX + 5 + textRenderer.getWidth(textBeforeCursor)
+                context.fill(cursorX, y + 4, cursorX + 1, y + height - 4, CinnamonTheme.primaryTextColor)
+            }
         }
+        
+        // Copy button
+        val copyButtonX = inputX + inputWidth + 5
+        val copyButtonWidth = 25
+        val copyButtonHovered = lastMouseX >= copyButtonX && lastMouseX < copyButtonX + copyButtonWidth && 
+                               lastMouseY >= y && lastMouseY < y + height
+        
+        context.fill(
+            copyButtonX, y, copyButtonX + copyButtonWidth, y + height,
+            if (copyButtonHovered) CinnamonTheme.accentColorHover else CinnamonTheme.accentColor
+        )
+        context.drawBorder(copyButtonX, y, copyButtonWidth, height, CinnamonTheme.borderColor)
+        
+        val copyText = "C"
+        val copyTextWidth = textRenderer.getWidth(copyText)
+        context.drawText(
+            textRenderer,
+            Text.literal(copyText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            copyButtonX + (copyButtonWidth - copyTextWidth) / 2,
+            textY,
+            0xFFFFFFFF.toInt(),
+            false
+        )
+        
+        // Paste button
+        val pasteButtonX = copyButtonX + copyButtonWidth + 2
+        val pasteButtonWidth = 25
+        val pasteButtonHovered = lastMouseX >= pasteButtonX && lastMouseX < pasteButtonX + pasteButtonWidth && 
+                                lastMouseY >= y && lastMouseY < y + height
+        
+        context.fill(
+            pasteButtonX, y, pasteButtonX + pasteButtonWidth, y + height,
+            if (pasteButtonHovered) CinnamonTheme.buttonBackgroundHover else CinnamonTheme.buttonBackground
+        )
+        context.drawBorder(pasteButtonX, y, pasteButtonWidth, height, CinnamonTheme.borderColor)
+        
+        val pasteText = "P"
+        val pasteTextWidth = textRenderer.getWidth(pasteText)
+        context.drawText(
+            textRenderer,
+            Text.literal(pasteText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            pasteButtonX + (pasteButtonWidth - pasteTextWidth) / 2,
+            textY,
+            CinnamonTheme.primaryTextColor,
+            false
+        )
     }
     
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
@@ -532,7 +592,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val buttonSpacing = 20
         val totalButtonWidth = buttonWidth * 2 + buttonSpacing
         val buttonStartX = pickerX + (pickerWidth - totalButtonWidth) / 2
-        
+    
         if (mouseY >= buttonY && mouseY < buttonY + 25) {
             if (mouseX >= buttonStartX && mouseX < buttonStartX + buttonWidth) {
                 // Apply button
@@ -546,24 +606,67 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
                 return true
             }
         }
-        
+    
         // Handle hex input field click
         val previewBoxY = buttonY - 35
         val previewBoxHeight = 30
         val inputX = pickerX + 20 + (pickerWidth - 40) / 2 + 10
         val inputWidth = (pickerWidth - 40) / 2 - 5
-        
-        if (mouseX >= inputX && mouseX < inputX + inputWidth && 
+    
+        // --- Enhanced hex input & copy/paste logic below ---
+    
+        if (mouseX >= inputX && mouseX < inputX + inputWidth &&
             mouseY >= previewBoxY && mouseY < previewBoxY + previewBoxHeight) {
             hexInputFocused = true
+            // Cursor positioning by click
+            val clickX = mouseX - (inputX + 5)
+            val displayText = if (hexInputText.isNotEmpty()) hexInputText else String.format("%08X", selectedColorType?.currentColor() ?: 0)
+            val fullText = "#$displayText"
+    
+            // Find cursor position based on click location
+            hexCursorPosition = 0
+            for (i in displayText.indices) {
+                val textWidth = textRenderer.getWidth("#" + displayText.substring(0, i + 1))
+                if (clickX <= textWidth) {
+                    hexCursorPosition = i
+                    break
+                }
+                hexCursorPosition = i + 1
+            }
             return true
         } else {
             hexInputFocused = false
         }
-        
+    
+        // Copy/paste buttons
+        val copyButtonX = inputX + inputWidth + 5
+        val copyButtonWidth = 25
+        val pasteButtonX = copyButtonX + copyButtonWidth + 2
+        val pasteButtonWidth = 25
+    
+        if (mouseY >= previewBoxY && mouseY < previewBoxY + previewBoxHeight) {
+            if (mouseX >= copyButtonX && mouseX < copyButtonX + copyButtonWidth) {
+                // Copy button clicked
+                val displayText = if (hexInputText.isNotEmpty()) hexInputText else String.format("%08X", selectedColorType?.currentColor() ?: 0)
+                MinecraftClient.getInstance().keyboard.clipboard = "#$displayText"
+                return true
+            } else if (mouseX >= pasteButtonX && mouseX < pasteButtonX + pasteButtonWidth) {
+                // Paste button clicked
+                val clipboard = MinecraftClient.getInstance().keyboard.clipboard
+                if (clipboard.startsWith("#") && clipboard.length > 1) {
+                    val hexPart = clipboard.substring(1)
+                    if (parseHexColor(hexPart)) {
+                        hexInputText = hexPart.uppercase()
+                        hexCursorPosition = hexInputText.length
+                    }
+                }
+                return true
+            }
+        }
+    
         // Handle color wheel, brightness, and alpha slider clicks
         handleColorControlClicks(mouseX, mouseY)
-        
+    
         return true
     }
     
@@ -631,6 +734,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         brightness = hsv[2]
         alpha = ((currentColor ushr 24) and 0xFF) / 255f
         hexInputText = String.format("%08X", currentColor)
+        hexCursorPosition = hexInputText.length
     }
     
     private fun applyColor() {
@@ -703,6 +807,35 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
                     hexInputText = ""
                     return true
                 }
+                259 -> { // Backspace
+                    if (hexInputText.isNotEmpty() && hexCursorPosition > 0) {
+                        hexInputText = hexInputText.substring(0, hexCursorPosition - 1) + hexInputText.substring(hexCursorPosition)
+                        hexCursorPosition = maxOf(0, hexCursorPosition - 1)
+                    }
+                    return true
+                }
+                256 -> { // Escape
+                    hexInputFocused = false
+                    hexInputText = ""
+                    return true
+                }
+                // Add these lines:
+                262 -> { // Right arrow
+                    hexCursorPosition = minOf(hexInputText.length, hexCursorPosition + 1)
+                    return true
+                }
+                263 -> { // Left arrow
+                    hexCursorPosition = maxOf(0, hexCursorPosition - 1)
+                    return true
+                }
+                268 -> { // Home
+                    hexCursorPosition = 0
+                    return true
+                }
+                269 -> { // End
+                    hexCursorPosition = hexInputText.length
+                    return true
+                }
             }
             return true
         }
@@ -714,7 +847,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             if (chr.isLetterOrDigit() && hexInputText.length < 8) {
                 val upperChar = chr.uppercaseChar()
                 if (upperChar.isDigit() || upperChar in 'A'..'F') {
-                    hexInputText += upperChar
+                    hexInputText = hexInputText.substring(0, hexCursorPosition) + upperChar + hexInputText.substring(hexCursorPosition)
+                    hexCursorPosition++
                 }
             }
             return true
