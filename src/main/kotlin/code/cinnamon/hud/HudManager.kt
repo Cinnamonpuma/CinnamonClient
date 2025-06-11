@@ -123,6 +123,10 @@ object HudManager {
     
     fun getElements(): List<HudElement> = hudElements.toList()
 
+    fun markChangesForSave() {
+        this.hasUnsavedChanges = true
+    }
+
     fun saveHudConfig() {
         try {
             configDir.mkdirs()
@@ -132,7 +136,10 @@ object HudManager {
                     x = element.getX(),
                     y = element.getY(),
                     scale = element.scale,
-                    isEnabled = element.isEnabled
+                    isEnabled = element.isEnabled,
+                    textColor = element.textColor,
+                    backgroundColor = element.backgroundColor,
+                    textShadowEnabled = element.textShadowEnabled
                 )
             }
             val jsonString = json.encodeToString(configs)
@@ -159,6 +166,10 @@ object HudManager {
                     element.setY(config.y)
                     element.scale = config.scale
                     element.isEnabled = config.isEnabled
+                    // Apply new properties, relying on defaults in HudElementConfig if not in JSON
+                    element.textColor = config.textColor
+                    element.backgroundColor = config.backgroundColor
+                    element.textShadowEnabled = config.textShadowEnabled
                 }
             }
             println("[HudManager] HUD config loaded successfully from ${configFile.absolutePath}")

@@ -21,6 +21,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     private val pickerHeight = 350
     private var pickerX = 0
     private var pickerY = 0
+    private var hexInputText = ""
+    private var hexInputFocused = false
     
     // Color picker state
     private var hue = 0f
@@ -326,19 +328,34 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val centerY = y + size / 2
         val radius = size / 2 - 5
         
-        // Draw color wheel using concentric circles
-        for (r in 0 until radius step 2) {
-            for (angle in 0 until 360 step 4) {
+        // Draw filled color wheel using small rectangles for better color coverage
+        for (r in 0 until radius) {
+            for (angle in 0 until 360 step 2) {
                 val rad = Math.toRadians(angle.toDouble())
-                val px = centerX + (cos(rad) * r).toInt()
-                val py = centerY + (sin(rad) * r).toInt()
+                val innerR = r
+                val outerR = r + 1
                 
-                val sat = r.toFloat() / radius
-                val hueColor = hsvToRgb(angle.toFloat(), sat, brightness)
-                
-                context.fill(px, py, px + 2, py + 2, hueColor)
+                // Draw multiple points to create filled effect
+                for (subR in innerR until outerR) {
+                    val px = centerX + (cos(rad) * subR).toInt()
+                    val py = centerY + (sin(rad) * subR).toInt()
+                    
+                    val sat = subR.toFloat() / radius
+                    val hueColor = hsvToRgb(angle.toFloat(), sat, brightness)
+                    
+                    // Draw 2x2 pixel blocks for better fill
+                    context.fill(px, py, px + 2, py + 2, hueColor)
+                }
             }
         }
+        
+        // Draw white center circle
+        val centerSize = 20
+        context.fill(
+            centerX - centerSize/2, centerY - centerSize/2, 
+            centerX + centerSize/2, centerY + centerSize/2, 
+            hsvToRgb(hue, 0f, brightness)
+        )
         
         // Draw selection indicator
         val selRadius = saturation * radius
@@ -346,10 +363,10 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val selX = centerX + (cos(selAngle) * selRadius).toInt()
         val selY = centerY + (sin(selAngle) * selRadius).toInt()
         
-        // White border
-        context.drawBorder(selX - 4, selY - 4, 8, 8, 0xFFFFFFFF.toInt())
-        // Black inner border for visibility
-        context.drawBorder(selX - 3, selY - 3, 6, 6, 0xFF000000.toInt())
+        // Larger, more visible selection indicator
+        context.fill(selX - 6, selY - 6, selX + 6, selY + 6, 0xFFFFFFFF.toInt())
+        context.fill(selX - 4, selY - 4, selX + 4, selY + 4, 0xFF000000.toInt())
+        context.fill(selX - 2, selY - 2, selX + 2, selY + 2, 0xFFFFFFFF.toInt())
     }
     
     private fun renderBrightnessSlider(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
@@ -397,12 +414,15 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
     
     private fun renderColorPreview(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
-        // Checkerboard background for transparency preview
+        val previewWidth = width / 2 - 5
+        val inputWidth = width / 2 - 5
+        
+        // Color preview (left half)
         val checkerSize = 8
-        for (i in 0 until width step checkerSize) {
+        for (i in 0 until previewWidth step checkerSize) {
             for (j in 0 until height step checkerSize) {
                 val color = if ((i / checkerSize + j / checkerSize) % 2 == 0) 0xFFCCCCCC.toInt() else 0xFF999999.toInt()
-                val endX = minOf(x + i + checkerSize, x + width)
+                val endX = minOf(x + i + checkerSize, x + previewWidth)
                 val endY = minOf(y + j + checkerSize, y + height)
                 context.fill(x + i, y + j, endX, endY, color)
             }
@@ -411,17 +431,33 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val currentColor = hsvToRgb(hue, saturation, brightness)
         val finalColor = (currentColor and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
         
-        context.fill(x, y, x + width, y + height, finalColor)
-        context.drawBorder(x, y, width, height, CinnamonTheme.borderColor)
+        context.fill(x, y, x + previewWidth, y + height, finalColor)
+        context.drawBorder(x, y, previewWidth, height, CinnamonTheme.borderColor)
         
-        // Hex value
-        val hexValue = String.format("#%08X", finalColor)
-        val textX = x + (width - textRenderer.getWidth(hexValue)) / 2
+        // Hex input field (right half)
+        val inputX = x + previewWidth + 10
+        val inputBgColor = if (hexInputFocused) CinnamonTheme.contentBackground else CinnamonTheme.cardBackground
+        val inputBorderColor = if (hexInputFocused) CinnamonTheme.accentColor else CinnamonTheme.borderColor
+        
+        context.fill(inputX, y, inputX + inputWidth, y + height, inputBgColor)
+        context.drawBorder(inputX, y, inputWidth, height, inputBorderColor)
+        
+        // Display hex text
+        val displayText = if (hexInputText.isNotEmpty()) hexInputText else String.format("%08X", finalColor)
         val textY = y + (height - textRenderer.fontHeight) / 2
+        val textColor = if (hexInputText.isNotEmpty()) CinnamonTheme.primaryTextColor else CinnamonTheme.secondaryTextColor
         
-        // Draw text with outline for better visibility
-        context.drawText(textRenderer, Text.literal(hexValue).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), textX + 1, textY + 1, 0xFF000000.toInt(), false)
-        context.drawText(textRenderer, Text.literal(hexValue).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), textX, textY, 0xFFFFFFFF.toInt(), false)
+        context.drawText(
+            textRenderer, 
+            Text.literal("#$displayText").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), 
+            inputX + 5, textY, textColor, false
+        )
+        
+        // Cursor for focused input
+        if (hexInputFocused) {
+            val cursorX = inputX + 5 + textRenderer.getWidth("#$displayText")
+            context.fill(cursorX, y + 2, cursorX + 1, y + height - 2, CinnamonTheme.primaryTextColor)
+        }
     }
     
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
@@ -503,12 +539,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
     
     private fun handleColorPickerClick(mouseX: Int, mouseY: Int, button: Int): Boolean {
-        // println("[ThemeManagerScreen] handleColorPickerClick called. mouseX: $mouseX, mouseY: $mouseY") // <--- REMOVE THIS LINE
-        // NOTE: The check for clicks outside the picker's main rectangle has been moved to mouseClicked.
-        // This method now assumes the click is within pickerX, pickerY, pickerWidth, pickerHeight.
-        
         // Handle button clicks
-        val buttonY = pickerY + 290 // This is the target Y for buttons
+        val buttonY = pickerY + 290
         val buttonWidth = 80
         val buttonSpacing = 20
         val totalButtonWidth = buttonWidth * 2 + buttonSpacing
@@ -518,7 +550,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             if (mouseX >= buttonStartX && mouseX < buttonStartX + buttonWidth) {
                 // Apply button
                 applyColor()
-                ThemeConfigManager.saveTheme() // Save theme after applying color
+                ThemeConfigManager.saveTheme()
                 showColorPicker = false
                 return true
             } else if (mouseX >= buttonStartX + buttonWidth + buttonSpacing && mouseX < buttonStartX + buttonWidth * 2 + buttonSpacing) {
@@ -526,6 +558,20 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
                 showColorPicker = false
                 return true
             }
+        }
+        
+        // Handle hex input field click
+        val previewBoxY = buttonY - 35
+        val previewBoxHeight = 30
+        val inputX = pickerX + 20 + (pickerWidth - 40) / 2 + 10
+        val inputWidth = (pickerWidth - 40) / 2 - 5
+        
+        if (mouseX >= inputX && mouseX < inputX + inputWidth && 
+            mouseY >= previewBoxY && mouseY < previewBoxY + previewBoxHeight) {
+            hexInputFocused = true
+            return true
+        } else {
+            hexInputFocused = false
         }
         
         // Handle color wheel, brightness, and alpha slider clicks
@@ -587,6 +633,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     private fun openColorPicker(colorType: ColorType) {
         selectedColorType = colorType
         showColorPicker = true
+        hexInputText = ""
+        hexInputFocused = false
         
         // Initialize color picker with current color
         val currentColor = colorType.currentColor()
@@ -614,6 +662,74 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
 
             this.initializeComponents() // Refresh UI components
         }
+    }
+
+    private fun parseHexColor(hex: String): Boolean {
+        try {
+            val cleanHex = hex.replace("#", "").uppercase()
+            if (cleanHex.length == 6 || cleanHex.length == 8) {
+                val color = if (cleanHex.length == 6) {
+                    // RGB format - add full alpha
+                    0xFF000000.toInt() or cleanHex.toLong(16).toInt()
+                } else {
+                    // RGBA format
+                    cleanHex.toLong(16).toInt()
+                }
+                
+                val hsv = rgbToHsv(color)
+                hue = hsv[0]
+                saturation = hsv[1]
+                brightness = hsv[2]
+                alpha = if (cleanHex.length == 8) {
+                    ((color ushr 24) and 0xFF) / 255f
+                } else {
+                    1f
+                }
+                return true
+            }
+        } catch (e: NumberFormatException) {
+            // Invalid hex format
+        }
+        return false
+    }
+
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (showColorPicker && hexInputFocused) {
+            when (keyCode) {
+                257 -> { // Enter key
+                    if (parseHexColor(hexInputText)) {
+                        hexInputText = ""
+                    }
+                    return true
+                }
+                259 -> { // Backspace
+                    if (hexInputText.isNotEmpty()) {
+                        hexInputText = hexInputText.dropLast(1)
+                    }
+                    return true
+                }
+                256 -> { // Escape
+                    hexInputFocused = false
+                    hexInputText = ""
+                    return true
+                }
+            }
+            return true
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers)
+    }
+
+    override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        if (showColorPicker && hexInputFocused) {
+            if (chr.isLetterOrDigit() && hexInputText.length < 8) {
+                val upperChar = chr.uppercaseChar()
+                if (upperChar.isDigit() || upperChar in 'A'..'F') {
+                    hexInputText += upperChar
+                }
+            }
+            return true
+        }
+        return super.charTyped(chr, modifiers)
     }
     
     private fun resetToDefaults() {

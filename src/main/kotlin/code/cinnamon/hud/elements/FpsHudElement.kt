@@ -2,6 +2,7 @@ package code.cinnamon.hud.elements
 
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.hud.HudElement
+// import code.cinnamon.hud.HudManager // No longer needed for config fetching
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Style
@@ -36,23 +37,24 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
         val padding = 6
         
         // Draw rounded background
-        drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2)
+        drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2, this.backgroundColor) // Use this.backgroundColor
         
         // Clean white FPS text with slight shadow for readability
         val fpsText = Text.literal("$currentFps").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
         
         // Subtle shadow for better readability
-        context.drawText(mc.textRenderer, fpsText, 1, 1, 0x40000000, false)
+        if (this.textShadowEnabled) { // Use this.textShadowEnabled
+            context.drawText(mc.textRenderer, fpsText, 1, 1, 0x40000000, false)
+        }
         
-        // White text
-        val textColor = 0xFFFFFF
-        context.drawText(mc.textRenderer, fpsText, 0, 0, textColor, false)
+        // Use text color from this element
+        context.drawText(mc.textRenderer, fpsText, 0, 0, this.textColor, false) // Use this.textColor
         
         context.matrices.pop()
     }
     
-    private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
-        drawRoundedRect(context, x, y, width, height, cornerRadius, 0x80000000.toInt())
+    private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {
+        drawRoundedRect(context, x, y, width, height, cornerRadius, backgroundColor)
     }
     
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {

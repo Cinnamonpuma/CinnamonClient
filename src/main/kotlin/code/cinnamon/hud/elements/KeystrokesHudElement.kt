@@ -2,6 +2,8 @@ package code.cinnamon.hud.elements
 
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.hud.HudElement
+// import code.cinnamon.hud.HudManager // No longer needed for config fetching
+// import code.cinnamon.hud.HudElementConfig // No longer needed as parameter to drawKey
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Style
@@ -32,12 +34,12 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         
         // W key (centered)
         val wX = keySize + spacing
-        drawKey(context, "W", wX, 0, wPressed)
+        drawKey(context, "W", wX, 0, wPressed) // Removed config parameter
         
         // A S D keys
-        drawKey(context, "A", 0, keySize + spacing, aPressed)
-        drawKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
-        drawKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
+        drawKey(context, "A", 0, keySize + spacing, aPressed) // Removed config parameter
+        drawKey(context, "S", keySize + spacing, keySize + spacing, sPressed) // Removed config parameter
+        drawKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed) // Removed config parameter
         
         context.matrices.pop()
     }
@@ -49,20 +51,23 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         dPressed = mc.options.rightKey.isPressed
     }
     
-    private fun drawKey(context: DrawContext, key: String, x: Int, y: Int, pressed: Boolean) {
-        // Semi-transparent background that blends better
-        val bgColor = if (pressed) {
-            0xAAFFFFFF.toInt() // Semi-transparent white when pressed
+    private fun drawKey(context: DrawContext, key: String, x: Int, y: Int, pressed: Boolean) { // Removed config parameter
+        val currentBgColor = if (pressed) {
+            this.textColor // Pressed background is this element's text color
         } else {
-            0x80000000.toInt() // Semi-transparent black when not pressed
+            this.backgroundColor // Not pressed background is this element's background color
         }
         
         // Draw rounded rectangular key background
-        drawRoundedRect(context, x, y, keySize, keySize, cornerRadius, bgColor)
+        drawRoundedRect(context, x, y, keySize, keySize, cornerRadius, currentBgColor)
         
         // Key text with good contrast
         val keyText = Text.literal(key).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
-        val textColor = if (pressed) 0x000000 else 0xFFFFFF // Black on white, white on dark
+        val currentTextColor = if (pressed) {
+            this.backgroundColor // Pressed text is this element's background color
+        } else {
+            this.textColor // Not pressed text is this element's text color
+        }
         
         // Center the text
         val textWidth = mc.textRenderer.getWidth(keyText)
@@ -71,12 +76,12 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         val textY = y + (keySize - textHeight) / 2
         
         // Add subtle shadow for unpressed keys
-        if (!pressed) {
+        if (!pressed && this.textShadowEnabled) { // Use this.textShadowEnabled
             context.drawText(mc.textRenderer, keyText, textX + 1, textY + 1, 0x40000000, false)
         }
         
         // Draw main text
-        context.drawText(mc.textRenderer, keyText, textX, textY, textColor, false)
+        context.drawText(mc.textRenderer, keyText, textX, textY, currentTextColor, false)
     }
     
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
