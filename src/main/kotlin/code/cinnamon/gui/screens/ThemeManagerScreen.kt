@@ -409,8 +409,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
     
     private fun renderColorPreview(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
-        val previewWidth = width / 2 - 35 // Made smaller to fit buttons
-        val inputWidth = width / 2 - 35
+        val previewWidth = width / 2 - 10
+        val inputWidth = width / 2 - 60 // Made smaller to accommodate copy/paste buttons
         
         // Color preview (left half)
         val checkerSize = 8
@@ -449,18 +449,20 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             inputX + 5, textY, textColor, false
         )
         
-        // Improved cursor for focused input
+        // Fixed cursor positioning for focused input
         if (hexInputFocused) {
-            // Update cursor blink time
             hexCursorBlinkTime += 0.05f
-            if (hexCursorBlinkTime % 1.0f < 0.5f) { // Blink every half second
-                val textBeforeCursor = "#" + displayText.substring(0, minOf(hexCursorPosition, displayText.length))
-                val cursorX = inputX + 5 + textRenderer.getWidth(textBeforeCursor)
+            if (hexCursorBlinkTime % 1.0f < 0.5f) {
+                // Calculate cursor position correctly accounting for the "#" prefix
+                val textBeforeCursor = displayText.substring(0, minOf(hexCursorPosition, displayText.length))
+                val prefixWidth = textRenderer.getWidth("#")
+                val textWidth = textRenderer.getWidth(textBeforeCursor)
+                val cursorX = inputX + 5 + prefixWidth + textWidth
                 context.fill(cursorX, y + 4, cursorX + 1, y + height - 4, CinnamonTheme.primaryTextColor)
             }
         }
         
-        // Copy button
+        // Copy button (right side)
         val copyButtonX = inputX + inputWidth + 5
         val copyButtonWidth = 25
         val copyButtonHovered = lastMouseX >= copyButtonX && lastMouseX < copyButtonX + copyButtonWidth && 
@@ -610,35 +612,45 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         // Handle hex input field click
         val previewBoxY = buttonY - 35
         val previewBoxHeight = 30
-        val inputX = pickerX + 20 + (pickerWidth - 40) / 2 + 10
-        val inputWidth = (pickerWidth - 40) / 2 - 5
+        val previewBoxX = pickerX + 20
+        val previewBoxWidth = pickerWidth - 40
+        
+        // Calculate input field position (matches renderColorPreview)
+        val previewWidth = previewBoxWidth / 2 - 10
+        val inputWidth = previewBoxWidth / 2 - 60
+        val inputX = previewBoxX + previewWidth + 5
     
-        // --- Enhanced hex input & copy/paste logic below ---
-    
+        // Hex input field click
         if (mouseX >= inputX && mouseX < inputX + inputWidth &&
             mouseY >= previewBoxY && mouseY < previewBoxY + previewBoxHeight) {
             hexInputFocused = true
-            // Cursor positioning by click
+            
+            // Fixed cursor positioning
             val clickX = mouseX - (inputX + 5)
             val displayText = if (hexInputText.isNotEmpty()) hexInputText else String.format("%08X", selectedColorType?.currentColor() ?: 0)
-            val fullText = "#$displayText"
-    
-            // Find cursor position based on click location
-            hexCursorPosition = 0
-            for (i in displayText.indices) {
-                val textWidth = textRenderer.getWidth("#" + displayText.substring(0, i + 1))
-                if (clickX <= textWidth) {
-                    hexCursorPosition = i
-                    break
+            
+            // Account for the "#" prefix when calculating cursor position
+            val prefixWidth = textRenderer.getWidth("#")
+            val adjustedClickX = clickX - prefixWidth
+            
+            if (adjustedClickX <= 0) {
+                hexCursorPosition = 0
+            } else {
+                hexCursorPosition = displayText.length
+                for (i in 1..displayText.length) {
+                    val textWidth = textRenderer.getWidth(displayText.substring(0, i))
+                    if (adjustedClickX <= textWidth) {
+                        hexCursorPosition = i - 1
+                        break
+                    }
                 }
-                hexCursorPosition = i + 1
             }
             return true
         } else {
             hexInputFocused = false
         }
     
-        // Copy/paste buttons
+        // Fixed copy/paste button positions
         val copyButtonX = inputX + inputWidth + 5
         val copyButtonWidth = 25
         val pasteButtonX = copyButtonX + copyButtonWidth + 2
@@ -647,18 +659,50 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         if (mouseY >= previewBoxY && mouseY < previewBoxY + previewBoxHeight) {
             if (mouseX >= copyButtonX && mouseX < copyButtonX + copyButtonWidth) {
                 // Copy button clicked
-                val displayText = if (hexInputText.isNotEmpty()) hexInputText else String.format("%08X", selectedColorType?.currentColor() ?: 0)
-                MinecraftClient.getInstance().keyboard.clipboard = "#$displayText"
+                val colorToCopy = if (hexInputText.isNotEmpty()) {
+                    try {
+                        val cleanHex = hexInputText.replace("#", "").uppercase()
+                        if (cleanHex.length == 6) {
+                            // Add alpha if missing
+                            "FF$cleanHex"
+                        } else {
+                            cleanHex
+                        }
+                    } catch (e: Exception) {
+                        String.format("%08X", selectedColorType?.currentColor() ?: 0)
+                    }
+                } else {
+                    String.format("%08X", selectedColorType?.currentColor() ?: 0)
+                }
+                
+                MinecraftClient.getInstance().keyboard.clipboard = "#$colorToCopy"
                 return true
             } else if (mouseX >= pasteButtonX && mouseX < pasteButtonX + pasteButtonWidth) {
                 // Paste button clicked
-                val clipboard = MinecraftClient.getInstance().keyboard.clipboard
-                if (clipboard.startsWith("#") && clipboard.length > 1) {
-                    val hexPart = clipboard.substring(1)
-                    if (parseHexColor(hexPart)) {
-                        hexInputText = hexPart.uppercase()
-                        hexCursorPosition = hexInputText.length
+                try {
+                    val clipboard = MinecraftClient.getInstance().keyboard.clipboard
+                    if (clipboard.isNotEmpty()) {
+                        val cleanClipboard = clipboard.trim()
+                        val hexPart = if (cleanClipboard.startsWith("#")) {
+                            cleanClipboard.substring(1)
+                        } else {
+                            cleanClipboard
+                        }
+                        
+                        if (hexPart.length == 6 || hexPart.length == 8) {
+                            // Validate hex characters
+                            val isValidHex = hexPart.all { it.isDigit() || it.uppercaseChar() in 'A'..'F' }
+                            if (isValidHex) {
+                                val fullHex = if (hexPart.length == 6) "FF$hexPart" else hexPart
+                                if (parseHexColor(fullHex)) {
+                                    hexInputText = fullHex.uppercase()
+                                    hexCursorPosition = hexInputText.length
+                                }
+                            }
+                        }
                     }
+                } catch (e: Exception) {
+                    // Handle clipboard access errors silently
                 }
                 return true
             }
@@ -791,25 +835,15 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         if (showColorPicker && hexInputFocused) {
             when (keyCode) {
                 257 -> { // Enter key
-                    if (parseHexColor(hexInputText)) {
-                        hexInputText = ""
+                    if (hexInputText.isNotEmpty() && parseHexColor(hexInputText)) {
+                        // Keep the parsed color, don't clear the text
                     }
-                    return true
-                }
-                259 -> { // Backspace
-                    if (hexInputText.isNotEmpty()) {
-                        hexInputText = hexInputText.dropLast(1)
-                    }
-                    return true
-                }
-                256 -> { // Escape
-                    hexInputFocused = false
-                    hexInputText = ""
                     return true
                 }
                 259 -> { // Backspace
                     if (hexInputText.isNotEmpty() && hexCursorPosition > 0) {
-                        hexInputText = hexInputText.substring(0, hexCursorPosition - 1) + hexInputText.substring(hexCursorPosition)
+                        hexInputText = hexInputText.substring(0, hexCursorPosition - 1) + 
+                                      hexInputText.substring(hexCursorPosition)
                         hexCursorPosition = maxOf(0, hexCursorPosition - 1)
                     }
                     return true
@@ -819,7 +853,6 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
                     hexInputText = ""
                     return true
                 }
-                // Add these lines:
                 262 -> { // Right arrow
                     hexCursorPosition = minOf(hexInputText.length, hexCursorPosition + 1)
                     return true
@@ -836,6 +869,13 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
                     hexCursorPosition = hexInputText.length
                     return true
                 }
+                46 -> { // Delete key
+                    if (hexInputText.isNotEmpty() && hexCursorPosition < hexInputText.length) {
+                        hexInputText = hexInputText.substring(0, hexCursorPosition) + 
+                                      hexInputText.substring(hexCursorPosition + 1)
+                    }
+                    return true
+                }
             }
             return true
         }
@@ -847,7 +887,9 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             if (chr.isLetterOrDigit() && hexInputText.length < 8) {
                 val upperChar = chr.uppercaseChar()
                 if (upperChar.isDigit() || upperChar in 'A'..'F') {
-                    hexInputText = hexInputText.substring(0, hexCursorPosition) + upperChar + hexInputText.substring(hexCursorPosition)
+                    hexInputText = hexInputText.substring(0, hexCursorPosition) + 
+                                  upperChar + 
+                                  hexInputText.substring(hexCursorPosition)
                     hexCursorPosition++
                 }
             }
