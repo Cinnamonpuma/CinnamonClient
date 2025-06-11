@@ -665,18 +665,24 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
                         if (cleanHex.length == 6) {
                             // Add alpha if missing
                             "FF$cleanHex"
-                        } else {
+                        } else if (cleanHex.length == 8) {
                             cleanHex
+                        } else {
+                            // Invalid length, use current color from picker
+                            String.format("%08X", hsvToRgb(hue, saturation, brightness) or ((alpha * 255).toInt() shl 24))
                         }
                     } catch (e: Exception) {
-                        String.format("%08X", selectedColorType?.currentColor() ?: 0)
+                        // Use current color from picker if hex parsing fails
+                        String.format("%08X", hsvToRgb(hue, saturation, brightness) or ((alpha * 255).toInt() shl 24))
                     }
                 } else {
-                    String.format("%08X", selectedColorType?.currentColor() ?: 0)
+                    // Use current color from picker if no hex input
+                    String.format("%08X", hsvToRgb(hue, saturation, brightness) or ((alpha * 255).toInt() shl 24))
                 }
                 
                 MinecraftClient.getInstance().keyboard.clipboard = "#$colorToCopy"
                 return true
+            
             } else if (mouseX >= pasteButtonX && mouseX < pasteButtonX + pasteButtonWidth) {
                 // Paste button clicked
                 try {
@@ -777,6 +783,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         saturation = hsv[1]
         brightness = hsv[2]
         alpha = ((currentColor ushr 24) and 0xFF) / 255f
+        
+        // Update hex input text to show current color
         hexInputText = String.format("%08X", currentColor)
         hexCursorPosition = hexInputText.length
     }
@@ -842,9 +850,12 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
                 }
                 259 -> { // Backspace
                     if (hexInputText.isNotEmpty() && hexCursorPosition > 0) {
-                        hexInputText = hexInputText.substring(0, hexCursorPosition - 1) + 
-                                      hexInputText.substring(hexCursorPosition)
-                        hexCursorPosition = maxOf(0, hexCursorPosition - 1)
+                        val safePosition = hexCursorPosition.coerceIn(0, hexInputText.length)
+                        if (safePosition > 0) {
+                            hexInputText = hexInputText.substring(0, safePosition - 1) + 
+                                          hexInputText.substring(safePosition)
+                            hexCursorPosition = maxOf(0, safePosition - 1)
+                        }
                     }
                     return true
                 }
@@ -871,8 +882,11 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
                 }
                 46 -> { // Delete key
                     if (hexInputText.isNotEmpty() && hexCursorPosition < hexInputText.length) {
-                        hexInputText = hexInputText.substring(0, hexCursorPosition) + 
-                                      hexInputText.substring(hexCursorPosition + 1)
+                        val safePosition = hexCursorPosition.coerceIn(0, hexInputText.length)
+                        if (safePosition < hexInputText.length) {
+                            hexInputText = hexInputText.substring(0, safePosition) + 
+                                          hexInputText.substring(safePosition + 1)
+                        }
                     }
                     return true
                 }
@@ -887,10 +901,13 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             if (chr.isLetterOrDigit() && hexInputText.length < 8) {
                 val upperChar = chr.uppercaseChar()
                 if (upperChar.isDigit() || upperChar in 'A'..'F') {
-                    hexInputText = hexInputText.substring(0, hexCursorPosition) + 
+                    // Ensure cursor position is within bounds
+                    val safePosition = hexCursorPosition.coerceIn(0, hexInputText.length)
+                    
+                    hexInputText = hexInputText.substring(0, safePosition) + 
                                   upperChar + 
-                                  hexInputText.substring(hexCursorPosition)
-                    hexCursorPosition++
+                                  hexInputText.substring(safePosition)
+                    hexCursorPosition = safePosition + 1
                 }
             }
             return true
