@@ -330,32 +330,19 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         
         // Draw filled color wheel using small rectangles for better color coverage
         for (r in 0 until radius) {
-            for (angle in 0 until 360 step 2) {
+            for (angle in 0 until 360 step 1) { // Changed from step 2 to step 1 for smoother wheel
                 val rad = Math.toRadians(angle.toDouble())
-                val innerR = r
-                val outerR = r + 1
                 
-                // Draw multiple points to create filled effect
-                for (subR in innerR until outerR) {
-                    val px = centerX + (cos(rad) * subR).toInt()
-                    val py = centerY + (sin(rad) * subR).toInt()
-                    
-                    val sat = subR.toFloat() / radius
-                    val hueColor = hsvToRgb(angle.toFloat(), sat, brightness)
-                    
-                    // Draw 2x2 pixel blocks for better fill
-                    context.fill(px, py, px + 2, py + 2, hueColor)
-                }
+                val px = centerX + (cos(rad) * r).toInt()
+                val py = centerY + (sin(rad) * r).toInt()
+                
+                val sat = r.toFloat() / radius
+                val hueColor = hsvToRgb(angle.toFloat(), sat, brightness)
+                
+                // Draw single pixels instead of 2x2 blocks
+                context.fill(px, py, px + 1, py + 1, hueColor)
             }
         }
-        
-        // Draw white center circle
-        val centerSize = 20
-        context.fill(
-            centerX - centerSize/2, centerY - centerSize/2, 
-            centerX + centerSize/2, centerY + centerSize/2, 
-            hsvToRgb(hue, 0f, brightness)
-        )
         
         // Draw selection indicator
         val selRadius = saturation * radius
@@ -643,12 +630,14 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         saturation = hsv[1]
         brightness = hsv[2]
         alpha = ((currentColor ushr 24) and 0xFF) / 255f
+        hexInputText = String.format("%08X", currentColor)
     }
     
     private fun applyColor() {
         selectedColorType?.let { colorType ->
             val finalColor = hsvToRgb(hue, saturation, brightness)
             val colorWithAlpha = (finalColor and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
+            hexInputText = String.format("%08X", colorWithAlpha)
             
             // Logging before setter
             println("[ThemeManagerScreen] Applying color for: ${colorType.displayName}")
@@ -685,6 +674,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
                 } else {
                     1f
                 }
+                hexInputText = String.format("%08X", color)
                 return true
             }
         } catch (e: NumberFormatException) {
