@@ -83,42 +83,18 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         
         // Header section
         val headerHeight = 50
-        context.fill(
-            contentX,
-            contentY,
-            contentX + contentWidth,
-            contentY + headerHeight,
-            CinnamonTheme.cardBackground
-        )
+
         
         // Title
         context.drawText(
             textRenderer,
-            Text.literal("Key Bindings").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal("Click on a key to change it").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             contentX + 15,
-            contentY + 12,
+            contentY + 20,
             CinnamonTheme.titleColor,
             true
         )
         
-        // Subtitle
-        context.drawText(
-            textRenderer,
-            Text.literal("Click on a keybinding to change it").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
-            contentX + 15,
-            contentY + 28,
-            CinnamonTheme.secondaryTextColor,
-            false
-        )
-        
-        // Header border
-        context.fill(
-            contentX,
-            contentY + headerHeight - 1,
-            contentX + contentWidth,
-            contentY + headerHeight,
-            CinnamonTheme.borderColor
-        )
         
         // Listening indicator
         if (isListening && selectedKeybinding != null) {
