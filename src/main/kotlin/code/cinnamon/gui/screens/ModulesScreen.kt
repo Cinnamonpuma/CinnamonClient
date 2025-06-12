@@ -30,6 +30,13 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     private val settingsHudElementHeight = 120 // Height for expanded HUD element card
     private val moduleSpacing = 8 // Increased spacing between modules
     private val settingsAreaHeight = 120 // Fixed height for settings area
+    private var showColorPicker = false
+    private var colorPickerX = 0
+    private var colorPickerY = 0
+    private var colorPickerColor = 0xFFFFFFFF.toInt()
+    private var colorPickerAlpha = 0xFF
+    private var colorPickerTarget: HudElement? = null
+    private var colorPickerIsBg = false // true = background, false = text
 
     // Helper functions to convert Int color to HEX string
     private fun Int.toRGBAHexString(): String = String.format("#%08X", this)
@@ -127,6 +134,15 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         
         if (maxScrollOffset > 0) {
             renderScrollbar(context, contentX + contentWidth - 8, moduleListY, 6, moduleListHeight)
+        }
+        if (showColorPicker) {
+            renderColorPicker(
+                context,
+                colorPickerX,
+                colorPickerY,
+                colorPickerColor,
+                colorPickerAlpha
+            )
         }
     }
     
@@ -493,6 +509,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     }
     
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (showColorPicker) {
+            if (handleColorPickerClick(mouseX.toInt(), mouseY.toInt(), button)) return true
+        }
         val contentX = getContentX()
         val contentY = getContentY()
         val contentWidth = getContentWidth()
@@ -609,19 +628,15 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val setTextColorButtonX = settingsX + settingsWidth - setTextColorButtonWidth
         val setTextColorButtonY = currentSettingY
         
-        if (mouseX >= setTextColorButtonX && mouseX < setTextColorButtonX + setTextColorButtonWidth && 
+        if (mouseX >= setTextColorButtonX && mouseX < setTextColorButtonX + setTextColorButtonWidth &&
             mouseY >= setTextColorButtonY && mouseY < setTextColorButtonY + textElementHeight) {
-            println("Set Text Color clicked for ${element.getName()}. Current value: ${element.textColor.toRGBHexString()}. User input for new hex string would be requested here.")
-            val newTextColor = when (element.textColor.toRGBHexString()) { 
-                "#FFFFFF" -> 0xFF0000 
-                "#FF0000" -> 0x00FF00 
-                "#00FF00" -> 0x0000FF 
-                "#0000FF" -> 0xFFFFFF 
-                else -> 0xFFFFFF 
-            }
-            element.textColor = newTextColor // Directly modify element property
-            HudManager.markChangesForSave() // Mark for saving
-            println("Placeholder: Text color for ${element.getName()} changed to ${element.textColor.toRGBHexString()}.")
+            showColorPicker = true
+            colorPickerX = mouseX.toInt()
+            colorPickerY = mouseY.toInt()
+            colorPickerColor = element.textColor
+            colorPickerAlpha = 0xFF
+            colorPickerTarget = element
+            colorPickerIsBg = false
             return true
         }
         currentSettingY += 14 
@@ -632,21 +647,13 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val setBgColorButtonY = currentSettingY
         if (mouseX >= setBgColorButtonX && mouseX < setBgColorButtonX + setBgColorButtonWidth &&
             mouseY >= setBgColorButtonY && mouseY < setBgColorButtonY + textElementHeight) {
-            println("Set Background Color clicked for ${element.getName()}. Current value: ${element.backgroundColor.toRGBAHexString()}. User input for new hex string would be requested here.")
-            val currentAlpha = (element.backgroundColor ushr 24) and 0xFF
-            val baseColorRGB = element.backgroundColor and 0x00FFFFFF 
-            
-            val newAlpha = when (currentAlpha) {
-                0x80 -> 0xAA
-                0xAA -> 0xDD
-                0xDD -> 0x50 
-                0x50 -> 0x80
-                else -> 0x80 
-            }
-            val newBgColor = (newAlpha shl 24) or baseColorRGB
-            element.backgroundColor = newBgColor // Directly modify element property
-            HudManager.markChangesForSave() // Mark for saving
-            println("Placeholder: Background color for ${element.getName()} changed to ${element.backgroundColor.toRGBAHexString()}.")
+            showColorPicker = true
+            colorPickerX = mouseX.toInt()
+            colorPickerY = mouseY.toInt()
+            colorPickerColor = element.backgroundColor
+            colorPickerAlpha = (element.backgroundColor ushr 24) and 0xFF
+            colorPickerTarget = element
+            colorPickerIsBg = true
             return true
         }
         currentSettingY += 14 
@@ -729,6 +736,10 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         
         return false
     }
+    override fun close() {
+        // Instead of calling super.close(), open the main menu (just like HudScreen)
+        CinnamonGuiManager.openMainMenu()
+    }
     
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
         val contentX = getContentX()
@@ -749,5 +760,129 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
         
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
+    }
+    private fun renderColorPicker(context: DrawContext, x: Int, y: Int, color: Int, alpha: Int) {
+        val width = 180
+        val height = 210
+        val padding = 10
+        val gradientSize = 120
+        val sliderWidth = gradientSize
+        val sliderHeight = 10
+        val previewSize = 24
+    
+        // Popup background
+        context.fill(x, y, x + width, y + height, 0xCC1A1A1A.toInt())
+    
+        // Color gradient (R = X, G = Y, B = 1-(R+G)/2)
+        for (dx in 0 until gradientSize) {
+            for (dy in 0 until gradientSize) {
+                val r = dx / (gradientSize-1).toFloat()
+                val g = dy / (gradientSize-1).toFloat()
+                val b = 1f - (r + g) / 2
+                val col = (0xFF shl 24) or
+                    ((r * 255).toInt() shl 16) or
+                    ((g * 255).toInt() shl 8) or
+                    ((b * 255).toInt())
+                context.fill(x + padding + dx, y + padding + dy, x + padding + dx + 1, y + padding + dy + 1, col)
+            }
+        }
+        // Crosshair for selection
+        val curR = ((color shr 16) and 0xFF) / 255f
+        val curG = ((color shr 8) and 0xFF) / 255f
+        val crossX = (curR * (gradientSize-1)).toInt()
+        val crossY = (curG * (gradientSize-1)).toInt()
+        context.fill(x + padding + crossX - 2, y + padding + crossY - 2, x + padding + crossX + 3, y + padding + crossY + 3, 0xFFFFFFFF.toInt())
+    
+        // Alpha slider
+        val sliderX = x + padding
+        val sliderY = y + padding + gradientSize + 10
+        for (dx in 0 until sliderWidth) {
+            val a = (dx / (sliderWidth-1).toFloat() * 255).toInt()
+            val sliderCol = (a shl 24) or (color and 0x00FFFFFF)
+            context.fill(sliderX + dx, sliderY, sliderX + dx + 1, sliderY + sliderHeight, sliderCol)
+        }
+        // Alpha indicator
+        val alphaPos = (alpha / 255f * (sliderWidth-1)).toInt()
+        context.fill(sliderX + alphaPos - 2, sliderY - 2, sliderX + alphaPos + 3, sliderY + sliderHeight + 2, 0xFFFFFFFF.toInt())
+    
+        // Preview box
+        val previewX = x + width - previewSize - padding
+        val previewY = y + padding
+        context.fill(previewX, previewY, previewX + previewSize, previewY + previewSize, (alpha shl 24) or (color and 0x00FFFFFF))
+    
+        // Buttons
+        val btnY = y + height - 32
+        val btnW = 64
+        val btnH = 22
+        val btnApplyX = x + padding
+        val btnCancelX = x + width - btnW - padding
+    
+        context.fill(btnApplyX, btnY, btnApplyX + btnW, btnY + btnH, 0xFF2ECC71.toInt())
+        context.fill(btnCancelX, btnY, btnCancelX + btnW, btnY + btnH, 0xFFCC2E2E.toInt())
+        context.drawText(textRenderer, Text.literal("Apply"), btnApplyX + 14, btnY + 5, 0xFF000000.toInt(), false)
+        context.drawText(textRenderer, Text.literal("Cancel"), btnCancelX + 10, btnY + 5, 0xFF000000.toInt(), false)
+    }
+    
+    private fun handleColorPickerClick(mouseX: Int, mouseY: Int, button: Int): Boolean {
+        val x = colorPickerX
+        val y = colorPickerY
+        val width = 180
+        val height = 210
+        val padding = 10
+        val gradientSize = 120
+        val sliderWidth = gradientSize
+        val sliderHeight = 10
+        val previewSize = 24
+        val btnY = y + height - 32
+        val btnW = 64
+        val btnH = 22
+        val btnApplyX = x + padding
+        val btnCancelX = x + width - btnW - padding
+    
+        // Apply
+        if (mouseX >= btnApplyX && mouseX < btnApplyX + btnW && mouseY >= btnY && mouseY < btnY + btnH) {
+            colorPickerTarget?.let {
+                if (colorPickerIsBg) {
+                    it.backgroundColor = (colorPickerAlpha shl 24) or (colorPickerColor and 0x00FFFFFF)
+                } else {
+                    it.textColor = colorPickerColor
+                }
+                HudManager.markChangesForSave()
+            }
+            showColorPicker = false
+            return true
+        }
+        // Cancel
+        if (mouseX >= btnCancelX && mouseX < btnCancelX + btnW && mouseY >= btnY && mouseY < btnY + btnH) {
+            showColorPicker = false
+            return true
+        }
+        // Color gradient
+        val gradX = x + padding
+        val gradY = y + padding
+        if (mouseX >= gradX && mouseX < gradX + gradientSize && mouseY >= gradY && mouseY < gradY + gradientSize) {
+            val r = (mouseX - gradX) / (gradientSize-1).toFloat()
+            val g = (mouseY - gradY) / (gradientSize-1).toFloat()
+            val b = 1f - (r + g) / 2
+            colorPickerColor = (0xFF shl 24) or
+                    ((r * 255).toInt() shl 16) or
+                    ((g * 255).toInt() shl 8) or
+                    ((b * 255).toInt())
+            return true
+        }
+        // Alpha slider
+        val sliderX = x + padding
+        val sliderY = y + padding + gradientSize + 10
+        if (mouseX >= sliderX && mouseX < sliderX + sliderWidth && mouseY >= sliderY && mouseY < sliderY + sliderHeight) {
+            val a = ((mouseX - sliderX) / (sliderWidth-1).toFloat() * 255).toInt().coerceIn(0, 255)
+            colorPickerAlpha = a
+            return true
+        }
+        // Click outside picker closes it
+        if (mouseX < x || mouseX > x + width || mouseY < y || mouseY > y + height) {
+            showColorPicker = false
+            return true
+        }
+        return true // Consume other clicks inside picker
     }
 }

@@ -29,7 +29,10 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val description: String,
         val currentKey: Int
     )
-    
+    override fun close() {
+        // Instead of calling super.close(), open the main menu (just like HudScreen)
+        CinnamonGuiManager.openMainMenu()
+    }
     override fun initializeComponents() {
         // Back button
         addButton(CinnamonButton(

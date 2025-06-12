@@ -16,6 +16,9 @@ object CinnamonGuiManager {
     fun openMainMenu() {
         client.setScreen(MainMenuScreen())
     }
+    fun openScreen(screen: Screen) {
+        client.setScreen(screen)
+    }
     fun openThemeManagerScreen() {
         client.setScreen(ThemeManagerScreen())
     }
