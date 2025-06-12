@@ -46,7 +46,7 @@ public abstract class ScreenMixin {
                 // ill clean this up later if you dont fix it
 
                 TextRenderer textRenderer = ((ScreenAccessor) this).getTextRenderer();
-                MainClient.createWidgets(mc, screen);
+                UIUtilsModule.createWidgets(mc, screen);
 
                 // create chat box
                 this.addressField = new TextFieldWidget(textRenderer, 5, 245, 160, 20, Text.of("Chat ...")) {
@@ -68,7 +68,7 @@ public abstract class ScreenMixin {
                                     mc.getNetworkHandler().sendChatMessage(this.getText());
                                 }
                             } else {
-                                MainClient.LOGGER.warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
+                                UIUtilsModule.LOGGER.warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
                             }
 
                             this.setText("");
@@ -89,7 +89,7 @@ public abstract class ScreenMixin {
     public void render(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         // display sync id, revision, if ui utils is enabled
         if (SharedVariables.enabled && mc.player != null && mc.currentScreen instanceof LecternScreen) {
-            MainClient.createText(mc, context, ((ScreenAccessor) this).getTextRenderer());
+            UIUtilsModule.createText(mc, context, ((ScreenAccessor) this).getTextRenderer());
         }
     }
 }

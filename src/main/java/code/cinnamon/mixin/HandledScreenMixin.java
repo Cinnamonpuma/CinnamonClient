@@ -46,7 +46,7 @@ public abstract class HandledScreenMixin extends Screen {
     @Inject(at = @At("TAIL"), method = "init")
     public void init(CallbackInfo ci) {
         if (SharedVariables.enabled) {
-            MainClient.createWidgets(mc, this);
+            UIUtilsModule.createWidgets(mc, this);
 
             // create chat box
             this.addressField = new TextFieldWidget(this.textRenderer, 5, 245, 160, 20, Text.of("Chat ...")) {
@@ -68,7 +68,7 @@ public abstract class HandledScreenMixin extends Screen {
                                 mc.getNetworkHandler().sendChatMessage(this.getText());
                             }
                     } else {
-                            MainClient.LOGGER.warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
+                            UIUtilsModule.LOGGER.warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
                         }
 
                         this.setText("");
@@ -88,7 +88,7 @@ public abstract class HandledScreenMixin extends Screen {
         cir.cancel();
         if (super.keyPressed(keyCode, scanCode, modifiers)) {
             cir.setReturnValue(true);
-        } else if (MainClient.mc.options.inventoryKey.matchesKey(keyCode, scanCode) && (this.addressField == null || !this.addressField.isSelected())) {
+        } else if (UIUtilsModule.mc.options.inventoryKey.matchesKey(keyCode, scanCode) && (this.addressField == null || !this.addressField.isSelected())) {
             // Crashes if address field does not exist (because of ui utils disabled, this is a temporary fix.)
             this.close();
             cir.setReturnValue(true);
@@ -113,7 +113,7 @@ public abstract class HandledScreenMixin extends Screen {
         // this hurts me physically to look at this in a render method :(
         // im too lazy to fix it tho :D
         if (SharedVariables.enabled) {
-            MainClient.createText(mc, context, this.textRenderer);
+            UIUtilsModule.createText(mc, context, this.textRenderer);
         }
     }
 }

@@ -27,7 +27,7 @@ public class BookEditScreenMixin extends Screen {
     @Inject(at = @At("TAIL"), method = "init")
     public void init(CallbackInfo ci) {
         if (SharedVariables.enabled) {
-            MainClient.createWidgets(mc, this);
+            UIUtilsModule.createWidgets(mc, this);
 
             // create chat box
             TextFieldWidget addressField = new TextFieldWidget(textRenderer, 5, 245, 160, 20, Text.of("Chat ...")) {
@@ -49,7 +49,7 @@ public class BookEditScreenMixin extends Screen {
                                 mc.getNetworkHandler().sendChatMessage(this.getText());
                             }
                         } else {
-                            MainClient.LOGGER.warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
+                            UIUtilsModule.LOGGER.warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
                         }
 
                         this.setText("");

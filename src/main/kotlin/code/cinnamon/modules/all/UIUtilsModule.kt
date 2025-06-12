@@ -2,7 +2,6 @@ package code.cinnamon.modules.all
 
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.gui.components.CinnamonButton
-import code.cinnamon.gui.components.CinnamonDropdown
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
@@ -15,9 +14,12 @@ import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.text.Text
 import org.slf4j.LoggerFactory
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import net.minecraft.util.collection.DefaultedList
 import java.util.*
 import kotlin.collections.mutableListOf
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import net.minecraft.screen.sync.ItemStackHash
 
 object UIUtilsModule {
     private val LOGGER = LoggerFactory.getLogger("ui-utils")
@@ -60,7 +62,7 @@ object UIUtilsModule {
         ))
         
         // Send packets toggle button
-        val sendPacketsButton = CinnamonButton(
+        buttons.add(CinnamonButton(
             x = baseX,
             y = baseY + (buttonHeight + spacing) * 2,
             width = buttonWidth,
@@ -70,11 +72,10 @@ object UIUtilsModule {
                 toggleSendPackets()
                 // Button text will be updated externally
             }
-        )
-        buttons.add(sendPacketsButton)
+        ))
         
         // Delay packets toggle button
-        val delayPacketsButton = CinnamonButton(
+        buttons.add(CinnamonButton(
             x = baseX,
             y = baseY + (buttonHeight + spacing) * 3,
             width = buttonWidth,
@@ -84,8 +85,7 @@ object UIUtilsModule {
                 toggleDelayPackets()
                 // Button text will be updated externally
             }
-        )
-        buttons.add(delayPacketsButton)
+        ))
         
         // Save GUI button
         buttons.add(CinnamonButton(
@@ -139,24 +139,24 @@ object UIUtilsModule {
         
         // Display sync ID and revision
         context.drawText(
-            textRenderer, 
-            "Sync Id: ${player.currentScreenHandler.syncId}", 
-            x, y, 
-            0xFFFFFF, 
+            textRenderer,
+            Text.of("Sync Id: ${player.currentScreenHandler.syncId}"),
+            x, y,
+            0xFFFFFF,
             false
         )
         context.drawText(
-            textRenderer, 
-            "Revision: ${player.currentScreenHandler.revision}", 
-            x, y + 15, 
-            0xFFFFFF, 
+            textRenderer,
+            Text.of("Revision: ${player.currentScreenHandler.revision}"),
+            x, y + 15,
+            0xFFFFFF,
             false
         )
         context.drawText(
-            textRenderer, 
-            "Delayed Packets: ${delayedUIPackets.size}", 
-            x, y + 30, 
-            0xFFFFFF, 
+            textRenderer,
+            Text.of("Delayed Packets: ${delayedUIPackets.size}"),
+            x, y + 30,
+            0xFFFFFF,
             false
         )
     }
@@ -193,7 +193,7 @@ object UIUtilsModule {
                 delayedUIPackets.forEach { packet ->
                     networkHandler.sendPacket(packet)
                 }
-                mc.player?.sendMessage(Text.of("Sent ${delayedUIPackets.size} delayed packets"))
+                mc.player?.sendMessage(Text.of("Sent ${delayedUIPackets.size} delayed packets"), false)
                 delayedUIPackets.clear()
                 LOGGER.info("Sent all delayed packets")
             }
@@ -230,7 +230,7 @@ object UIUtilsModule {
     }
     
     private fun openPacketUtilsScreen() {
-        mc.setScreen(PacketUtilsScreen())
+        MinecraftClient.getInstance().setScreen(PacketUtilsScreen())
     }
     
     private fun copyGUITitleJSON() {
@@ -297,27 +297,17 @@ object UIUtilsModule {
             false
         }
     }
-    
-    private fun stringToSlotActionType(string: String): SlotActionType? {
-        return when (string) {
-            "PICKUP" -> SlotActionType.PICKUP
-            "QUICK_MOVE" -> SlotActionType.QUICK_MOVE
-            "SWAP" -> SlotActionType.SWAP
-            "CLONE" -> SlotActionType.CLONE
-            "THROW" -> SlotActionType.THROW
-            "QUICK_CRAFT" -> SlotActionType.QUICK_CRAFT
-            "PICKUP_ALL" -> SlotActionType.PICKUP_ALL
-            else -> null
-        }
-    }
 }
 
 /**
- * Screen with dropdown menus for packet utilities
+ * Screen with simple text inputs for packet utilities
  */
 class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
+    private val LOGGER = LoggerFactory.getLogger("packet-utils")
+    
     private var selectedPacketType = "Click Slot"
     private val packetTypes = listOf("Click Slot", "Button Click")
+    private var currentPacketIndex = 0
     
     // Click Slot fields
     private var syncId = ""
@@ -326,6 +316,7 @@ class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
     private var button = ""
     private var selectedAction = "PICKUP"
     private val actionTypes = SlotActionType.values().map { it.name }
+    private var currentActionIndex = 0
     
     // Button Click fields
     private var buttonId = ""
@@ -336,34 +327,41 @@ class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
     private var statusMessage = ""
     private var statusColor = 0xFFFFFF
     
+    // Input handling
+    private var activeField = ""
+    
     override fun initializeComponents() {
         val centerX = getContentX() + getContentWidth() / 2
         val buttonWidth = 100
         val buttonHeight = 25
         
-        // Packet type dropdown
-        addDropdown(CinnamonDropdown(
+        // Packet type toggle button
+        addButton(CinnamonButton(
             x = centerX - 60,
             y = getContentY() + 50,
             width = 120,
             height = 20,
-            options = packetTypes,
-            selectedOption = selectedPacketType,
-            onSelectionChanged = { selection -> 
-                selectedPacketType = selection
+            text = Text.of(selectedPacketType),
+            onClick = { _, _ -> 
+                currentPacketIndex = (currentPacketIndex + 1) % packetTypes.size
+                selectedPacketType = packetTypes[currentPacketIndex]
                 statusMessage = ""
+                refreshButtons()
             }
         ))
         
-        // Action type dropdown for Click Slot packets
-        addDropdown(CinnamonDropdown(
+        // Action type toggle button for Click Slot packets
+        addButton(CinnamonButton(
             x = centerX - 60,
             y = getContentY() + 200,
             width = 120,
             height = 20,
-            options = actionTypes,
-            selectedOption = selectedAction,
-            onSelectionChanged = { selection -> selectedAction = selection }
+            text = Text.of(selectedAction),
+            onClick = { _, _ -> 
+                currentActionIndex = (currentActionIndex + 1) % actionTypes.size
+                selectedAction = actionTypes[currentActionIndex]
+                refreshButtons()
+            }
         ))
         
         // Send button
@@ -383,8 +381,14 @@ class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("Back"),
-            onClick = { _, _ -> mc.setScreen(null) }
+            onClick = { _, _ -> MinecraftClient.getInstance().setScreen(null) }
         ))
+    }
+    
+    private fun refreshButtons() {
+        // Clear and recreate buttons with updated text
+        buttons.clear()
+        initializeComponents()
     }
     
     override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
@@ -408,16 +412,16 @@ class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
         
         // Draw form fields based on selected packet type
         if (selectedPacketType == "Click Slot") {
-            drawInputField(context, leftX, currentY, "Sync ID", syncId, labelWidth, fieldWidth)
+            drawInputField(context, leftX, currentY, "Sync ID", syncId, labelWidth, fieldWidth, "syncId")
             currentY += rowHeight
             
-            drawInputField(context, leftX, currentY, "Revision", revision, labelWidth, fieldWidth)
+            drawInputField(context, leftX, currentY, "Revision", revision, labelWidth, fieldWidth, "revision")
             currentY += rowHeight
             
-            drawInputField(context, leftX, currentY, "Slot", slot, labelWidth, fieldWidth)
+            drawInputField(context, leftX, currentY, "Slot", slot, labelWidth, fieldWidth, "slot")
             currentY += rowHeight
             
-            drawInputField(context, leftX, currentY, "Button", button, labelWidth, fieldWidth)
+            drawInputField(context, leftX, currentY, "Button", button, labelWidth, fieldWidth, "button")
             currentY += rowHeight
             
             context.drawText(
@@ -431,15 +435,15 @@ class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
             currentY += 60
             
         } else if (selectedPacketType == "Button Click") {
-            drawInputField(context, leftX, currentY, "Sync ID", syncId, labelWidth, fieldWidth)
+            drawInputField(context, leftX, currentY, "Sync ID", syncId, labelWidth, fieldWidth, "syncId")
             currentY += rowHeight
             
-            drawInputField(context, leftX, currentY, "Button ID", buttonId, labelWidth, fieldWidth)
+            drawInputField(context, leftX, currentY, "Button ID", buttonId, labelWidth, fieldWidth, "buttonId")
             currentY += 60
         }
         
         // Common fields
-        drawInputField(context, leftX, currentY, "Times to Send", timesToSend, labelWidth, fieldWidth)
+        drawInputField(context, leftX, currentY, "Times to Send", timesToSend, labelWidth, fieldWidth, "timesToSend")
         currentY += rowHeight
         
         // Delay checkbox
@@ -464,12 +468,16 @@ class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
         }
     }
     
-    private fun drawInputField(context: DrawContext, x: Int, y: Int, label: String, value: String, labelWidth: Int, fieldWidth: Int) {
+    private fun drawInputField(context: DrawContext, x: Int, y: Int, label: String, value: String, labelWidth: Int, fieldWidth: Int, fieldName: String) {
         context.drawText(textRenderer, Text.of("$label:"), x, y + 5, 0xFFFFFF, false)
         
         val fieldX = x + labelWidth
-        context.fill(fieldX, y, fieldX + fieldWidth, y + 20, 0x40FFFFFF)
-        context.drawBorder(fieldX, y, fieldWidth, 20, 0xFFFFFFFF.toInt())
+        val isActive = activeField == fieldName
+        val bgColor = if (isActive) 0x60FFFFFF else 0x40FFFFFF
+        val borderColor = if (isActive) 0xFFFFFFFF.toInt() else 0x80FFFFFF
+        
+        context.fill(fieldX, y, fieldX + fieldWidth, y + 20, bgColor)
+        context.drawBorder(fieldX, y, fieldWidth, 20, borderColor.toInt())
         
         context.drawText(textRenderer, Text.of(value), fieldX + 5, y + 6, 0xFFFFFF, false)
     }
@@ -490,16 +498,17 @@ class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
         
         try {
             val actionType = SlotActionType.valueOf(selectedAction)
-            val changedSlots = Int2ObjectArrayMap<ItemStack>()
+            val changedSlots: Int2ObjectMap<ItemStackHash> = Int2ObjectOpenHashMap()
             
             val packet = ClickSlotC2SPacket(
                 syncId.toInt(),
                 revision.toInt(),
-                slot.toInt(),
-                button.toInt(),
+                slot.toShort(),
+                button.toByte(),
                 actionType,
-                ItemStack.EMPTY,
-                changedSlots
+                changedSlots,
+                ItemStackHash.EMPTY
+
             )
             
             repeat(timesToSend.toInt()) {
@@ -558,14 +567,40 @@ class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
     }
     
     override fun charTyped(chr: Char, modifiers: Int): Boolean {
-        // Handle text input - this would need to be implemented based on your GUI framework
-        // For now, this is a placeholder
+        if (activeField.isNotEmpty()) {
+            when (activeField) {
+                "syncId" -> syncId += chr
+                "revision" -> revision += chr
+                "slot" -> slot += chr
+                "button" -> button += chr
+                "buttonId" -> buttonId += chr
+                "timesToSend" -> timesToSend += chr
+            }
+            return true
+        }
         return super.charTyped(chr, modifiers)
+    }
+    
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        // Handle backspace
+        if (keyCode == 259 && activeField.isNotEmpty()) { // GLFW_KEY_BACKSPACE
+            when (activeField) {
+                "syncId" -> if (syncId.isNotEmpty()) syncId = syncId.dropLast(1)
+                "revision" -> if (revision.isNotEmpty()) revision = revision.dropLast(1)
+                "slot" -> if (slot.isNotEmpty()) slot = slot.dropLast(1)
+                "button" -> if (button.isNotEmpty()) button = button.dropLast(1)
+                "buttonId" -> if (buttonId.isNotEmpty()) buttonId = buttonId.dropLast(1)
+                "timesToSend" -> if (timesToSend.isNotEmpty()) timesToSend = timesToSend.dropLast(1)
+            }
+            return true
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers)
     }
     
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         // Handle checkbox clicking
-        val checkboxX = getContentX() + 120
+        val leftX = getContentX() + 20
+        val checkboxX = leftX + 100
         val checkboxY = getContentY() + 227 // Adjust based on layout
         
         if (mouseX >= checkboxX && mouseX < checkboxX + 16 && 
@@ -574,12 +609,56 @@ class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
             return true
         }
         
+        // Handle input field clicking
+        activeField = getClickedField(mouseX, mouseY)
+        
         return super.mouseClicked(mouseX, mouseY, button)
     }
     
-    // Helper method to add dropdown (assuming this method exists in CinnamonScreen)
-    private fun addDropdown(dropdown: CinnamonDropdown) {
-        // This would need to be implemented based on your GUI framework
-        // For now, this is a placeholder
+    private fun getClickedField(mouseX: Double, mouseY: Double): String {
+        val leftX = getContentX() + 20
+        val fieldX = leftX + 100
+        val fieldWidth = 120
+        val rowHeight = 25
+        var currentY = getContentY() + 80
+        
+        if (selectedPacketType == "Click Slot") {
+            // Check syncId field
+            if (mouseX >= fieldX && mouseX < fieldX + fieldWidth && 
+                mouseY >= currentY && mouseY < currentY + 20) return "syncId"
+            currentY += rowHeight
+            
+            // Check revision field
+            if (mouseX >= fieldX && mouseX < fieldX + fieldWidth && 
+                mouseY >= currentY && mouseY < currentY + 20) return "revision"
+            currentY += rowHeight
+            
+            // Check slot field
+            if (mouseX >= fieldX && mouseX < fieldX + fieldWidth && 
+                mouseY >= currentY && mouseY < currentY + 20) return "slot"
+            currentY += rowHeight
+            
+            // Check button field
+            if (mouseX >= fieldX && mouseX < fieldX + fieldWidth && 
+                mouseY >= currentY && mouseY < currentY + 20) return "button"
+            currentY += 60 // Skip action dropdown
+            
+        } else if (selectedPacketType == "Button Click") {
+            // Check syncId field
+            if (mouseX >= fieldX && mouseX < fieldX + fieldWidth && 
+                mouseY >= currentY && mouseY < currentY + 20) return "syncId"
+            currentY += rowHeight
+            
+            // Check buttonId field
+            if (mouseX >= fieldX && mouseX < fieldX + fieldWidth && 
+                mouseY >= currentY && mouseY < currentY + 20) return "buttonId"
+            currentY += 60
+        }
+        
+        // Check timesToSend field
+        if (mouseX >= fieldX && mouseX < fieldX + fieldWidth && 
+            mouseY >= currentY && mouseY < currentY + 20) return "timesToSend"
+        
+        return ""
     }
 }
