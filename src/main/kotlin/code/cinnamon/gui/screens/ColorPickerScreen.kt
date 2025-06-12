@@ -75,7 +75,7 @@ class ColorPickerScreen(
         val buttonWidth = 80
         val buttonSpacing = 24
         val totalButtonWidth = buttonWidth * 2 + buttonSpacing
-        val buttonY = pickerY + pickerHeight - 42
+        val buttonY = pickerY + pickerHeight - 32
         val buttonStartX = pickerX + (pickerWidth - totalButtonWidth) / 2
 
         // Apply button
@@ -202,7 +202,7 @@ class ColorPickerScreen(
         val buttonWidth = 80
         val buttonSpacing = 24
         val totalButtonWidth = buttonWidth * 2 + buttonSpacing
-        val buttonY = pickerY + pickerHeight - 42
+        val buttonY = pickerY + pickerHeight - 32
         val buttonStartX = pickerX + (pickerWidth - totalButtonWidth) / 2
 
         if (mY in buttonY until (buttonY + 30)) {
