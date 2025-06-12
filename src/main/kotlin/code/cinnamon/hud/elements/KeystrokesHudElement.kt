@@ -53,7 +53,7 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     
     private fun drawKey(context: DrawContext, key: String, x: Int, y: Int, pressed: Boolean) { // Removed config parameter
         val currentBgColor = if (pressed) {
-            this.textColor // Pressed background is this element's text color
+            this.keypressedBackgroundColor // Pressed background is this element's keypressed background color
         } else {
             this.backgroundColor // Not pressed background is this element's background color
         }
@@ -64,7 +64,7 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         // Key text with good contrast
         val keyText = Text.literal(key).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
         val currentTextColor = if (pressed) {
-            this.backgroundColor // Pressed text is this element's background color
+            this.keypressedTextColor // Pressed text is this element's keypressed text color
         } else {
             this.textColor // Not pressed text is this element's text color
         }

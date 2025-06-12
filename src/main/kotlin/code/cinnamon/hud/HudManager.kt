@@ -145,7 +145,9 @@ object HudManager {
                     isEnabled = element.isEnabled,
                     textColor = element.textColor,
                     backgroundColor = element.backgroundColor,
-                    textShadowEnabled = element.textShadowEnabled
+                    textShadowEnabled = element.textShadowEnabled,
+                    keypressedTextColor = element.keypressedTextColor,
+                    keypressedBackgroundColor = element.keypressedBackgroundColor
                 )
             }
             val jsonString = json.encodeToString(configs)
@@ -176,6 +178,8 @@ object HudManager {
                     element.textColor = config.textColor
                     element.backgroundColor = config.backgroundColor
                     element.textShadowEnabled = config.textShadowEnabled
+                    element.keypressedTextColor = config.keypressedTextColor
+                    element.keypressedBackgroundColor = config.keypressedBackgroundColor
                 }
             }
             println("[HudManager] HUD config loaded successfully from ${configFile.absolutePath}")

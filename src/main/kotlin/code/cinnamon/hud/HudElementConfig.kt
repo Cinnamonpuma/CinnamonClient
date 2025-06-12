@@ -11,5 +11,7 @@ data class HudElementConfig(
     val isEnabled: Boolean,
     val textColor: Int = 0xFFFFFF,
     val backgroundColor: Int = 0x80000000.toInt(),
-    val textShadowEnabled: Boolean = true
+    val textShadowEnabled: Boolean = true,
+    val keypressedTextColor: Int = 0x000000,
+    val keypressedBackgroundColor: Int = 0xFFFFFF
 )

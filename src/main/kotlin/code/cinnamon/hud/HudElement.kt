@@ -23,6 +23,8 @@ abstract class HudElement(
     var textColor: Int = 0xFFFFFF // White
     var backgroundColor: Int = 0x80000000.toInt() // Semi-transparent black
     var textShadowEnabled: Boolean = true
+    var keypressedTextColor: Int = 0x000000 // Black
+    var keypressedBackgroundColor: Int = 0xFFFFFF // White
     
     private var isDragging: Boolean = false
     private var dragOffsetX: Float = 0f
