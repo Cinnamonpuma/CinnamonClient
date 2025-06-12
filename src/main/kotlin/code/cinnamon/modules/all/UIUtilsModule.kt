@@ -2,6 +2,7 @@ package code.cinnamon.modules.all
 
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.gui.components.CinnamonButton
+import code.cinnamon.gui.components.CinnamonDropdown
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
@@ -14,6 +15,7 @@ import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.text.Text
 import org.slf4j.LoggerFactory
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
+import net.minecraft.util.collection.DefaultedList
 import java.util.*
 import kotlin.collections.mutableListOf
 
@@ -44,7 +46,7 @@ object UIUtilsModule {
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("Close without packet"),
-            onClick = { closeWithoutPacket() }
+            onClick = { _, _ -> closeWithoutPacket() }
         ))
         
         // De-sync button
@@ -54,39 +56,36 @@ object UIUtilsModule {
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("De-sync"),
-            onClick = { desyncScreen() }
+            onClick = { _, _ -> desyncScreen() }
         ))
         
         // Send packets toggle button
-        buttons.add(CinnamonButton(
+        val sendPacketsButton = CinnamonButton(
             x = baseX,
             y = baseY + (buttonHeight + spacing) * 2,
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("Send packets: $sendUIPackets"),
-            onClick = { toggleSendPackets() }
-        ).apply {
-            // Update button text when clicked
-            this.onClick = {
+            onClick = { _, _ -> 
                 toggleSendPackets()
-                this.text = Text.of("Send packets: $sendUIPackets")
+                // Button text will be updated externally
             }
-        })
+        )
+        buttons.add(sendPacketsButton)
         
         // Delay packets toggle button
-        buttons.add(CinnamonButton(
+        val delayPacketsButton = CinnamonButton(
             x = baseX,
             y = baseY + (buttonHeight + spacing) * 3,
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("Delay packets: $delayUIPackets"),
-            onClick = { toggleDelayPackets() }
-        ).apply {
-            this.onClick = {
+            onClick = { _, _ -> 
                 toggleDelayPackets()
-                this.text = Text.of("Delay packets: $delayUIPackets")
+                // Button text will be updated externally
             }
-        })
+        )
+        buttons.add(delayPacketsButton)
         
         // Save GUI button
         buttons.add(CinnamonButton(
@@ -95,7 +94,7 @@ object UIUtilsModule {
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("Save GUI"),
-            onClick = { saveCurrentGUI() }
+            onClick = { _, _ -> saveCurrentGUI() }
         ))
         
         // Disconnect and send packets button
@@ -105,17 +104,17 @@ object UIUtilsModule {
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("Disconnect & Send"),
-            onClick = { disconnectAndSendPackets() }
+            onClick = { _, _ -> disconnectAndSendPackets() }
         ))
         
-        // Fabricate packet button
+        // Packet Utils button (opens dropdown menu)
         buttons.add(CinnamonButton(
             x = baseX,
             y = baseY + (buttonHeight + spacing) * 6,
             width = buttonWidth,
             height = buttonHeight,
-            text = Text.of("Fabricate Packet"),
-            onClick = { openPacketFabricationScreen() }
+            text = Text.of("Packet Utils"),
+            onClick = { _, _ -> openPacketUtilsScreen() }
         ))
         
         // Copy GUI title JSON button
@@ -125,7 +124,7 @@ object UIUtilsModule {
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("Copy Title JSON"),
-            onClick = { copyGUITitleJSON() }
+            onClick = { _, _ -> copyGUITitleJSON() }
         ))
         
         return buttons
@@ -230,8 +229,8 @@ object UIUtilsModule {
         }
     }
     
-    private fun openPacketFabricationScreen() {
-        mc.setScreen(PacketFabricationScreen())
+    private fun openPacketUtilsScreen() {
+        mc.setScreen(PacketUtilsScreen())
     }
     
     private fun copyGUITitleJSON() {
@@ -284,13 +283,13 @@ object UIUtilsModule {
         val player = mc.player
         if (storedScreen != null && storedScreenHandler != null && player != null) {
             mc.setScreen(storedScreen)
-            player.currentScreenHandler = storedScreenHandler
+            player.currentScreenHandler = storedScreenHandler!!
             LOGGER.info("Restored saved screen")
         }
     }
     
     // Utility functions
-    private fun isInteger(string: String): Boolean {
+    fun isInteger(string: String): Boolean {
         return try {
             string.toInt()
             true
@@ -314,89 +313,77 @@ object UIUtilsModule {
 }
 
 /**
- * Screen for fabricating custom packets
+ * Screen with dropdown menus for packet utilities
  */
-class PacketFabricationScreen : CinnamonScreen(Text.of("Packet Fabrication")) {
+class PacketUtilsScreen : CinnamonScreen(Text.of("Packet Utils")) {
+    private var selectedPacketType = "Click Slot"
+    private val packetTypes = listOf("Click Slot", "Button Click")
     
-    override fun initializeComponents() {
-        val buttonWidth = 120
-        val buttonHeight = 30
-        val centerX = getContentX() + (getContentWidth() - buttonWidth) / 2
-        val startY = getContentY() + 50
-        
-        // Click Slot Packet button
-        addButton(CinnamonButton(
-            x = centerX,
-            y = startY,
-            width = buttonWidth,
-            height = buttonHeight,
-            text = Text.of("Click Slot Packet"),
-            onClick = { mc.setScreen(ClickSlotPacketScreen()) }
-        ))
-        
-        // Button Click Packet button
-        addButton(CinnamonButton(
-            x = centerX,
-            y = startY + buttonHeight + 10,
-            width = buttonWidth,
-            height = buttonHeight,
-            text = Text.of("Button Click Packet"),
-            onClick = { mc.setScreen(ButtonClickPacketScreen()) }
-        ))
-    }
-    
-    override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        val titleText = Text.of("Choose a packet type to fabricate:")
-        val titleWidth = textRenderer.getWidth(titleText)
-        val titleX = getContentX() + (getContentWidth() - titleWidth) / 2
-        
-        context.drawText(
-            textRenderer,
-            titleText,
-            titleX,
-            getContentY() + 20,
-            theme.primaryTextColor,
-            false
-        )
-    }
-}
-
-/**
- * Screen for creating Click Slot packets
- */
-class ClickSlotPacketScreen : CinnamonScreen(Text.of("Click Slot Packet")) {
+    // Click Slot fields
     private var syncId = ""
     private var revision = ""
     private var slot = ""
     private var button = ""
-    private var selectedAction = SlotActionType.PICKUP
+    private var selectedAction = "PICKUP"
+    private val actionTypes = SlotActionType.values().map { it.name }
+    
+    // Button Click fields
+    private var buttonId = ""
+    
+    // Common fields
     private var timesToSend = "1"
     private var delayPacket = false
     private var statusMessage = ""
     private var statusColor = 0xFFFFFF
     
     override fun initializeComponents() {
+        val centerX = getContentX() + getContentWidth() / 2
         val buttonWidth = 100
         val buttonHeight = 25
         
+        // Packet type dropdown
+        addDropdown(CinnamonDropdown(
+            x = centerX - 60,
+            y = getContentY() + 50,
+            width = 120,
+            height = 20,
+            options = packetTypes,
+            selectedOption = selectedPacketType,
+            onSelectionChanged = { selection -> 
+                selectedPacketType = selection
+                statusMessage = ""
+            }
+        ))
+        
+        // Action type dropdown for Click Slot packets
+        addDropdown(CinnamonDropdown(
+            x = centerX - 60,
+            y = getContentY() + 200,
+            width = 120,
+            height = 20,
+            options = actionTypes,
+            selectedOption = selectedAction,
+            onSelectionChanged = { selection -> selectedAction = selection }
+        ))
+        
         // Send button
         addButton(CinnamonButton(
-            x = getContentX() + 20,
-            y = getContentY() + 200,
+            x = centerX - buttonWidth - 10,
+            y = getContentY() + 280,
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("Send Packet"),
-            onClick = { sendClickSlotPacket() }
+            onClick = { _, _ -> sendPacket() }
         ))
         
         // Back button
         addButton(CinnamonButton(
-            x = getContentX() + 140,
-            y = getContentY() + 200,
+            x = centerX + 10,
+            y = getContentY() + 280,
             width = buttonWidth,
             height = buttonHeight,
             text = Text.of("Back"),
-            onClick = { mc.setScreen(PacketFabricationScreen()) }
+            onClick = { _, _ -> mc.setScreen(null) }
         ))
     }
     
@@ -404,39 +391,64 @@ class ClickSlotPacketScreen : CinnamonScreen(Text.of("Click Slot Packet")) {
         val leftX = getContentX() + 20
         var currentY = getContentY() + 20
         val labelWidth = 100
-        val fieldWidth = 80
+        val fieldWidth = 120
         val rowHeight = 25
         
-        // Helper function to draw a form row
-        fun drawFormRow(label: String, value: String, isEditable: Boolean = true) {
-            context.drawText(textRenderer, Text.of("$label:"), leftX, currentY + 5, theme.primaryTextColor, false)
-            
-            // Draw input field background
-            val fieldX = leftX + labelWidth
-            val fieldColor = if (isEditable) theme.inputBackgroundColor else theme.disabledBackgroundColor
-            context.fill(fieldX, currentY, fieldX + fieldWidth, currentY + 20, fieldColor)
-            context.drawBorder(fieldX, currentY, fieldWidth, 20, theme.borderColor)
-            
-            // Draw text
-            context.drawText(textRenderer, Text.of(value), fieldX + 5, currentY + 6, theme.primaryTextColor, false)
+        // Title
+        context.drawText(
+            textRenderer,
+            Text.of("Packet Type:"),
+            leftX,
+            currentY + 35,
+            0xFFFFFF,
+            false
+        )
+        
+        currentY += 60
+        
+        // Draw form fields based on selected packet type
+        if (selectedPacketType == "Click Slot") {
+            drawInputField(context, leftX, currentY, "Sync ID", syncId, labelWidth, fieldWidth)
             currentY += rowHeight
+            
+            drawInputField(context, leftX, currentY, "Revision", revision, labelWidth, fieldWidth)
+            currentY += rowHeight
+            
+            drawInputField(context, leftX, currentY, "Slot", slot, labelWidth, fieldWidth)
+            currentY += rowHeight
+            
+            drawInputField(context, leftX, currentY, "Button", button, labelWidth, fieldWidth)
+            currentY += rowHeight
+            
+            context.drawText(
+                textRenderer,
+                Text.of("Action Type:"),
+                leftX,
+                currentY + 35,
+                0xFFFFFF,
+                false
+            )
+            currentY += 60
+            
+        } else if (selectedPacketType == "Button Click") {
+            drawInputField(context, leftX, currentY, "Sync ID", syncId, labelWidth, fieldWidth)
+            currentY += rowHeight
+            
+            drawInputField(context, leftX, currentY, "Button ID", buttonId, labelWidth, fieldWidth)
+            currentY += 60
         }
         
-        // Draw form fields
-        drawFormRow("Sync ID", syncId)
-        drawFormRow("Revision", revision)
-        drawFormRow("Slot", slot)
-        drawFormRow("Button", button)
-        drawFormRow("Action", selectedAction.name, false)
-        drawFormRow("Times", timesToSend)
+        // Common fields
+        drawInputField(context, leftX, currentY, "Times to Send", timesToSend, labelWidth, fieldWidth)
+        currentY += rowHeight
         
         // Delay checkbox
+        context.drawText(textRenderer, Text.of("Delay Packet:"), leftX, currentY + 5, 0xFFFFFF, false)
         val checkboxX = leftX + labelWidth
-        context.drawText(textRenderer, Text.of("Delay:"), leftX, currentY + 5, theme.primaryTextColor, false)
-        context.fill(checkboxX, currentY + 2, checkboxX + 16, currentY + 18, theme.inputBackgroundColor)
-        context.drawBorder(checkboxX, currentY + 2, 16, 16, theme.borderColor)
+        context.fill(checkboxX, currentY + 2, checkboxX + 16, currentY + 18, 0x40FFFFFF)
+        context.drawBorder(checkboxX, currentY + 2, 16, 16, 0xFFFFFFFF.toInt())
         if (delayPacket) {
-            context.drawText(textRenderer, Text.of("✓"), checkboxX + 4, currentY + 6, theme.accentColor, false)
+            context.drawText(textRenderer, Text.of("✓"), checkboxX + 4, currentY + 6, 0xFF55FF55.toInt(), false)
         }
         
         // Status message
@@ -445,166 +457,65 @@ class ClickSlotPacketScreen : CinnamonScreen(Text.of("Click Slot Packet")) {
                 textRenderer, 
                 Text.of(statusMessage), 
                 leftX, 
-                getContentY() + 170, 
+                getContentY() + 250, 
                 statusColor, 
                 false
             )
         }
     }
     
+    private fun drawInputField(context: DrawContext, x: Int, y: Int, label: String, value: String, labelWidth: Int, fieldWidth: Int) {
+        context.drawText(textRenderer, Text.of("$label:"), x, y + 5, 0xFFFFFF, false)
+        
+        val fieldX = x + labelWidth
+        context.fill(fieldX, y, fieldX + fieldWidth, y + 20, 0x40FFFFFF)
+        context.drawBorder(fieldX, y, fieldWidth, 20, 0xFFFFFFFF.toInt())
+        
+        context.drawText(textRenderer, Text.of(value), fieldX + 5, y + 6, 0xFFFFFF, false)
+    }
+    
+    private fun sendPacket() {
+        if (selectedPacketType == "Click Slot") {
+            sendClickSlotPacket()
+        } else if (selectedPacketType == "Button Click") {
+            sendButtonClickPacket()
+        }
+    }
+    
     private fun sendClickSlotPacket() {
-        if (!validateInputs()) {
-            showStatus("Invalid arguments!", 0xFF5555)
+        if (!validateClickSlotInputs()) {
+            showStatus("Invalid arguments!", 0xFFFF5555.toInt())
             return
         }
         
         try {
+            val actionType = SlotActionType.valueOf(selectedAction)
+            val changedSlots = Int2ObjectArrayMap<ItemStack>()
+            
             val packet = ClickSlotC2SPacket(
                 syncId.toInt(),
                 revision.toInt(),
                 slot.toInt(),
                 button.toInt(),
-                selectedAction,
+                actionType,
                 ItemStack.EMPTY,
-                Int2ObjectArrayMap()
+                changedSlots
             )
             
             repeat(timesToSend.toInt()) {
                 UIUtilsModule.sendOrDelayPacket(packet)
             }
             
-            showStatus("Sent successfully!", 0x55FF55)
+            showStatus("Sent successfully!", 0xFF55FF55.toInt())
         } catch (e: Exception) {
-            showStatus("Error sending packet!", 0xFF5555)
-        }
-    }
-    
-    private fun validateInputs(): Boolean {
-        return listOf(syncId, revision, slot, button, timesToSend).all { 
-            it.isNotEmpty() && UIUtilsModule.isInteger(it) 
-        }
-    }
-    
-    private fun showStatus(message: String, color: Int) {
-        statusMessage = message
-        statusColor = color
-        
-        // Clear status after 3 seconds
-        Timer().schedule(object : TimerTask() {
-            override fun run() {
-                statusMessage = ""
-            }
-        }, 3000)
-    }
-    
-    override fun charTyped(chr: Char, modifiers: Int): Boolean {
-        // Handle text input for form fields
-        // This is a simplified implementation - you'd want to track which field is focused
-        return super.charTyped(chr, modifiers)
-    }
-    
-    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        // Handle checkbox clicking and field focusing
-        val checkboxX = getContentX() + 120
-        val checkboxY = getContentY() + 152
-        
-        if (mouseX >= checkboxX && mouseX < checkboxX + 16 && 
-            mouseY >= checkboxY && mouseY < checkboxY + 16) {
-            delayPacket = !delayPacket
-            return true
-        }
-        
-        return super.mouseClicked(mouseX, mouseY, button)
-    }
-}
-
-/**
- * Screen for creating Button Click packets
- */
-class ButtonClickPacketScreen : CinnamonScreen(Text.of("Button Click Packet")) {
-    private var syncId = ""
-    private var buttonId = ""
-    private var timesToSend = "1"
-    private var delayPacket = false
-    private var statusMessage = ""
-    private var statusColor = 0xFFFFFF
-    
-    override fun initializeComponents() {
-        val buttonWidth = 100
-        val buttonHeight = 25
-        
-        // Send button
-        addButton(CinnamonButton(
-            x = getContentX() + 20,
-            y = getContentY() + 150,
-            width = buttonWidth,
-            height = buttonHeight,
-            text = Text.of("Send Packet"),
-            onClick = { sendButtonClickPacket() }
-        ))
-        
-        // Back button
-        addButton(CinnamonButton(
-            x = getContentX() + 140,
-            y = getContentY() + 150,
-            width = buttonWidth,
-            height = buttonHeight,
-            text = Text.of("Back"),
-            onClick = { mc.setScreen(PacketFabricationScreen()) }
-        ))
-    }
-    
-    override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        val leftX = getContentX() + 20
-        var currentY = getContentY() + 20
-        val labelWidth = 100
-        val fieldWidth = 80
-        val rowHeight = 25
-        
-        // Helper function to draw a form row
-        fun drawFormRow(label: String, value: String) {
-            context.drawText(textRenderer, Text.of("$label:"), leftX, currentY + 5, theme.primaryTextColor, false)
-            
-            // Draw input field background
-            val fieldX = leftX + labelWidth
-            context.fill(fieldX, currentY, fieldX + fieldWidth, currentY + 20, theme.inputBackgroundColor)
-            context.drawBorder(fieldX, currentY, fieldWidth, 20, theme.borderColor)
-            
-            // Draw text
-            context.drawText(textRenderer, Text.of(value), fieldX + 5, currentY + 6, theme.primaryTextColor, false)
-            currentY += rowHeight
-        }
-        
-        // Draw form fields
-        drawFormRow("Sync ID", syncId)
-        drawFormRow("Button ID", buttonId)
-        drawFormRow("Times", timesToSend)
-        
-        // Delay checkbox
-        val checkboxX = leftX + labelWidth
-        context.drawText(textRenderer, Text.of("Delay:"), leftX, currentY + 5, theme.primaryTextColor, false)
-        context.fill(checkboxX, currentY + 2, checkboxX + 16, currentY + 18, theme.inputBackgroundColor)
-        context.drawBorder(checkboxX, currentY + 2, 16, 16, theme.borderColor)
-        if (delayPacket) {
-            context.drawText(textRenderer, Text.of("✓"), checkboxX + 4, currentY + 6, theme.accentColor, false)
-        }
-        
-        // Status message
-        if (statusMessage.isNotEmpty()) {
-            context.drawText(
-                textRenderer, 
-                Text.of(statusMessage), 
-                leftX, 
-                getContentY() + 120, 
-                statusColor, 
-                false
-            )
+            showStatus("Error sending packet!", 0xFFFF5555.toInt())
+            LOGGER.error("Error sending click slot packet", e)
         }
     }
     
     private fun sendButtonClickPacket() {
-        if (!validateInputs()) {
-            showStatus("Invalid arguments!", 0xFF5555)
+        if (!validateButtonClickInputs()) {
+            showStatus("Invalid arguments!", 0xFFFF5555.toInt())
             return
         }
         
@@ -615,13 +526,20 @@ class ButtonClickPacketScreen : CinnamonScreen(Text.of("Button Click Packet")) {
                 UIUtilsModule.sendOrDelayPacket(packet)
             }
             
-            showStatus("Sent successfully!", 0x55FF55)
+            showStatus("Sent successfully!", 0xFF55FF55.toInt())
         } catch (e: Exception) {
-            showStatus("Error sending packet!", 0xFF5555)
+            showStatus("Error sending packet!", 0xFFFF5555.toInt())
+            LOGGER.error("Error sending button click packet", e)
         }
     }
     
-    private fun validateInputs(): Boolean {
+    private fun validateClickSlotInputs(): Boolean {
+        return listOf(syncId, revision, slot, button, timesToSend).all { 
+            it.isNotEmpty() && UIUtilsModule.isInteger(it) 
+        }
+    }
+    
+    private fun validateButtonClickInputs(): Boolean {
         return listOf(syncId, buttonId, timesToSend).all { 
             it.isNotEmpty() && UIUtilsModule.isInteger(it) 
         }
@@ -639,10 +557,16 @@ class ButtonClickPacketScreen : CinnamonScreen(Text.of("Button Click Packet")) {
         }, 3000)
     }
     
+    override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        // Handle text input - this would need to be implemented based on your GUI framework
+        // For now, this is a placeholder
+        return super.charTyped(chr, modifiers)
+    }
+    
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         // Handle checkbox clicking
         val checkboxX = getContentX() + 120
-        val checkboxY = getContentY() + 77
+        val checkboxY = getContentY() + 227 // Adjust based on layout
         
         if (mouseX >= checkboxX && mouseX < checkboxX + 16 && 
             mouseY >= checkboxY && mouseY < checkboxY + 16) {
@@ -652,14 +576,10 @@ class ButtonClickPacketScreen : CinnamonScreen(Text.of("Button Click Packet")) {
         
         return super.mouseClicked(mouseX, mouseY, button)
     }
-}
-
-// Extension function to make UIUtilsModule.isInteger accessible
-private fun UIUtilsModule.isInteger(string: String): Boolean {
-    return try {
-        string.toInt()
-        true
-    } catch (e: NumberFormatException) {
-        false
+    
+    // Helper method to add dropdown (assuming this method exists in CinnamonScreen)
+    private fun addDropdown(dropdown: CinnamonDropdown) {
+        // This would need to be implemented based on your GUI framework
+        // For now, this is a placeholder
     }
 }
