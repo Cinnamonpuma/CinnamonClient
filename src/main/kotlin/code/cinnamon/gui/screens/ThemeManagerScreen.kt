@@ -437,10 +437,19 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         context.fill(inputX, y, inputX + inputWidth, y + height, inputBgColor)
         context.drawBorder(inputX, y, inputWidth, height, inputBorderColor)
         
-        // Display hex text
-        val displayText = if (hexInputText.isNotEmpty()) hexInputText else String.format("%08X", finalColor)
+        // Display hex text - FIXED: Always show current picker color, use hexInputText only when focused
+        val displayText = if (hexInputFocused && hexInputText.isNotEmpty()) {
+            hexInputText
+        } else {
+            String.format("%08X", finalColor)
+        }
+        
         val textY = y + (height - textRenderer.fontHeight) / 2
-        val textColor = if (hexInputText.isNotEmpty()) CinnamonTheme.primaryTextColor else CinnamonTheme.secondaryTextColor
+        val textColor = if (hexInputFocused && hexInputText.isNotEmpty()) {
+            CinnamonTheme.primaryTextColor
+        } else {
+            CinnamonTheme.secondaryTextColor
+        }
         
         val fullText = "#$displayText"
         context.drawText(
