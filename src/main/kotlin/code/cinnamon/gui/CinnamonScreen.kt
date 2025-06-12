@@ -60,6 +60,22 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     // Add this abstract method - subclasses must implement their own content rendering
     protected abstract fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float)
     
+// IMPORTANT BACKGROUND RENDERING STRATEGY:
+// 1. `renderBlurredBackground` draws a semi-transparent overlay across the entire game screen.
+// 2. `renderGuiBox` then draws the main GUI dialog box using `theme.coreBackgroundPrimary`.
+//    - If `theme.coreBackgroundPrimary` has an alpha component (e.g., 0x80XXXXXX),
+//      it will blend with the `renderBlurredBackground`, making the entire GUI dialog box
+//      semi-transparent. This is the intended way to achieve overall GUI transparency.
+// 3. Screens extending `CinnamonScreen` should generally NOT draw their own separate,
+//    large, full-content area backgrounds (e.g., a 'contentBackground' for their entire content area)
+//    if they intend for the `theme.coreBackgroundPrimary` and its potential transparency
+//    to be the true background of the screen's content.
+// 4. Drawing additional semi-transparent background layers within a screen's content area
+//    on top of `coreBackgroundPrimary` can lead to unintended additive color blending if
+//    `coreBackgroundPrimary` is also semi-transparent.
+// 5. Individual UI elements within a screen (like buttons, list items, cards) can, of course,
+//    have their own backgrounds. The focus is to avoid large, redundant, overlapping
+//    background layers that cover most of the content area already covered by `coreBackgroundPrimary`.
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         super.render(context, mouseX, mouseY, delta)
         

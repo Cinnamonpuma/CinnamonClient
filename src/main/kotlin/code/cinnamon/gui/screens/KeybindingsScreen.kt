@@ -72,14 +72,14 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val contentWidth = getContentWidth()
         val contentHeight = getContentHeight()
         
-        // Content background
-        context.fill(
-            contentX,
-            contentY,
-            contentX + contentWidth,
-            contentY + contentHeight,
-            CinnamonTheme.contentBackground
-        )
+        // Content background (now handled by CinnamonScreen's coreBackgroundPrimary)
+        // context.fill(
+        //     contentX,
+        //     contentY,
+        //     contentX + contentWidth,
+        //     contentY + contentHeight,
+        //     CinnamonTheme.contentBackground
+        // )
         
         // Header section
         val headerHeight = 50

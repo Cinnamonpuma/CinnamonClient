@@ -97,30 +97,16 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val contentWidth = getContentWidth()
         val contentHeight = getContentHeight()
 
-        context.fill(
-            contentX,
-            contentY,
-            contentX + contentWidth,
-            contentY + contentHeight,
-            CinnamonTheme.contentBackground
-        )
+        // Content background (now handled by CinnamonScreen's coreBackgroundPrimary)
+        // context.fill(
+        //     contentX,
+        //     contentY,
+        //     contentX + contentWidth,
+        //     contentY + contentHeight,
+        //     CinnamonTheme.contentBackground
+        // )
 
         val categoryAreaHeight = 50
-        context.fill(
-            contentX,
-            contentY,
-            contentX + contentWidth,
-            contentY + categoryAreaHeight,
-            CinnamonTheme.cardBackground
-        )
-
-        context.fill(
-            contentX,
-            contentY + categoryAreaHeight - 1,
-            contentX + contentWidth,
-            contentY + categoryAreaHeight,
-            CinnamonTheme.borderColor
-        )
 
         val moduleListY = contentY + categoryAreaHeight + 10
         val moduleListHeight = contentHeight - categoryAreaHeight - 20
@@ -204,8 +190,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             val settingsY = y + baseModuleHeight
             val settingsContentHeight = height - baseModuleHeight - 8
 
-            context.fill(x + 8, settingsY - 4, x + width - 8, settingsY + settingsContentHeight, CinnamonTheme.contentBackground)
-            context.fill(x + 8, settingsY - 4, x + width - 8, settingsY - 3, CinnamonTheme.borderColor)
+            // Settings area background (now handled by CinnamonScreen's coreBackgroundPrimary)
+            // context.fill(x + 8, settingsY - 4, x + width - 8, settingsY + settingsContentHeight, CinnamonTheme.contentBackground)
+            context.fill(x + 8, settingsY - 4, x + width - 8, settingsY - 3, CinnamonTheme.borderColor) // Keep border
 
             renderHudElementSettings(
                 context,
@@ -313,8 +300,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             val settingsY = y + 40
             val settingsHeight = settingsAreaHeight
 
-            context.fill(x + 8, settingsY, x + width - 8, settingsY + settingsHeight, CinnamonTheme.contentBackground)
-            context.fill(x + 8, settingsY, x + width - 8, settingsY + 1, CinnamonTheme.borderColor)
+            // Settings area background (now handled by CinnamonScreen's coreBackgroundPrimary)
+            // context.fill(x + 8, settingsY, x + width - 8, settingsY + settingsHeight, CinnamonTheme.contentBackground)
+            context.fill(x + 8, settingsY, x + width - 8, settingsY + 1, CinnamonTheme.borderColor) // Keep border
 
             renderModuleSettings(
                 context,

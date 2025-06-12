@@ -94,8 +94,9 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val listWidth = guiWidth - 80
         val listHeight = getContentHeight() - 170
 
-        context.fill(listX, listY, listX + listWidth, listY + listHeight, CinnamonTheme.contentBackground)
-        context.drawBorder(listX, listY, listWidth, listHeight, CinnamonTheme.borderColor)
+        // List background (now handled by CinnamonScreen's coreBackgroundPrimary)
+        // context.fill(listX, listY, listX + listWidth, listY + listHeight, CinnamonTheme.contentBackground)
+        context.drawBorder(listX, listY, listWidth, listHeight, CinnamonTheme.borderColor) // Keep border
 
         context.enableScissor(listX, listY, listX + listWidth, listY + listHeight)
         val colors = ColorType.values()
