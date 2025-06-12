@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import code.cinnamon.MainClient;
+import code.cinnamon.modules.all.UIUtilsModule;
 import code.cinnamon.SharedVariables;
 
 @Mixin(ChatScreen.class)
