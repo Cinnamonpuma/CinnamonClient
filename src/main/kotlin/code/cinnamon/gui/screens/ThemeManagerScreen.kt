@@ -20,29 +20,21 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             CinnamonTheme.coreBackgroundPrimary = color
             CinnamonTheme.updateDependentColors()
         }),
-        CORE_BACKGROUND_SECONDARY("Secondary Background", { CinnamonTheme.coreBackgroundSecondary }, { color ->
-            CinnamonTheme.coreBackgroundSecondary = color
-            CinnamonTheme.updateDependentColors()
-        }),
         CORE_ACCENT_PRIMARY("Primary Accent", { CinnamonTheme.coreAccentPrimary }, { color ->
             CinnamonTheme.coreAccentPrimary = color
-            CinnamonTheme.updateDependentColors()
-        }),
-        CORE_ACCENT_SECONDARY("Secondary Accent/Button", { CinnamonTheme.coreAccentSecondary }, { color ->
-            CinnamonTheme.coreAccentSecondary = color
             CinnamonTheme.updateDependentColors()
         }),
         CORE_TEXT_PRIMARY("Primary Text", { CinnamonTheme.coreTextPrimary }, { color ->
             CinnamonTheme.coreTextPrimary = color
             CinnamonTheme.updateDependentColors()
         }),
-        CORE_TEXT_SECONDARY("Secondary Text", { CinnamonTheme.coreTextSecondary }, { color ->
-            CinnamonTheme.coreTextSecondary = color
-            CinnamonTheme.updateDependentColors()
-        }),
         CORE_BORDER("Border Color", { CinnamonTheme.coreBorder }, { color ->
             CinnamonTheme.coreBorder = color
             CinnamonTheme.updateDependentColors()
+        }),
+        CORE_BUTTON_BACKGROUND("Button Background", { CinnamonTheme.coreButtonBackground }, { color ->
+            CinnamonTheme.coreButtonBackground = color
+            CinnamonTheme.updateDependentColors() // Important to update dependents if button visuals rely on it
         }),
         CORE_STATUS_SUCCESS("Success Color", { CinnamonTheme.coreStatusSuccess }, { color ->
             CinnamonTheme.coreStatusSuccess = color

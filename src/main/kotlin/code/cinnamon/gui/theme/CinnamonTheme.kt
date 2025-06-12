@@ -3,12 +3,10 @@ package code.cinnamon.gui.theme
 // Data class to hold all core colors for a theme
 data class ThemeColors(
     val coreBackgroundPrimary: Int,
-    val coreBackgroundSecondary: Int,
     val coreAccentPrimary: Int,
-    val coreAccentSecondary: Int,
     val coreTextPrimary: Int,
-    val coreTextSecondary: Int,
     val coreBorder: Int,
+    val coreButtonBackgroundDef: Int,
     // Status colors could also be part of the theme, but for now, keeping them as defined in CinnamonTheme
     // Or, if they should also change, add them to ThemeColors and update applyTheme accordingly
 )
@@ -18,23 +16,19 @@ enum class Theme(val colors: ThemeColors) {
     DARK(
         ThemeColors(
             coreBackgroundPrimary = 0xE61a1a1a.toInt(),
-            coreBackgroundSecondary = 0xE61f1f1f.toInt(),
             coreAccentPrimary = 0xFF00aaff.toInt(),
-            coreAccentSecondary = 0xE6404040.toInt(),
             coreTextPrimary = 0xFFe0e0e0.toInt(),
-            coreTextSecondary = 0xFFa0a0a0.toInt(),
-            coreBorder = 0xFF404040.toInt()
+            coreBorder = 0xFF404040.toInt(),
+            coreButtonBackgroundDef = 0xE6404040.toInt()
         )
     ),
     LIGHT(
         ThemeColors(
             coreBackgroundPrimary = 0xE6FAFAFA.toInt(),
-            coreBackgroundSecondary = 0xE6F0F0F0.toInt(),
             coreAccentPrimary = 0xFF007ACC.toInt(),
-            coreAccentSecondary = 0xE6DDDDDD.toInt(),
             coreTextPrimary = 0xFF202020.toInt(),
-            coreTextSecondary = 0xFF505050.toInt(),
-            coreBorder = 0xFFCCCCCC.toInt()
+            coreBorder = 0xFFCCCCCC.toInt(),
+            coreButtonBackgroundDef = 0xE6DDDDDD.toInt()
         )
     )
 }
@@ -43,12 +37,10 @@ object CinnamonTheme {
 
     // 1. Core Color Properties (Mutable) - These will be updated by applyTheme
     var coreBackgroundPrimary = 0 // Placeholder, will be set by init -> applyTheme
-    var coreBackgroundSecondary = 0 // Placeholder
     var coreAccentPrimary = 0 // Placeholder
-    var coreAccentSecondary = 0 // Placeholder
     var coreTextPrimary = 0 // Placeholder
-    var coreTextSecondary = 0 // Placeholder
     var coreBorder = 0 // Placeholder
+    var coreButtonBackground = 0 // Placeholder
 
     // Status colors remain directly mutable for now, not part of ThemeColors data class.
     // They could be added to ThemeColors if theme-specific status colors are desired.
@@ -90,10 +82,10 @@ object CinnamonTheme {
     val headerBackground: Int get() = coreBackgroundPrimary  // Changed from coreBackgroundSecondary
     val footerBackground: Int get() = coreBackgroundPrimary  // Changed from coreBackgroundSecondary
     val contentBackground: Int get() = coreBackgroundPrimary // This already points to primary
-    val sidebarBackground: Int get() = coreBackgroundSecondary 
+    val sidebarBackground: Int get() = coreBackgroundPrimary 
     
     // Content Area
-    val cardBackground: Int get() = coreBackgroundSecondary 
+    val cardBackground: Int get() = coreBackgroundPrimary 
     // cardBackgroundHover is a derived 'var'
 
     // Borders & Accents
@@ -104,13 +96,13 @@ object CinnamonTheme {
     // Text
     val titleColor: Int get() = coreTextPrimary
     val primaryTextColor: Int get() = coreTextPrimary
-    val secondaryTextColor: Int get() = coreTextSecondary
-    val disabledTextColor: Int get() = adjustBrightness(coreTextSecondary, -0.2f)
+    val secondaryTextColor: Int get() = coreTextPrimary
+    val disabledTextColor: Int get() = adjustBrightness(coreTextPrimary, -0.3f)
 
     // Buttons
-    val buttonBackground: Int get() = coreAccentSecondary
+    val buttonBackground: Int get() = coreButtonBackground
     // buttonBackgroundHover, buttonBackgroundPressed are derived 'var's
-    val buttonBackgroundDisabled: Int get() = adjustBrightness(coreAccentSecondary, -0.3f)
+    val buttonBackgroundDisabled: Int get() = adjustBrightness(coreButtonBackground, -0.3f)
 
     // Primary Buttons (Accent Colored)
     // primaryButtonBackground, primaryButtonBackgroundHover, primaryButtonBackgroundPressed are derived 'var's
@@ -123,9 +115,9 @@ object CinnamonTheme {
 
     // Module Colors
     // moduleEnabledColor is a derived 'var'
-    val moduleDisabledColor: Int get() = adjustBrightness(coreAccentSecondary, -0.1f)
+    val moduleDisabledColor: Int get() = adjustBrightness(coreButtonBackground, -0.1f)
     val moduleBackgroundEnabled: Int get() = adjustBrightness(coreStatusSuccess, -0.3f) // Darker version of success
-    val moduleBackgroundDisabled: Int get() = adjustBrightness(coreAccentSecondary, -0.2f)
+    val moduleBackgroundDisabled: Int get() = adjustBrightness(coreButtonBackground, -0.2f)
 
 
     // Store default values for reset functionality - This might need rethinking with themes.
@@ -144,12 +136,10 @@ object CinnamonTheme {
         currentTheme = theme
 
         coreBackgroundPrimary = theme.colors.coreBackgroundPrimary
-        coreBackgroundSecondary = theme.colors.coreBackgroundSecondary
         coreAccentPrimary = theme.colors.coreAccentPrimary
-        coreAccentSecondary = theme.colors.coreAccentSecondary
         coreTextPrimary = theme.colors.coreTextPrimary
-        coreTextSecondary = theme.colors.coreTextSecondary
         coreBorder = theme.colors.coreBorder
+        coreButtonBackground = theme.colors.coreButtonBackgroundDef
 
         // Note: Status colors (success, warning, error) and special effect colors (patternColor, etc.)
         // are not part of the ThemeColors data class in this iteration.
@@ -183,7 +173,7 @@ object CinnamonTheme {
     
     fun updateDependentColors() {
         // Update 'var' properties that depend on core colors
-        cardBackgroundHover = adjustBrightness(coreBackgroundSecondary, 0.1f)
+        cardBackgroundHover = adjustBrightness(coreBackgroundPrimary, 0.05f)
         
         accentColorHover = adjustBrightness(coreAccentPrimary, -0.1f)
         accentColorPressed = adjustBrightness(coreAccentPrimary, -0.2f)
@@ -192,8 +182,8 @@ object CinnamonTheme {
         primaryButtonBackgroundHover = accentColorHover 
         primaryButtonBackgroundPressed = accentColorPressed
         
-        buttonBackgroundHover = adjustBrightness(coreAccentSecondary, 0.1f)
-        buttonBackgroundPressed = adjustBrightness(coreAccentSecondary, -0.1f)
+        buttonBackgroundHover = adjustBrightness(coreButtonBackground, 0.1f)
+        buttonBackgroundPressed = adjustBrightness(coreButtonBackground, -0.1f)
         
         moduleEnabledColor = coreStatusSuccess
         

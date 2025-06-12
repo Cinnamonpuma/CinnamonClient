@@ -11,12 +11,10 @@ import java.nio.file.Paths
 data class ThemeConfig(
     // Core Color Properties
     val coreBackgroundPrimary: Int = 0xE61a1a1a.toInt(),
-    val coreBackgroundSecondary: Int = 0xE61f1f1f.toInt(),
     val coreAccentPrimary: Int = 0xFF00aaff.toInt(),
-    val coreAccentSecondary: Int = 0xE6404040.toInt(),
     val coreTextPrimary: Int = 0xFFe0e0e0.toInt(),
-    val coreTextSecondary: Int = 0xFFa0a0a0.toInt(),
     val coreBorder: Int = 0xFF404040.toInt(),
+    val coreButtonBackground: Int = 0xE6404040.toInt(), // Default to dark theme's button background
     val coreStatusSuccess: Int = 0xFF4caf50.toInt(),
     val coreStatusWarning: Int = 0xFFff9800.toInt(),
     val coreStatusError: Int = 0xFFf44336.toInt()
@@ -38,12 +36,10 @@ object ThemeConfigManager {
         try {
             val config = ThemeConfig(
                 coreBackgroundPrimary = CinnamonTheme.coreBackgroundPrimary,
-                coreBackgroundSecondary = CinnamonTheme.coreBackgroundSecondary,
                 coreAccentPrimary = CinnamonTheme.coreAccentPrimary,
-                coreAccentSecondary = CinnamonTheme.coreAccentSecondary,
                 coreTextPrimary = CinnamonTheme.coreTextPrimary,
-                coreTextSecondary = CinnamonTheme.coreTextSecondary,
                 coreBorder = CinnamonTheme.coreBorder,
+                coreButtonBackground = CinnamonTheme.coreButtonBackground,
                 coreStatusSuccess = CinnamonTheme.coreStatusSuccess,
                 coreStatusWarning = CinnamonTheme.coreStatusWarning,
                 coreStatusError = CinnamonTheme.coreStatusError
@@ -78,12 +74,10 @@ object ThemeConfigManager {
             
             // Apply loaded theme to core colors
             CinnamonTheme.coreBackgroundPrimary = config.coreBackgroundPrimary
-            CinnamonTheme.coreBackgroundSecondary = config.coreBackgroundSecondary
             CinnamonTheme.coreAccentPrimary = config.coreAccentPrimary
-            CinnamonTheme.coreAccentSecondary = config.coreAccentSecondary
             CinnamonTheme.coreTextPrimary = config.coreTextPrimary
-            CinnamonTheme.coreTextSecondary = config.coreTextSecondary
             CinnamonTheme.coreBorder = config.coreBorder
+            CinnamonTheme.coreButtonBackground = config.coreButtonBackground
             CinnamonTheme.coreStatusSuccess = config.coreStatusSuccess
             CinnamonTheme.coreStatusWarning = config.coreStatusWarning
             CinnamonTheme.coreStatusError = config.coreStatusError
