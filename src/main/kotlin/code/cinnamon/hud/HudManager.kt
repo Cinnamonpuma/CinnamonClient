@@ -16,9 +16,22 @@ import java.io.File
 import java.nio.file.Paths
 
 object HudManager {
+    private var editMode: Boolean = false
+
+    fun setEditMode(enabled: Boolean) {
+        editMode = enabled
+        if (!editMode) {
+            selectedElement = null
+            if (hasUnsavedChanges) {
+                saveHudConfig()
+                hasUnsavedChanges = false
+            }
+        }
+    }
+
+    fun isEditMode(): Boolean = editMode
+
     private val hudElements = mutableListOf<HudElement>()
-    var isEditMode = false
-        private set
     private var selectedElement: HudElement? = null
     private var hasUnsavedChanges = false
 
@@ -38,12 +51,11 @@ object HudManager {
     fun render(context: DrawContext, tickDelta: Float) {
         hudElements.filter { it.isEnabled }.forEach { it.render(context, tickDelta) }
         
-        // Get the current screen
         val mc = MinecraftClient.getInstance()
         val currentScreen = mc.currentScreen
         
-        // Only render edit mode overlay if isEditMode is true AND current screen is HudScreen
-        if (isEditMode && currentScreen is HudScreen) {
+        // Use isEditMode() instead of isEditMode
+        if (isEditMode() && currentScreen is HudScreen) {
             renderEditModeOverlay(context)
         }
     }
@@ -51,14 +63,12 @@ object HudManager {
     private fun renderEditModeOverlay(context: DrawContext) {
         val mc = MinecraftClient.getInstance()
         val text = Text.literal("HUD Edit Mode - ESC to exit").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
-
         val x = (mc.window.scaledWidth - mc.textRenderer.getWidth(text)) / 2
         context.drawText(mc.textRenderer, text, x, 5, 0xFFFFFF, true)
     }
     
     fun onMouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (!isEditMode) return false
-        
+        if (!isEditMode()) return false
         hudElements.firstOrNull { it.isMouseOver(mouseX, mouseY) }?.let { element ->
             selectedElement = element
             element.startDragging(mouseX, mouseY)
@@ -68,8 +78,7 @@ object HudManager {
     }
     
     fun onMouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
-        if (!isEditMode) return false
-        
+        if (!isEditMode()) return false
         selectedElement?.let {
             it.updateDragging(mouseX, mouseY)
             hasUnsavedChanges = true // Mark as having unsaved changes
@@ -78,8 +87,7 @@ object HudManager {
     }
     
     fun onMouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (!isEditMode) return false
-        
+        if (!isEditMode()) return false
         selectedElement?.let {
             it.stopDragging()
             selectedElement = null
@@ -89,8 +97,7 @@ object HudManager {
     }
     
     fun onMouseScrolled(mouseX: Double, mouseY: Double, delta: Double): Boolean {
-        if (!isEditMode) return false
-        
+        if (!isEditMode()) return false
         hudElements.firstOrNull { it.isMouseOver(mouseX, mouseY) }?.let { element ->
             element.scale += (delta * 0.1).toFloat()
             hasUnsavedChanges = true // Mark as having unsaved changes
@@ -101,18 +108,17 @@ object HudManager {
     
     fun toggleEditMode() {
         // If exiting edit mode and there are unsaved changes, save them
-        if (isEditMode && hasUnsavedChanges) {
+        if (editMode && hasUnsavedChanges) {
             saveHudConfig()
             hasUnsavedChanges = false
         }
         
-        isEditMode = !isEditMode
-        if (!isEditMode) {
+        editMode = !editMode
+        if (!editMode) {
             selectedElement = null
         }
     }
     
-    // New method to be called when the HUD edit menu is closed
     fun onEditMenuClosed() {
         if (hasUnsavedChanges) {
             saveHudConfig()

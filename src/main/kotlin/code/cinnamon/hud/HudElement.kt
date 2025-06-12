@@ -1,4 +1,3 @@
-// file: src/main/kotlin/code/cinnamon/hud/HudElement.kt
 package code.cinnamon.hud
 
 import net.minecraft.client.MinecraftClient
@@ -35,7 +34,7 @@ abstract class HudElement(
     abstract fun getName(): String
 
     fun renderBackground(context: DrawContext) {
-        if (HudManager.isEditMode) {
+        if (HudManager.isEditMode()) {
             context.fill(
                 _x.toInt(),
                 _y.toInt(),
