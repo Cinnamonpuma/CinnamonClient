@@ -1,4 +1,4 @@
-package com.ui_utils.mixin.accessor;
+package code.cinnamon.mixin.accessor;
 
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
