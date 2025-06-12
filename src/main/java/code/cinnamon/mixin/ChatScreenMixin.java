@@ -19,7 +19,7 @@ public class ChatScreenMixin {
             if (MinecraftClient.getInstance().player != null) {
                 MinecraftClient.getInstance().player.sendMessage(Text.of("UI-Utils is now " + (SharedVariables.enabled ? "enabled" : "disabled") + "."), false);
             } else {
-                UIUtilsModule.LOGGER.warn("Minecraft player was nulling while enabling / disabling UI Utils.");
+                UIUtilsModule.getLOGGER().warn("Minecraft player was nulling while enabling / disabling UI Utils.");
             }
             MinecraftClient.getInstance().inGameHud.getChatHud().addToMessageHistory(chatText);
             MinecraftClient.getInstance().setScreen(null);

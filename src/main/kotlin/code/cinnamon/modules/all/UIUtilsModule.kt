@@ -22,11 +22,14 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.minecraft.screen.sync.ItemStackHash
 import code.cinnamon.mixin.accessor.ScreenAccessor
 
-object UIUtilsModule {
-    val LOGGER = LoggerFactory.getLogger("ui-utils")
-    val mc = MinecraftClient.getInstance()
-    
-    // Shared variables for UI state
+class UIUtilsModule {
+    companion object {
+        @JvmStatic
+        public val LOGGER = LoggerFactory.getLogger("ui-utils")
+        @JvmStatic
+        public val mc = MinecraftClient.getInstance()
+
+        // Shared variables for UI state
     var sendUIPackets = true
     var delayUIPackets = false
     val delayedUIPackets = mutableListOf<Packet<*>>()
@@ -134,6 +137,7 @@ object UIUtilsModule {
     /**
      * Creates UI utility buttons.
      */
+        @JvmStatic
     public fun createWidgets(mc: MinecraftClient, screen: Screen) {
         createUIUtilsButtons(0, 0) // Assuming baseX and baseY are 0 for now
         // Buttons are created but not added to the screen as per updated requirement
@@ -173,11 +177,12 @@ object UIUtilsModule {
     /**
      * Renders debug information using the provided context and text renderer.
      */
+        @JvmStatic
     public fun createText(mc: MinecraftClient, context: DrawContext, textRenderer: net.minecraft.client.font.TextRenderer) {
         renderDebugInfo(context, 5, 5)
     }
-    
-    // Button action implementations
+
+        // Button action implementations
     private fun closeWithoutPacket() {
         mc.setScreen(null)
         LOGGER.info("Closed screen without sending packet")
@@ -312,6 +317,7 @@ object UIUtilsModule {
         } catch (e: NumberFormatException) {
             false
         }
+    }
     }
 }
 

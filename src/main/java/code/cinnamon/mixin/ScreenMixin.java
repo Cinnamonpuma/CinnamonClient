@@ -68,7 +68,7 @@ public abstract class ScreenMixin {
                                     mc.getNetworkHandler().sendChatMessage(this.getText());
                                 }
                             } else {
-                                UIUtilsModule.LOGGER.warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
+                                UIUtilsModule.getLOGGER().warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
                             }
 
                             this.setText("");

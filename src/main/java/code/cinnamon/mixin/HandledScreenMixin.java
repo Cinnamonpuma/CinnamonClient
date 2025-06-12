@@ -68,7 +68,7 @@ public abstract class HandledScreenMixin extends Screen {
                                 mc.getNetworkHandler().sendChatMessage(this.getText());
                             }
                     } else {
-                            UIUtilsModule.LOGGER.warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
+                            UIUtilsModule.getLOGGER().warn("Minecraft network handler (mc.getNetworkHandler()) was null while trying to send chat message from UI Utils.");
                         }
 
                         this.setText("");
@@ -88,7 +88,7 @@ public abstract class HandledScreenMixin extends Screen {
         cir.cancel();
         if (super.keyPressed(keyCode, scanCode, modifiers)) {
             cir.setReturnValue(true);
-        } else if (UIUtilsModule.mc.options.inventoryKey.matchesKey(keyCode, scanCode) && (this.addressField == null || !this.addressField.isSelected())) {
+        } else if (UIUtilsModule.getMc().options.inventoryKey.matchesKey(keyCode, scanCode) && (this.addressField == null || !this.addressField.isSelected())) {
             // Crashes if address field does not exist (because of ui utils disabled, this is a temporary fix.)
             this.close();
             cir.setReturnValue(true);
