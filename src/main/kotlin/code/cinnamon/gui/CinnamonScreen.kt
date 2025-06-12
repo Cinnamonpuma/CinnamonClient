@@ -347,7 +347,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
             
             buttons.forEach { btn ->
                 if (btn.isMouseOver(mouseX, mouseY)) {
-                    btn.onClick(mouseX, mouseY)
+                    btn.onClick.invoke(mouseX, mouseY)
                     return true
                 }
             }

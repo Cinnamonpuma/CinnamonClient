@@ -2,44 +2,70 @@ package code.cinnamon.gui.components
 
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.Drawable
+import net.minecraft.client.gui.Element
+import net.minecraft.client.gui.Selectable
 import net.minecraft.text.Text
 import code.cinnamon.gui.theme.CinnamonTheme
 import kotlin.math.max
 import kotlin.math.min
 
 class CinnamonButton(
-    private val x: Int,
-    private val y: Int,
-    private val width: Int,
-    private val height: Int,
+    x: Int,
+    y: Int,
+    width: Int,
+    height: Int,
     private val text: Text,
-    private val onClick: (mouseX: Double, mouseY: Double) -> Unit,
+    val onClick: (mouseX: Double, mouseY: Double) -> Unit,
     private val isPrimary: Boolean = false
-) {
+) : Element, Drawable, Selectable {
+    private var _x: Int = x
+    private var _y: Int = y
+    private var _width: Int = width
+    private var _height: Int = height
+    
     private var isHovered = false
     private var isPressed = false
     private var isEnabled = true
     private var animationProgress = 0f
     private val client = MinecraftClient.getInstance()
-    
-    fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+
+    // Public accessors for position and size
+    fun getX(): Int = _x
+    fun setX(x: Int) { _x = x }
+    fun getY(): Int = _y
+    fun setY(y: Int) { _y = y }
+    fun getWidth(): Int = _width
+    fun setWidth(width: Int) { _width = width }
+    fun getHeight(): Int = _height
+    fun setHeight(height: Int) { _height = height }
+
+    override fun setFocused(focused: Boolean) { /* No-op for now */ }
+    override fun isFocused(): Boolean = false
+
+    override fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
+        return mouseX >= _x && mouseX < _x + _width && mouseY >= _y && mouseY < _y + _height
+    }
+
+    // Drawable method
+    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         updateAnimation(delta)
         
         val backgroundColor = getBackgroundColor()
         val textColor = getTextColor()
         
         // Draw button background with rounded corners effect
-        drawRoundedRect(context, x, y, width, height, backgroundColor)
+        drawRoundedRect(context, _x, _y, _width, _height, backgroundColor)
         
         // Draw border
         if (isHovered || isPressed) {
-            drawBorder(context, x, y, width, height, CinnamonTheme.accentColor)
+            drawBorder(context, _x, _y, _width, _height, CinnamonTheme.accentColor)
         }
         
         // Draw text
         val textWidth = client.textRenderer.getWidth(text)
-        val textX = x + (width - textWidth) / 2
-        val textY = y + (height - client.textRenderer.fontHeight) / 2
+        val textX = _x + (_width - textWidth) / 2
+        val textY = _y + (_height - client.textRenderer.fontHeight) / 2
         
         context.drawText(
             client.textRenderer,
@@ -54,7 +80,7 @@ class CinnamonButton(
         if (isHovered && isEnabled) {
             val alpha = (animationProgress * 0.1f).toInt()
             val overlayColor = (alpha shl 24) or 0xffffff
-            context.fill(x, y, x + width, y + height, overlayColor)
+            context.fill(_x, _y, _x + _width, _y + _height, overlayColor)
         }
     }
     
@@ -108,11 +134,8 @@ class CinnamonButton(
         context.fill(x + width - 1, y + 1, x + width, y + height - 1, color)
     }
     
-    fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
-        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height
-    }
-    
-    fun onClick(mouseX: Double, mouseY: Double) {
+    // Click handler
+    fun handleOnClick(mouseX: Double, mouseY: Double) {
         if (isEnabled) {
             isPressed = true
             onClick.invoke(mouseX, mouseY)
@@ -133,4 +156,57 @@ class CinnamonButton(
     }
     
     fun isEnabled(): Boolean = isEnabled
+
+    // Element methods
+    override fun mouseMoved(mouseX: Double, mouseY: Double) {
+        setHovered(isMouseOver(mouseX, mouseY))
+    }
+
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (isMouseOver(mouseX, mouseY) && isEnabled && button == 0) {
+            handleOnClick(mouseX, mouseY)
+            return true
+        }
+        return false
+    }
+
+    override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        return false
+    }
+
+    override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
+        return false
+    }
+
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+        return false
+    }
+
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        return false
+    }
+
+    override fun keyReleased(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        return false
+    }
+
+    override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        return false
+    }
+
+    // Selectable methods
+    override fun getType(): Selectable.SelectionType {
+        return if (isHovered && isEnabled) Selectable.SelectionType.HOVERED else Selectable.SelectionType.NONE
+    }
+
+    // Simple narration implementation
+    override fun appendNarrations(builder: net.minecraft.client.gui.screen.narration.NarrationMessageBuilder) {
+        try {
+            // Use reflection to safely call methods in case of version differences
+            val titleMethod = builder.javaClass.getMethod("put", net.minecraft.client.gui.screen.narration.NarrationPart::class.java, net.minecraft.text.Text::class.java)
+            titleMethod.invoke(builder, net.minecraft.client.gui.screen.narration.NarrationPart.TITLE, text)
+        } catch (e: Exception) {
+            // Fallback - do nothing if narration fails
+        }
+    }
 }

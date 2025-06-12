@@ -20,10 +20,11 @@ import java.util.*
 import kotlin.collections.mutableListOf
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.minecraft.screen.sync.ItemStackHash
+import code.cinnamon.mixin.accessor.ScreenAccessor
 
 object UIUtilsModule {
-    private val LOGGER = LoggerFactory.getLogger("ui-utils")
-    private val mc = MinecraftClient.getInstance()
+    val LOGGER = LoggerFactory.getLogger("ui-utils")
+    val mc = MinecraftClient.getInstance()
     
     // Shared variables for UI state
     var sendUIPackets = true
@@ -129,6 +130,14 @@ object UIUtilsModule {
         
         return buttons
     }
+
+    /**
+     * Creates UI utility buttons.
+     */
+    public fun createWidgets(mc: MinecraftClient, screen: Screen) {
+        createUIUtilsButtons(0, 0) // Assuming baseX and baseY are 0 for now
+        // Buttons are created but not added to the screen as per updated requirement
+    }
     
     /**
      * Renders debug information on screen
@@ -159,6 +168,13 @@ object UIUtilsModule {
             0xFFFFFF,
             false
         )
+    }
+
+    /**
+     * Renders debug information using the provided context and text renderer.
+     */
+    public fun createText(mc: MinecraftClient, context: DrawContext, textRenderer: net.minecraft.client.font.TextRenderer) {
+        renderDebugInfo(context, 5, 5)
     }
     
     // Button action implementations
