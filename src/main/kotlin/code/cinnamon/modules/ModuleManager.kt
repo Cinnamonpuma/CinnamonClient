@@ -32,9 +32,11 @@ object ModuleManager {
     }
     
     fun initialize() {
-        // Register your modules here
+        // Register only the desired modules
         registerModule(AutoclickerModule())
-        // Add more modules as needed
+        registerModule(FPSModule())
+        registerModule(PingModule())
+        registerModule(KeystrokesModule())
     }
 }
 

@@ -1,5 +1,3 @@
-package code.cinnamon.gui.theme
-
 // Data class to hold all core colors for a theme
 data class ThemeColors(
     val coreBackgroundPrimary: Int,
@@ -7,8 +5,6 @@ data class ThemeColors(
     val coreTextPrimary: Int,
     val coreBorder: Int,
     val coreButtonBackgroundDef: Int,
-    // Status colors could also be part of the theme, but for now, keeping them as defined in CinnamonTheme
-    // Or, if they should also change, add them to ThemeColors and update applyTheme accordingly
 )
 
 // Enum to define available themes
@@ -19,7 +15,7 @@ enum class Theme(val colors: ThemeColors) {
             coreAccentPrimary = 0xFF00aaff.toInt(),
             coreTextPrimary = 0xFFe0e0e0.toInt(),
             coreBorder = 0xFF404040.toInt(),
-            coreButtonBackgroundDef = 0xE6404040.toInt()
+            coreButtonBackgroundDef = 0xFF404040.toInt()
         )
     ),
     LIGHT(
@@ -28,7 +24,7 @@ enum class Theme(val colors: ThemeColors) {
             coreAccentPrimary = 0xFF007ACC.toInt(),
             coreTextPrimary = 0xFF202020.toInt(),
             coreBorder = 0xFFCCCCCC.toInt(),
-            coreButtonBackgroundDef = 0xE6DDDDDD.toInt()
+            coreButtonBackgroundDef = 0xFFDDDDDD.toInt()
         )
     )
 }
@@ -71,27 +67,24 @@ object CinnamonTheme {
     var buttonBackgroundPressed: Int = 0
     var moduleEnabledColor: Int = 0
 
-
     // --- Old Color Properties: Mapped to Core or Derived Colors via Getters ---
 
     // Backgrounds
     val guiBackground: Int get() = coreBackgroundPrimary
     val backgroundTop: Int get() = coreBackgroundPrimary 
-    val backgroundBottom: Int get() = adjustBrightness(coreBackgroundPrimary, -0.05f) // Slight adjustment for depth
+    val backgroundBottom: Int get() = adjustBrightness(coreBackgroundPrimary, -0.05f)
     
-    val headerBackground: Int get() = coreBackgroundPrimary  // Changed from coreBackgroundSecondary
-    val footerBackground: Int get() = coreBackgroundPrimary  // Changed from coreBackgroundSecondary
-    val contentBackground: Int get() = coreBackgroundPrimary // This already points to primary
+    val headerBackground: Int get() = coreBackgroundPrimary
+    val footerBackground: Int get() = coreBackgroundPrimary
+    val contentBackground: Int get() = coreBackgroundPrimary
     val sidebarBackground: Int get() = coreBackgroundPrimary 
     
     // Content Area
-    val cardBackground: Int get() = coreBackgroundPrimary 
-    // cardBackgroundHover is a derived 'var'
+    val cardBackground: Int get() = coreBackgroundPrimary
 
     // Borders & Accents
     val borderColor: Int get() = coreBorder
     val accentColor: Int get() = coreAccentPrimary
-    // accentColorHover, accentColorPressed are derived 'var's
 
     // Text
     val titleColor: Int get() = coreTextPrimary
@@ -101,36 +94,24 @@ object CinnamonTheme {
 
     // Buttons
     val buttonBackground: Int get() = coreButtonBackground
-    // buttonBackgroundHover, buttonBackgroundPressed are derived 'var's
     val buttonBackgroundDisabled: Int get() = adjustBrightness(coreButtonBackground, -0.3f)
 
     // Primary Buttons (Accent Colored)
-    // primaryButtonBackground, primaryButtonBackgroundHover, primaryButtonBackgroundPressed are derived 'var's
 
     // Status Colors
     val successColor: Int get() = coreStatusSuccess
     val warningColor: Int get() = coreStatusWarning
     val errorColor: Int get() = coreStatusError
-    val infoColor: Int get() = coreAccentPrimary // Mapped to primary accent
+    val infoColor: Int get() = coreAccentPrimary
 
     // Module Colors
-    // moduleEnabledColor is a derived 'var'
     val moduleDisabledColor: Int get() = adjustBrightness(coreButtonBackground, -0.1f)
-    val moduleBackgroundEnabled: Int get() = adjustBrightness(coreStatusSuccess, -0.3f) // Darker version of success
+    val moduleBackgroundEnabled: Int get() = adjustBrightness(coreStatusSuccess, -0.3f)
     val moduleBackgroundDisabled: Int get() = adjustBrightness(coreButtonBackground, -0.2f)
 
-
-    // Store default values for reset functionality - This might need rethinking with themes.
-    // For now, resetToDefaults will explicitly apply Theme.DARK.
-    // private val defaultColors = mutableMapOf<String, Int>() // Keeping for now, but its role is diminished.
-
     init {
-        // saveDefaults() // saveDefaults will be called by applyTheme if we want to save the applied theme's colors
-        applyTheme(Theme.DARK) // Initialize with Dark Theme; this also calls updateDependentColors
+        applyTheme(Theme.DARK)
     }
-
-    // Removed saveDefaults() as its previous role is handled by applyTheme setting specific theme colors.
-    // If we need to save *customizations* on top of a theme, this function might be re-introduced.
 
     fun applyTheme(theme: Theme) {
         currentTheme = theme
@@ -141,24 +122,12 @@ object CinnamonTheme {
         coreBorder = theme.colors.coreBorder
         coreButtonBackground = theme.colors.coreButtonBackgroundDef
 
-        // Note: Status colors (success, warning, error) and special effect colors (patternColor, etc.)
-        // are not part of the ThemeColors data class in this iteration.
-        // They retain their values unless explicitly changed.
-        // If they need to be themed, add them to ThemeColors and update here.
-
         updateDependentColors()
-        // If we want 'resetToDefaults' to reset to the *last applied theme's* defaults,
-        // then saveDefaults() should be called here.
-        // For now, resetToDefaults explicitly applies Dark theme.
     }
     
     fun resetToDefaults() {
-        // Reset to Dark Theme specifically, as per requirement.
         applyTheme(Theme.DARK)
 
-        // Reset independent special effect colors and status colors to their initial defaults
-        // as they are not part of the theme application logic in applyTheme.
-        // If these were part of ThemeColors, applyTheme(Theme.DARK) would handle them.
         coreStatusSuccess = 0xFF4caf50.toInt()
         coreStatusWarning = 0xFFff9800.toInt()
         coreStatusError = 0xFFf44336.toInt()
@@ -167,29 +136,18 @@ object CinnamonTheme {
         overlayColor = 0x80000000.toInt()
         glassHighlight = 0x20ffffff.toInt()
         glassShadow = 0x40000000.toInt()
-        
-        // updateDependentColors() is already called by applyTheme(Theme.DARK)
     }
     
     fun updateDependentColors() {
-        // Update 'var' properties that depend on core colors
         cardBackgroundHover = adjustBrightness(coreBackgroundPrimary, 0.05f)
-        
         accentColorHover = adjustBrightness(coreAccentPrimary, -0.1f)
         accentColorPressed = adjustBrightness(coreAccentPrimary, -0.2f)
-        
-        primaryButtonBackground = (coreAccentPrimary and 0x00FFFFFF) or 0xE6000000.toInt() // Retain original alpha logic
-        primaryButtonBackgroundHover = accentColorHover 
+        primaryButtonBackground = (coreAccentPrimary and 0x00FFFFFF) or 0xFF000000.toInt()
+        primaryButtonBackgroundHover = accentColorHover
         primaryButtonBackgroundPressed = accentColorPressed
-        
         buttonBackgroundHover = adjustBrightness(coreButtonBackground, 0.1f)
         buttonBackgroundPressed = adjustBrightness(coreButtonBackground, -0.1f)
-        
         moduleEnabledColor = coreStatusSuccess
-        
-        // Note: 'val' properties with 'get()' are automatically "updated" as they always read the current core color.
-        // No need to list them here (e.g. guiBackground, borderColor, titleColor, etc.)
-        // Also, specific derivations in getters (like disabledTextColor) are also always live.
     }
     
     private fun adjustBrightness(color: Int, factor: Float): Int {

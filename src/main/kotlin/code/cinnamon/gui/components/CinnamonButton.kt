@@ -1,5 +1,3 @@
-package code.cinnamon.gui.components
-
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Drawable
@@ -15,7 +13,7 @@ class CinnamonButton(
     y: Int,
     width: Int,
     height: Int,
-    private val text: Text,
+    var text: Text,
     val onClick: (mouseX: Double, mouseY: Double) -> Unit,
     private val isPrimary: Boolean = false
 ) : Element, Drawable, Selectable {
@@ -23,7 +21,7 @@ class CinnamonButton(
     private var _y: Int = y
     private var _width: Int = width
     private var _height: Int = height
-    
+
     private var isHovered = false
     private var isPressed = false
     private var isEnabled = true
@@ -50,23 +48,23 @@ class CinnamonButton(
     // Drawable method
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         updateAnimation(delta)
-        
+
         val backgroundColor = getBackgroundColor()
         val textColor = getTextColor()
-        
+
         // Draw button background with rounded corners effect
         drawRoundedRect(context, _x, _y, _width, _height, backgroundColor)
-        
+
         // Draw border
         if (isHovered || isPressed) {
             drawBorder(context, _x, _y, _width, _height, CinnamonTheme.accentColor)
         }
-        
+
         // Draw text
         val textWidth = client.textRenderer.getWidth(text)
         val textX = _x + (_width - textWidth) / 2
         val textY = _y + (_height - client.textRenderer.fontHeight) / 2
-        
+
         context.drawText(
             client.textRenderer,
             text,
@@ -75,7 +73,7 @@ class CinnamonButton(
             textColor,
             true
         )
-        
+
         // Draw hover effect
         if (isHovered && isEnabled) {
             val alpha = (animationProgress * 0.1f).toInt()
@@ -83,27 +81,25 @@ class CinnamonButton(
             context.fill(_x, _y, _x + _width, _y + _height, overlayColor)
         }
     }
-    
+
     private fun updateAnimation(delta: Float) {
         val targetProgress = if (isHovered) 1f else 0f
         val speed = delta * 0.1f
-        
+
         animationProgress = if (targetProgress > animationProgress) {
             min(animationProgress + speed, targetProgress)
         } else {
             max(animationProgress - speed, targetProgress)
         }
     }
-    
+
     private fun getBackgroundColor(): Int {
         return when {
             !isEnabled -> if (isPrimary) CinnamonTheme.buttonBackgroundDisabled else CinnamonTheme.buttonBackgroundDisabled
-            isPressed -> if (isPrimary) CinnamonTheme.primaryButtonBackgroundPressed else CinnamonTheme.buttonBackgroundPressed
-            isHovered -> if (isPrimary) CinnamonTheme.primaryButtonBackgroundHover else CinnamonTheme.buttonBackgroundHover
             else -> if (isPrimary) CinnamonTheme.primaryButtonBackground else CinnamonTheme.buttonBackground
         }
     }
-    
+
     private fun getTextColor(): Int {
         return when {
             !isEnabled -> CinnamonTheme.disabledTextColor
@@ -111,29 +107,29 @@ class CinnamonButton(
             else -> CinnamonTheme.primaryTextColor
         }
     }
-    
+
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
         // Simple rounded rectangle effect by drawing main rect and corner pixels
         context.fill(x + 1, y, x + width - 1, y + height, color)
         context.fill(x, y + 1, x + width, y + height - 1, color)
-        
+
         // Corner pixels for rounded effect
         context.fill(x + 1, y + 1, x + 2, y + 2, color)
         context.fill(x + width - 2, y + 1, x + width - 1, y + 2, color)
         context.fill(x + 1, y + height - 2, x + 2, y + height - 1, color)
         context.fill(x + width - 2, y + height - 2, x + width - 1, y + height - 1, color)
     }
-    
+
     private fun drawBorder(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
         // Top and bottom borders
         context.fill(x + 1, y, x + width - 1, y + 1, color)
         context.fill(x + 1, y + height - 1, x + width - 1, y + height, color)
-        
+
         // Left and right borders
         context.fill(x, y + 1, x + 1, y + height - 1, color)
         context.fill(x + width - 1, y + 1, x + width, y + height - 1, color)
     }
-    
+
     // Click handler
     fun handleOnClick(mouseX: Double, mouseY: Double) {
         if (isEnabled) {
@@ -146,15 +142,15 @@ class CinnamonButton(
             }.start()
         }
     }
-    
+
     fun setHovered(hovered: Boolean) {
         isHovered = hovered
     }
-    
+
     fun setEnabled(enabled: Boolean) {
         isEnabled = enabled
     }
-    
+
     fun isEnabled(): Boolean = isEnabled
 
     // Element methods

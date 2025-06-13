@@ -3,12 +3,6 @@ package code.cinnamon.hud
 import code.cinnamon.hud.elements.FpsHudElement
 import code.cinnamon.hud.elements.PingHudElement
 import code.cinnamon.hud.elements.KeystrokesHudElement
-import code.cinnamon.hud.elements.CloseButtonHudElement
-import code.cinnamon.hud.elements.DesyncButtonHudElement
-import code.cinnamon.hud.elements.SendPacketsButtonHudElement
-import code.cinnamon.hud.elements.DelayPacketsButtonHudElement
-import code.cinnamon.hud.elements.SaveGuiButtonHudElement
-import code.cinnamon.hud.elements.DisconnectButtonHudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
@@ -51,13 +45,6 @@ object HudManager {
             add(FpsHudElement(10f, 10f))
             add(PingHudElement(10f, 30f))
             add(KeystrokesHudElement(10f, 60f))
-            // New CinnaUtil Button HUD Elements
-            add(CloseButtonHudElement(10f, 85f))
-            add(DesyncButtonHudElement(10f, 110f))
-            add(SendPacketsButtonHudElement(10f, 135f))
-            add(DelayPacketsButtonHudElement(10f, 160f))
-            add(SaveGuiButtonHudElement(10f, 185f))
-            add(DisconnectButtonHudElement(10f, 210f))
         }
         loadHudConfig()
     }
