@@ -25,7 +25,7 @@ abstract class HudElement(
     var textShadowEnabled: Boolean = true
     var keypressedTextColor: Int = 0x000000 // Black
     var keypressedBackgroundColor: Int = 0xFFFFFF // White
-    
+
     private var isDragging: Boolean = false
     private var dragOffsetX: Float = 0f
     private var dragOffsetY: Float = 0f
@@ -47,7 +47,8 @@ abstract class HudElement(
         }
     }
 
-    fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
+    // Make this open so subclasses can override if needed for multiple inheritance with Element
+    open fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
         return mouseX >= _x && mouseX <= _x + getWidth() * scale &&
                mouseY >= _y && mouseY <= _y + getHeight() * scale
     }
