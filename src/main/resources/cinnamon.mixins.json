@@ -7,7 +7,8 @@
 		"AutoClickerMixin",
 		"client.TitleScreenMixin",
 		"client.PanoramaRendererMixin",
-		"client.ScreenMixin"
+		"client.ScreenMixin",
+		"PacketHandlerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
