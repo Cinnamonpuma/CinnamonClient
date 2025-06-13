@@ -17,7 +17,7 @@ class CinnamonButton(
     height: Int,
     var text: Text,
     val onClick: (mouseX: Double, mouseY: Double) -> Unit,
-    private val isPrimary: Boolean = false
+    var isPrimary: Boolean = false
 ) : Element, Drawable, Selectable {
     private var _x: Int = x
     private var _y: Int = y
