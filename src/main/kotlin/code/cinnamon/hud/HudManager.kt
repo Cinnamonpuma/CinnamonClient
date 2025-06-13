@@ -3,6 +3,7 @@ package code.cinnamon.hud
 import code.cinnamon.hud.elements.FpsHudElement
 import code.cinnamon.hud.elements.PingHudElement
 import code.cinnamon.hud.elements.KeystrokesHudElement
+import code.cinnamon.hud.elements.PacketHandlerHudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
@@ -48,6 +49,7 @@ object HudManager {
         registerHudElement(FpsHudElement(10f, 10f))
         registerHudElement(PingHudElement(10f, 30f))
         registerHudElement(KeystrokesHudElement(10f, 60f))
+        registerHudElement(PacketHandlerHudElement(10f, 90f)) // Adjust coordinates as needed
         loadHudConfig()
     }
     
