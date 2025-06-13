@@ -9,7 +9,7 @@
 		"client.PanoramaRendererMixin",
 		"client.ScreenMixin",
 		"PacketHandlerMixin",
-		"client.PacketHandlerHudGlobalInjectorMixin"
+		"client.PacketHandlerHudHandledScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

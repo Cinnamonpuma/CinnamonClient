@@ -2,11 +2,15 @@ package code.cinnamon.hud.elements
 
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.hud.HudElement
-import net.minecraft.client.gui.DrawContext
 import code.cinnamon.util.PacketHandlerAPI
+import code.cinnamon.SharedVariables
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
 import net.minecraft.text.Text
+import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket
+import javax.swing.JButton
+import javax.swing.JFrame
 
 class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(initialX, initialY), Element {
 
@@ -14,95 +18,161 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private val buttonHeight = 20
     private val buttonMargin = 2
 
-    private lateinit var blockingButton: CinnamonButton
-    private lateinit var safeCloseButton: CinnamonButton
-    private lateinit var clearQueuesButton: CinnamonButton
-    private lateinit var queueStatusButton: CinnamonButton
+    private val closeWithoutPacketButton = CinnamonButton(
+        0, 0, 0, 0, 
+        Text.of("Close without packet"),
+        onClick = { _: Double, _: Double ->
+            client.setScreen(null)
+        }
+    )
 
-    private val buttons: List<CinnamonButton>
+    private val deSyncButton = CinnamonButton(
+        0, 0, 0, 0, 
+        Text.of("De-sync"),
+        onClick = { _: Double, _: Double ->
+            client.player?.let { player ->
+                client.networkHandler?.sendPacket(CloseHandledScreenC2SPacket(player.currentScreenHandler.syncId))
+            }
+        }
+    )
 
-    init {
-        blockingButton = CinnamonButton(0, 0, 0, 0, Text.of(getBlockingButtonText()), onClick = { _, _ ->
+    private val sendPacketsButton: CinnamonButton = CinnamonButton(
+        0, 0, 0, 0, 
+        Text.of("Send packets: ${SharedVariables.enabled}"),
+        onClick = { _: Double, _: Double ->
+            SharedVariables.enabled = !SharedVariables.enabled
+            sendPacketsButton.text = Text.of("Send packets: ${SharedVariables.enabled}")
+        }
+    )
+
+    private val delayPacketsButton: CinnamonButton = CinnamonButton(
+        0, 0, 0, 0, 
+        Text.of("Delay packets: ${PacketHandlerAPI.isPacketBlocking()}"),
+        onClick = { _: Double, _: Double ->
             if (PacketHandlerAPI.isPacketBlocking()) {
                 PacketHandlerAPI.stopPacketBlocking()
+                if (client.networkHandler != null) {
+                    PacketHandlerAPI.flushPacketQueue()
+                }
             } else {
                 PacketHandlerAPI.startPacketBlocking()
             }
-            blockingButton.text = Text.of(getBlockingButtonText())
-        })
+            delayPacketsButton.text = Text.of("Delay packets: ${PacketHandlerAPI.isPacketBlocking()}")
+        }
+    )
 
-        safeCloseButton = CinnamonButton(0, 0, 0, 0, Text.of(getSafeCloseButtonText()), onClick = { _, _ ->
-            PacketHandlerAPI.enableSafeClose()
-            safeCloseButton.text = Text.of(getSafeCloseButtonText())
-        })
+    private val saveGuiButton = CinnamonButton(
+        0, 0, 0, 0, 
+        Text.of("Save GUI"),
+        onClick = { _: Double, _: Double ->
+            client.player?.let { player ->
+                try {
+                    val storedScreenField = SharedVariables::class.java.getDeclaredField("storedScreen")
+                    val storedScreenHandlerField = SharedVariables::class.java.getDeclaredField("storedScreenHandler")
+                    storedScreenField.isAccessible = true
+                    storedScreenHandlerField.isAccessible = true
+                    storedScreenField.set(null, client.currentScreen)
+                    storedScreenHandlerField.set(null, player.currentScreenHandler)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    )
 
-        clearQueuesButton = CinnamonButton(0, 0, 0, 0, Text.of("Clear Queues"), onClick = { _, _ ->
-            PacketHandlerAPI.clearQueues()
-        })
+    private val disconnectAndSendButton = CinnamonButton(
+        0, 0, 0, 0, 
+        Text.of("Disconnect and send packets"),
+        onClick = { _: Double, _: Double ->
+            if (PacketHandlerAPI.isPacketBlocking()) {
+                PacketHandlerAPI.stopPacketBlocking()
+            }
+            client.networkHandler?.let { handler ->
+                PacketHandlerAPI.flushPacketQueue()
+                handler.connection.disconnect(Text.of("Disconnecting (CINNAMON)"))
+            }
+        }
+    )
 
-        queueStatusButton = CinnamonButton(0, 0, 0, 0, Text.of("Queue Status"), onClick = { _, _ ->
-            val queuedCount = PacketHandlerAPI.getQueuedPacketCount()
-            val delayedCount = PacketHandlerAPI.getDelayedPacketCount()
-            val blocking = PacketHandlerAPI.isPacketBlocking()
-            val safeClose = PacketHandlerAPI.isSafeCloseEnabled()
-            println("=== Packet Handler Status ===")
-            println("Queued packets: $queuedCount")
-            println("Delayed packets: $delayedCount")
-            println("Blocking enabled: $blocking")
-            println("Safe close enabled: $safeClose")
-            println("=============================")
-        })
+    private val fabricatePacketButton = CinnamonButton(
+        0, 0, 0, 0, 
+        Text.of("Fabricate packet"),
+        onClick = { _: Double, _: Double ->
+            if (!MinecraftClient.IS_SYSTEM_MAC) {
+                val frame = JFrame("Choose Packet")
+                frame.setBounds(0, 0, 450, 100)
+                frame.isResizable = false
+                frame.setLocationRelativeTo(null)
+                frame.layout = null
 
-        buttons = listOf(blockingButton, safeCloseButton, clearQueuesButton, queueStatusButton)
-    }
+                val clickSlotButton = JButton("Click Slot")
+                clickSlotButton.setBounds(100, 25, 110, 20)
+                clickSlotButton.addActionListener {
+                    frame.isVisible = false
+                }
 
-    private fun getBlockingButtonText(): String {
-        return "Blocking: ${if (PacketHandlerAPI.isPacketBlocking()) "ON" else "OFF"}"
-    }
+                val buttonClickButton = JButton("Button Click")
+                buttonClickButton.setBounds(250, 25, 110, 20)
+                buttonClickButton.addActionListener {
+                    frame.isVisible = false
+                }
 
-    private fun getSafeCloseButtonText(): String {
-        // Assuming enableSafeClose toggles it. If it only enables, this logic might need adjustment
-        // For now, let's assume it means "Safe Close: ON" if PacketHandlerAPI.isSafeCloseEnabled() is true
-        // and the button's action is to ensure it's enabled.
-        // The prompt implies `enableSafeClose` is the action, and then `isSafeCloseEnabled` reflects state.
-        return "Safe Close: ${if (PacketHandlerAPI.isSafeCloseEnabled()) "ON" else "OFF"}"
-    }
+                frame.add(clickSlotButton)
+                frame.add(buttonClickButton)
+                frame.isVisible = true
+            }
+        }
+    )
 
-    // Only render in GUIs and HUD editor
+    private val copyTitleJsonButton = CinnamonButton(
+        0, 0, 0, 0, 
+        Text.of("Copy GUI Title JSON"),
+        onClick = { _: Double, _: Double ->
+            try {
+                val screen = client.currentScreen ?: throw IllegalStateException("The current minecraft screen (mc.currentScreen) is null")
+                client.keyboard.setClipboard(screen.title.string)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    )
+
+    private val buttons = listOf(
+        closeWithoutPacketButton,
+        deSyncButton,
+        sendPacketsButton,
+        delayPacketsButton,
+        saveGuiButton,
+        disconnectAndSendButton,
+        fabricatePacketButton,
+        copyTitleJsonButton
+    )
+
     private fun shouldRender(): Boolean {
         val screen = client.currentScreen
-        // Replace HudEditorScreen with your actual HUD editor class
+        // Always use the HUD editor's x/y, never override for containers
         return screen != null && (screen !is net.minecraft.client.gui.screen.GameMenuScreen)
     }
 
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!shouldRender()) return
-        super.renderBackground(context) // Optional: keep if you want a background for the whole element group
+        super.renderBackground(context)
         var currentY = getY().toInt() + buttonMargin
 
         for (button in buttons) {
+            // Always use getX()/getY() from the HUD (never static/fixed or GUI-relative)
             button.setX(getX().toInt() + buttonMargin)
             button.setY(currentY)
             button.setWidth(getWidth() - 2 * buttonMargin)
             button.setHeight(buttonHeight)
-            // Potentially update isPrimary for toggle buttons based on state
-            if (button == blockingButton) {
-                button.isPrimary = PacketHandlerAPI.isPacketBlocking()
-            } else if (button == safeCloseButton) {
-                button.isPrimary = PacketHandlerAPI.isSafeCloseEnabled()
-            }
             button.render(context, client.mouse.x.toInt(), client.mouse.y.toInt(), tickDelta)
             currentY += buttonHeight + buttonMargin
         }
     }
 
     override fun getWidth(): Int {
-        // Calculate width based on the longest text of the CinnamonButtons
-        // This might need access to TextRenderer to be accurate.
-        // CinnamonButton itself might have a method to get its preferred width.
-        // For now, a fixed width or a simple calculation:
         val longestTextWidth = buttons.maxOfOrNull { client.textRenderer.getWidth(it.text) } ?: 100
-        return longestTextWidth + buttonMargin * 4 // Adjusted margin for text padding within button
+        return longestTextWidth + buttonMargin * 4
     }
 
     override fun getHeight(): Int {
@@ -112,7 +182,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun getName(): String = "PacketHandler"
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (!shouldRender()) return false // Removed isMouseOver check for the entire element, buttons handle their own
+        if (!shouldRender()) return false
         for (cinnamonButton in buttons) {
             if (cinnamonButton.mouseClicked(mouseX, mouseY, button)) {
                 return true
@@ -121,7 +191,6 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         return false
     }
 
-    // Element interface methods - delegating to buttons or providing sensible defaults
     override fun mouseMoved(mouseX: Double, mouseY: Double) {
         for (button in buttons) {
             button.mouseMoved(mouseX, mouseY)
@@ -173,19 +242,13 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         return false
     }
 
-    override fun setFocused(focused: Boolean) {
-        // If the container itself can be focused, manage that state.
-        // Otherwise, could delegate to a specific button or none.
-        // For now, no specific button gets focus by default.
-    }
+    override fun setFocused(focused: Boolean) {}
 
-    override fun isFocused(): Boolean = false // Or manage based on setFocused
+    override fun isFocused(): Boolean = false
 
-    // isMouseOver for the entire element might still be useful for the Hud system
     override fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
         val x = getX()
         val y = getY()
-        // Ensure getWidth() and getHeight() are accurate for this check
         val w = getWidth() * scale
         val h = getHeight() * scale
         return mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h
