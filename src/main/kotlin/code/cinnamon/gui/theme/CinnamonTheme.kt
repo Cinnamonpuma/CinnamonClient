@@ -1,3 +1,5 @@
+package code.cinnamon.gui.theme
+
 // Data class to hold all core colors for a theme
 data class ThemeColors(
     val coreBackgroundPrimary: Int,

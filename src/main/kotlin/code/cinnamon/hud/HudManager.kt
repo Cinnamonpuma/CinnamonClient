@@ -40,12 +40,14 @@ object HudManager {
     private val configDir = Paths.get("config", "cinnamon").toFile()
     private val configFile = File(configDir, "hud.json")
     
+    fun registerHudElement(element: HudElement) {
+        hudElements.add(element)
+    }
+
     fun init() {
-        hudElements.apply {
-            add(FpsHudElement(10f, 10f))
-            add(PingHudElement(10f, 30f))
-            add(KeystrokesHudElement(10f, 60f))
-        }
+        registerHudElement(FpsHudElement(10f, 10f))
+        registerHudElement(PingHudElement(10f, 30f))
+        registerHudElement(KeystrokesHudElement(10f, 60f))
         loadHudConfig()
     }
     
@@ -55,7 +57,6 @@ object HudManager {
         val mc = MinecraftClient.getInstance()
         val currentScreen = mc.currentScreen
         
-        // Use isEditMode() instead of isEditMode
         if (isEditMode() && currentScreen is HudScreen) {
             renderEditModeOverlay(context)
         }
@@ -66,6 +67,16 @@ object HudManager {
         val text = Text.literal("HUD Edit Mode - ESC to exit").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
         val x = (mc.window.scaledWidth - mc.textRenderer.getWidth(text)) / 2
         context.drawText(mc.textRenderer, text, x, 5, 0xFFFFFF, true)
+    }
+
+    fun enableElement(name: String) {
+        hudElements.find { it.getName() == name }?.isEnabled = true
+    }
+    fun disableElement(name: String) {
+        hudElements.find { it.getName() == name }?.isEnabled = false
+    }
+    fun toggleElement(name: String) {
+        hudElements.find { it.getName() == name }?.let { it.isEnabled = !it.isEnabled }
     }
     
     fun onMouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
@@ -82,7 +93,7 @@ object HudManager {
         if (!isEditMode()) return false
         selectedElement?.let {
             it.updateDragging(mouseX, mouseY)
-            hasUnsavedChanges = true // Mark as having unsaved changes
+            hasUnsavedChanges = true
         }
         return selectedElement != null
     }
@@ -101,19 +112,17 @@ object HudManager {
         if (!isEditMode()) return false
         hudElements.firstOrNull { it.isMouseOver(mouseX, mouseY) }?.let { element ->
             element.scale += (delta * 0.1).toFloat()
-            hasUnsavedChanges = true // Mark as having unsaved changes
+            hasUnsavedChanges = true
             return true
         }
         return false
     }
     
     fun toggleEditMode() {
-        // If exiting edit mode and there are unsaved changes, save them
         if (editMode && hasUnsavedChanges) {
             saveHudConfig()
             hasUnsavedChanges = false
         }
-        
         editMode = !editMode
         if (!editMode) {
             selectedElement = null
@@ -175,7 +184,6 @@ object HudManager {
                     element.setY(config.y)
                     element.scale = config.scale
                     element.isEnabled = config.isEnabled
-                    // Apply new properties, relying on defaults in HudElementConfig if not in JSON
                     element.textColor = config.textColor
                     element.backgroundColor = config.backgroundColor
                     element.textShadowEnabled = config.textShadowEnabled
@@ -191,29 +199,18 @@ object HudManager {
 
     fun handleGlobalMouseClick(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (isEditMode()) {
-            // Edit mode clicks are handled by HudScreen and HudManager.onMouseClicked etc.
-            // This global handler is for non-edit mode scenarios.
             return false
         }
 
         val mc = MinecraftClient.getInstance()
-        // Do not process clicks if a full-screen UI is open that should take precedence,
-        // UNLESS our buttons are meant to overlay even those (which is part of the requirement).
-        // The `BaseHudButtonElement.mouseClicked` already contains logic for `isInGui()` or `isInHudEditor()`.
-        // We rely on that. The purpose of this global handler is to ensure these elements get a chance to process clicks
-        // when no other screen is actively capturing all input (like when only InGameHud is active).
 
-        // Iterate in reverse order so top-most elements get click priority
         for (element in hudElements.reversed()) {
             if (element.isEnabled && element is Element) {
-                // Forward the click. The element's own mouseClicked should determine if it's truly interactive.
-                // BaseHudButtonElement.mouseClicked checks for isInGui() or isInHudEditor().
-                // Since isEditMode() is false here, it will rely on isInGui().
                 if (element.mouseClicked(mouseX, mouseY, button)) {
-                    return true // Event handled
+                    return true
                 }
             }
         }
-        return false // Event not handled
+        return false
     }
 }

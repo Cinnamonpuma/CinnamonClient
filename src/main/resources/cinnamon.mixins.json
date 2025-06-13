@@ -7,20 +7,7 @@
 		"AutoClickerMixin",
 		"client.TitleScreenMixin",
 		"client.PanoramaRendererMixin",
-		"client.ScreenMixin",
-		"BookEditScreenMixin",
-		"BookScreenMixin",
-		"ChatScreenMixin",
-		"ClientCommonNetworkHandlerMixin",
-		"ClientConnectionMixin",
-		"HandledScreenMixin",
-		"MultiplayerScreenMixin",
-		"ScreenMixin",
-		"SignEditScreenMixin",
-		"SleepingChatScreenMixin"
-	],
-	"client": [
-		"client.MouseMixin"
+		"client.ScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
