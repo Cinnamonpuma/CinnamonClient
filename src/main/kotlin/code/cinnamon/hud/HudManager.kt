@@ -11,6 +11,7 @@ import code.cinnamon.hud.elements.SaveGuiButtonHudElement
 import code.cinnamon.hud.elements.DisconnectButtonHudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.Element
 import code.cinnamon.hud.HudScreen
 import code.cinnamon.gui.CinnamonScreen
 import net.minecraft.text.Style
@@ -199,5 +200,33 @@ object HudManager {
         } catch (e: Exception) {
             println("[HudManager] Failed to load HUD config: ${e.message}. Loading default HUD elements.")
         }
+    }
+
+    fun handleGlobalMouseClick(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (isEditMode()) {
+            // Edit mode clicks are handled by HudScreen and HudManager.onMouseClicked etc.
+            // This global handler is for non-edit mode scenarios.
+            return false
+        }
+
+        val mc = MinecraftClient.getInstance()
+        // Do not process clicks if a full-screen UI is open that should take precedence,
+        // UNLESS our buttons are meant to overlay even those (which is part of the requirement).
+        // The `BaseHudButtonElement.mouseClicked` already contains logic for `isInGui()` or `isInHudEditor()`.
+        // We rely on that. The purpose of this global handler is to ensure these elements get a chance to process clicks
+        // when no other screen is actively capturing all input (like when only InGameHud is active).
+
+        // Iterate in reverse order so top-most elements get click priority
+        for (element in hudElements.reversed()) {
+            if (element.isEnabled && element is Element) {
+                // Forward the click. The element's own mouseClicked should determine if it's truly interactive.
+                // BaseHudButtonElement.mouseClicked checks for isInGui() or isInHudEditor().
+                // Since isEditMode() is false here, it will rely on isInGui().
+                if (element.mouseClicked(mouseX, mouseY, button)) {
+                    return true // Event handled
+                }
+            }
+        }
+        return false // Event not handled
     }
 }

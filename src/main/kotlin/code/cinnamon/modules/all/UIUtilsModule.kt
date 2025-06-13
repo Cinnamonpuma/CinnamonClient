@@ -21,6 +21,8 @@ import kotlin.collections.mutableListOf
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.minecraft.screen.sync.ItemStackHash
 import code.cinnamon.mixin.accessor.ScreenAccessor
+import net.minecraft.client.gui.screen.ingame.HandledScreen
+import code.cinnamon.hud.HudScreen
 
 class UIUtilsModule {
     companion object {
@@ -183,12 +185,12 @@ class UIUtilsModule {
     }
 
         // Button action implementations
-    private fun closeWithoutPacket() {
+    fun closeWithoutPacket() {
         mc.setScreen(null)
         LOGGER.info("Closed screen without sending packet")
     }
     
-    private fun desyncScreen() {
+    fun desyncScreen() {
         val networkHandler = mc.networkHandler
         val player = mc.player
         
@@ -200,12 +202,12 @@ class UIUtilsModule {
         }
     }
     
-    private fun toggleSendPackets() {
+    fun toggleSendPackets() {
         sendUIPackets = !sendUIPackets
         LOGGER.info("Send UI packets: $sendUIPackets")
     }
     
-    private fun toggleDelayPackets() {
+    fun toggleDelayPackets() {
         delayUIPackets = !delayUIPackets
         
         if (!delayUIPackets && delayedUIPackets.isNotEmpty()) {
@@ -223,7 +225,7 @@ class UIUtilsModule {
         LOGGER.info("Delay UI packets: $delayUIPackets")
     }
     
-    private fun saveCurrentGUI() {
+    fun saveCurrentGUI() {
         val player = mc.player
         if (player != null) {
             storedScreen = mc.currentScreen
@@ -232,7 +234,7 @@ class UIUtilsModule {
         }
     }
     
-    private fun disconnectAndSendPackets() {
+    fun disconnectAndSendPackets() {
         val networkHandler = mc.networkHandler
         
         if (networkHandler != null) {
@@ -250,11 +252,11 @@ class UIUtilsModule {
         }
     }
     
-    private fun openPacketUtilsScreen() {
+    fun openPacketUtilsScreen() {
         MinecraftClient.getInstance().setScreen(PacketUtilsScreen())
     }
     
-    private fun copyGUITitleJSON() {
+    fun copyGUITitleJSON() {
         try {
             val currentScreen = mc.currentScreen
             if (currentScreen != null) {
@@ -318,6 +320,18 @@ class UIUtilsModule {
             false
         }
     }
+
+        @JvmStatic
+        fun isInGui(): Boolean {
+            val screen = MinecraftClient.getInstance().currentScreen
+            return screen is HandledScreen<*>
+        }
+
+        @JvmStatic
+        fun isInHudEditor(): Boolean {
+            val screen = MinecraftClient.getInstance().currentScreen
+            return screen is HudScreen // Use instanceof check for HudScreen
+        }
     }
 }
 

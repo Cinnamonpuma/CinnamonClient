@@ -19,6 +19,9 @@
 		"SignEditScreenMixin",
 		"SleepingChatScreenMixin"
 	],
+	"client": [
+		"client.MouseMixin"
+	],
 	"injectors": {
 		"defaultRequire": 1
 	}
