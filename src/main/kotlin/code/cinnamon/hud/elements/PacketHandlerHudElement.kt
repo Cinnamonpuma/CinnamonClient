@@ -8,7 +8,9 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
 import net.minecraft.text.Text
+import net.minecraft.text.Style
 import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket
+import net.minecraft.util.Identifier
 import javax.swing.JButton
 import javax.swing.JFrame
 
@@ -18,9 +20,18 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private val buttonHeight = 20
     private val buttonMargin = 2
 
+    // Position is managed by parent HudElement class
+
+    // Custom font reference
+    private val CINNA_FONT: Identifier = SharedVariables.CINNA_FONT
+
+    private fun createStyledText(text: String): Text {
+        return Text.literal(text).fillStyle(Style.EMPTY.withFont(CINNA_FONT))
+    }
+
     private val closeWithoutPacketButton = CinnamonButton(
         0, 0, 0, 0, 
-        Text.of("Close without packet"),
+        createStyledText("Close without packet"),
         onClick = { _: Double, _: Double ->
             client.setScreen(null)
         }
@@ -28,7 +39,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private val deSyncButton = CinnamonButton(
         0, 0, 0, 0, 
-        Text.of("De-sync"),
+        createStyledText("De-sync"),
         onClick = { _: Double, _: Double ->
             client.player?.let { player ->
                 client.networkHandler?.sendPacket(CloseHandledScreenC2SPacket(player.currentScreenHandler.syncId))
@@ -38,16 +49,16 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private val sendPacketsButton: CinnamonButton = CinnamonButton(
         0, 0, 0, 0, 
-        Text.of("Send packets: ${SharedVariables.enabled}"),
+        createStyledText("Send packets: ${SharedVariables.packetSendingEnabled}"),
         onClick = { _: Double, _: Double ->
-            SharedVariables.enabled = !SharedVariables.enabled
-            sendPacketsButton.text = Text.of("Send packets: ${SharedVariables.enabled}")
+            SharedVariables.packetSendingEnabled = !SharedVariables.packetSendingEnabled
+            updateSendPacketsButtonText()
         }
     )
 
     private val delayPacketsButton: CinnamonButton = CinnamonButton(
         0, 0, 0, 0, 
-        Text.of("Delay packets: ${PacketHandlerAPI.isPacketBlocking()}"),
+        createStyledText("Delay packets: ${PacketHandlerAPI.isPacketBlocking()}"),
         onClick = { _: Double, _: Double ->
             if (PacketHandlerAPI.isPacketBlocking()) {
                 PacketHandlerAPI.stopPacketBlocking()
@@ -57,13 +68,13 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
             } else {
                 PacketHandlerAPI.startPacketBlocking()
             }
-            delayPacketsButton.text = Text.of("Delay packets: ${PacketHandlerAPI.isPacketBlocking()}")
+            updateDelayPacketsButtonText()
         }
     )
 
     private val saveGuiButton = CinnamonButton(
         0, 0, 0, 0, 
-        Text.of("Save GUI"),
+        createStyledText("Save GUI"),
         onClick = { _: Double, _: Double ->
             client.player?.let { player ->
                 try {
@@ -82,21 +93,21 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private val disconnectAndSendButton = CinnamonButton(
         0, 0, 0, 0, 
-        Text.of("Disconnect and send packets"),
+        createStyledText("Disconnect and send packets"),
         onClick = { _: Double, _: Double ->
             if (PacketHandlerAPI.isPacketBlocking()) {
                 PacketHandlerAPI.stopPacketBlocking()
             }
             client.networkHandler?.let { handler ->
                 PacketHandlerAPI.flushPacketQueue()
-                handler.connection.disconnect(Text.of("Disconnecting (CINNAMON)"))
+                handler.connection.disconnect(Text.literal("Disconnecting (CINNAMON)"))
             }
         }
     )
 
     private val fabricatePacketButton = CinnamonButton(
         0, 0, 0, 0, 
-        Text.of("Fabricate packet"),
+        createStyledText("Fabricate packet"),
         onClick = { _: Double, _: Double ->
             if (!MinecraftClient.IS_SYSTEM_MAC) {
                 val frame = JFrame("Choose Packet")
@@ -126,7 +137,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private val copyTitleJsonButton = CinnamonButton(
         0, 0, 0, 0, 
-        Text.of("Copy GUI Title JSON"),
+        createStyledText("Copy GUI Title JSON"),
         onClick = { _: Double, _: Double ->
             try {
                 val screen = client.currentScreen ?: throw IllegalStateException("The current minecraft screen (mc.currentScreen) is null")
@@ -148,20 +159,39 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         copyTitleJsonButton
     )
 
+    private fun updateSendPacketsButtonText() {
+        sendPacketsButton.text = createStyledText("Send packets: ${SharedVariables.packetSendingEnabled}")
+    }
+
+    private fun updateDelayPacketsButtonText() {
+        delayPacketsButton.text = createStyledText("Delay packets: ${PacketHandlerAPI.isPacketBlocking()}")
+    }
+
     private fun shouldRender(): Boolean {
         val screen = client.currentScreen
-        // Always use the HUD editor's x/y, never override for containers
-        return screen != null && (screen !is net.minecraft.client.gui.screen.GameMenuScreen)
+        return SharedVariables.enabled && screen != null && (screen !is net.minecraft.client.gui.screen.GameMenuScreen)
+    }
+
+    // Method to update position using parent class setters
+    fun updatePosition(newX: Float, newY: Float) {
+        setX(newX)
+        setY(newY)
     }
 
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!shouldRender()) return
-        super.renderBackground(context)
-        var currentY = getY().toInt() + buttonMargin
+        
+        // Use parent class position getters
+        val hudXInt = getX().toInt()
+        val hudYInt = getY().toInt()
+        
+        // Render background directly
+        context.fill(hudXInt, hudYInt, hudXInt + getWidth(), hudYInt + getHeight(), 0x80000000.toInt())
+        
+        var currentY = hudYInt + buttonMargin
 
         for (button in buttons) {
-            // Always use getX()/getY() from the HUD (never static/fixed or GUI-relative)
-            button.setX(getX().toInt() + buttonMargin)
+            button.setX(hudXInt + buttonMargin)
             button.setY(currentY)
             button.setWidth(getWidth() - 2 * buttonMargin)
             button.setHeight(buttonHeight)
@@ -183,6 +213,10 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!shouldRender()) return false
+        
+        // Check if click is within our HUD bounds first
+        if (!isMouseOver(mouseX, mouseY)) return false
+        
         for (cinnamonButton in buttons) {
             if (cinnamonButton.mouseClicked(mouseX, mouseY, button)) {
                 return true
@@ -192,12 +226,14 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     }
 
     override fun mouseMoved(mouseX: Double, mouseY: Double) {
+        if (!shouldRender()) return
         for (button in buttons) {
             button.mouseMoved(mouseX, mouseY)
         }
     }
 
     override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (!shouldRender()) return false
         for (cinnamonButton in buttons) {
             if (cinnamonButton.mouseReleased(mouseX, mouseY, button)) {
                 return true
@@ -207,6 +243,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+        if (!shouldRender()) return false
         for (button in buttons) {
             if (button.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
                 return true
@@ -216,6 +253,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     }
 
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (!shouldRender()) return false
         for (button in buttons) {
             if (button.keyPressed(keyCode, scanCode, modifiers)) {
                 return true
@@ -225,6 +263,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     }
 
     override fun keyReleased(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (!shouldRender()) return false
         for (button in buttons) {
             if (button.keyReleased(keyCode, scanCode, modifiers)) {
                 return true
@@ -234,6 +273,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     }
 
     override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        if (!shouldRender()) return false
         for (button in buttons) {
             if (button.charTyped(chr, modifiers)) {
                 return true
@@ -247,10 +287,11 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun isFocused(): Boolean = false
 
     override fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
-        val x = getX()
-        val y = getY()
-        val w = getWidth() * scale
-        val h = getHeight() * scale
-        return mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h
+        if (!shouldRender()) return false
+        val hudXDouble = getX().toDouble()
+        val hudYDouble = getY().toDouble()
+        val w = getWidth().toDouble()
+        val h = getHeight().toDouble()
+        return mouseX >= hudXDouble && mouseX <= hudXDouble + w && mouseY >= hudYDouble && mouseY <= hudYDouble + h
     }
 }

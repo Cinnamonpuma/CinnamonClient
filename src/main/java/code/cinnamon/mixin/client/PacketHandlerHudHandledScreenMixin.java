@@ -13,37 +13,36 @@ import code.cinnamon.SharedVariables;
 
 @Mixin(HandledScreen.class)
 public abstract class PacketHandlerHudHandledScreenMixin {
-    private static final PacketHandlerHudElement packetHandlerHudElement = new PacketHandlerHudElement(10.0f, 10.0f);
+    // Create a single instance that will be reused
+    private static PacketHandlerHudElement packetHandlerHudElement = null;
+
+    private static PacketHandlerHudElement getHudElement() {
+        if (packetHandlerHudElement == null) {
+            packetHandlerHudElement = new PacketHandlerHudElement(10.0f, 10.0f);
+        }
+        return packetHandlerHudElement;
+    }
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderScreen(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (SharedVariables.enabled && client.player != null) {
-            packetHandlerHudElement.render(context, delta);
+            getHudElement().render(context, delta);
         }
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (SharedVariables.enabled && client.player != null && packetHandlerHudElement.mouseClicked(mouseX, mouseY, button)) {
+        if (SharedVariables.enabled && client.player != null && getHudElement().mouseClicked(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
     }
 
-    // REMOVED: no such method in HandledScreen in 1.21+
-    // @Inject(method = "mouseMoved", at = @At("HEAD"))
-    // private void onMouseMoved(double mouseX, double mouseY, CallbackInfo ci) {
-    //     MinecraftClient client = MinecraftClient.getInstance();
-    //     if (SharedVariables.enabled && client.player != null) {
-    //         packetHandlerHudElement.mouseMoved(mouseX, mouseY);
-    //     }
-    // }
-
     @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true)
     private void onMouseReleased(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (SharedVariables.enabled && client.player != null && packetHandlerHudElement.mouseReleased(mouseX, mouseY, button)) {
+        if (SharedVariables.enabled && client.player != null && getHudElement().mouseReleased(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
     }
@@ -51,7 +50,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
     private void onMouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, CallbackInfoReturnable<Boolean> cir) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (SharedVariables.enabled && client.player != null && packetHandlerHudElement.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
+        if (SharedVariables.enabled && client.player != null && getHudElement().mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
             cir.setReturnValue(true);
         }
     }

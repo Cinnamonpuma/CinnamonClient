@@ -1,5 +1,6 @@
 package code.cinnamon.util;
 
+import code.cinnamon.SharedVariables;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.listener.PacketListener;
 import net.minecraft.network.packet.Packet;
@@ -12,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 public class PacketHandlerAPI {
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-    // FIXED: Delayed packets should be for DelayedPacket, not Packet
     private static final Queue<DelayedPacket> delayedPackets = new ConcurrentLinkedQueue<>();
     private static final Queue<Packet<? extends PacketListener>> packetQueue = new ConcurrentLinkedQueue<>();
     private static boolean packetBlocking = false;
@@ -42,7 +42,7 @@ public class PacketHandlerAPI {
     public static void flushPacketQueue() {
         Packet<? extends PacketListener> packet;
         while ((packet = packetQueue.poll()) != null) {
-            if (MinecraftClient.getInstance().getNetworkHandler() != null) {
+            if (MinecraftClient.getInstance().getNetworkHandler() != null && SharedVariables.packetSendingEnabled) {
                 MinecraftClient.getInstance().getNetworkHandler().getConnection().send(packet);
             }
         }
@@ -53,7 +53,7 @@ public class PacketHandlerAPI {
     }
 
     public static void sendPacket(Packet<? extends PacketListener> packet) {
-        if (MinecraftClient.getInstance().getNetworkHandler() != null) {
+        if (MinecraftClient.getInstance().getNetworkHandler() != null && SharedVariables.packetSendingEnabled) {
             MinecraftClient.getInstance().getNetworkHandler().getConnection().send(packet);
         }
     }
