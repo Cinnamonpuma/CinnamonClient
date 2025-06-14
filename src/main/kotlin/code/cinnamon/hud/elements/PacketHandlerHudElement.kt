@@ -3,7 +3,7 @@ package code.cinnamon.hud.elements
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.hud.HudElement
 import code.cinnamon.util.PacketHandlerAPI
-import code.cinnamon.SharedVariables
+import code.cinnamon.gui.CinnamonScreen // Use the font from here!
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
@@ -19,7 +19,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private val client: MinecraftClient = MinecraftClient.getInstance()
     private val buttonHeight = 20
     private val buttonMargin = 2
-    private val CINNA_FONT: Identifier = SharedVariables.CINNA_FONT
+    private val CINNA_FONT: Identifier = CinnamonScreen.CINNA_FONT // Unified font identifier!
 
     private fun createStyledText(text: String): Text =
         Text.literal(text).setStyle(Style.EMPTY.withFont(CINNA_FONT))
@@ -42,9 +42,9 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private val sendPacketsButton = CinnamonButton(
         0, 0, 0, 0,
-        createStyledText("Send packets: ${SharedVariables.packetSendingEnabled}"),
+        createStyledText("Send packets: ${code.cinnamon.SharedVariables.packetSendingEnabled}"),
         onClick = { _, _ ->
-            SharedVariables.packetSendingEnabled = !SharedVariables.packetSendingEnabled
+            code.cinnamon.SharedVariables.packetSendingEnabled = !code.cinnamon.SharedVariables.packetSendingEnabled
             updateSendPacketsButtonText()
         }
     )
@@ -69,8 +69,8 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         onClick = { _, _ ->
             client.player?.let { player ->
                 try {
-                    val storedScreenField = SharedVariables::class.java.getDeclaredField("storedScreen")
-                    val storedScreenHandlerField = SharedVariables::class.java.getDeclaredField("storedScreenHandler")
+                    val storedScreenField = code.cinnamon.SharedVariables::class.java.getDeclaredField("storedScreen")
+                    val storedScreenHandlerField = code.cinnamon.SharedVariables::class.java.getDeclaredField("storedScreenHandler")
                     storedScreenField.isAccessible = true
                     storedScreenHandlerField.isAccessible = true
                     storedScreenField.set(null, client.currentScreen)
@@ -141,7 +141,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     )
 
     private fun updateSendPacketsButtonText() {
-        sendPacketsButton.text = createStyledText("Send packets: ${SharedVariables.packetSendingEnabled}")
+        sendPacketsButton.text = createStyledText("Send packets: ${code.cinnamon.SharedVariables.packetSendingEnabled}")
     }
 
     private fun updateDelayPacketsButtonText() {
@@ -150,7 +150,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private fun shouldRender(): Boolean {
         val screen = client.currentScreen
-        return SharedVariables.enabled && screen != null && (screen !is net.minecraft.client.gui.screen.GameMenuScreen)
+        return code.cinnamon.SharedVariables.enabled && screen != null && (screen !is net.minecraft.client.gui.screen.GameMenuScreen)
     }
 
     override fun render(context: DrawContext, tickDelta: Float) {
