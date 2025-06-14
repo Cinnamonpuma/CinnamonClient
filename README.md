@@ -1,4 +1,4 @@
-# CinnamonClient            <img src="https://github.com/user-attachments/assets/ab8e350a-ecb2-4548-865d-f7a0beb871bc" width="100"/>
+# <img src="https://github.com/user-attachments/assets/ab8e350a-ecb2-4548-865d-f7a0beb871bc" width="100"/>  CinnamonClient         
 
 
 **CinnamonClient** is a modular and customizable Minecraft 1.21.5 Fabric client mod focused on providing a lightweight and extensible framework for player-centric HUDs, UI utilities, shaders, and packet-level control.
