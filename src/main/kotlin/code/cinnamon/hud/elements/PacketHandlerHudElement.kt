@@ -3,7 +3,8 @@ package code.cinnamon.hud.elements
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.hud.HudElement
 import code.cinnamon.util.PacketHandlerAPI
-import code.cinnamon.gui.CinnamonScreen // Use the font from here!
+import code.cinnamon.gui.CinnamonScreen
+import code.cinnamon.hud.HudManager
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
@@ -19,7 +20,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private val client: MinecraftClient = MinecraftClient.getInstance()
     private val buttonHeight = 20
     private val buttonMargin = 2
-    private val CINNA_FONT: Identifier = CinnamonScreen.CINNA_FONT // Unified font identifier!
+    private val CINNA_FONT: Identifier = CinnamonScreen.CINNA_FONT
 
     private fun createStyledText(text: String): Text =
         Text.literal(text).setStyle(Style.EMPTY.withFont(CINNA_FONT))
@@ -150,7 +151,10 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private fun shouldRender(): Boolean {
         val screen = client.currentScreen
-        return code.cinnamon.SharedVariables.enabled && screen != null && (screen !is net.minecraft.client.gui.screen.GameMenuScreen)
+        // Render if HUD is enabled AND (a screen is open and not GameMenuScreen OR in HUD edit mode)
+        return code.cinnamon.SharedVariables.enabled &&
+               (HudManager.isEditMode() ||
+                (screen != null && screen !is net.minecraft.client.gui.screen.GameMenuScreen))
     }
 
     override fun render(context: DrawContext, tickDelta: Float) {
@@ -169,6 +173,13 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
             button.render(context, client.mouse.x.toInt(), client.mouse.y.toInt(), tickDelta)
             currentY += buttonHeight + buttonMargin
         }
+
+        // Draw border or indicator if in edit mode (optional)
+        if (HudManager.isEditMode()) {
+            context.drawBorder(
+                hudXInt, hudYInt, getWidth(), getHeight(), 0xFFFF0000.toInt() // Red border
+            )
+        }
     }
 
     override fun getWidth(): Int =
@@ -179,15 +190,43 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     override fun getName(): String = "PacketHandler"
 
+    // Right-click drag to move (only in HUD edit mode)
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!shouldRender()) return false
         if (!isMouseOver(mouseX, mouseY)) return false
+        // Only allow drag in HUD edit mode with right click (button 1)
+        if (button == 1 && HudManager.isEditMode()) {
+            startDragging(mouseX, mouseY)
+            return true
+        }
+        var handled = false
         for (cinnamonButton in buttons) {
-            if (cinnamonButton.mouseClicked(mouseX, mouseY, button)) {
-                return true
-            }
+            handled = handled or cinnamonButton.mouseClicked(mouseX, mouseY, button)
+        }
+        return handled
+    }
+
+    override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
+        if (!shouldRender()) return false
+        // Only drag while in edit mode and right mouse button is held
+        if (HudManager.isEditMode()) {
+            updateDragging(mouseX, mouseY)
+            return true
         }
         return false
+    }
+
+    override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (!shouldRender()) return false
+        // Only stop dragging if in edit mode
+        if (HudManager.isEditMode()) {
+            stopDragging()
+        }
+        var handled = false
+        for (cinnamonButton in buttons) {
+            handled = handled or cinnamonButton.mouseReleased(mouseX, mouseY, button)
+        }
+        return handled
     }
 
     override fun mouseMoved(mouseX: Double, mouseY: Double) {
@@ -197,24 +236,13 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         }
     }
 
-    override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (!shouldRender()) return false
-        for (cinnamonButton in buttons) {
-            if (cinnamonButton.mouseReleased(mouseX, mouseY, button)) {
-                return true
-            }
-        }
-        return false
-    }
-
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
         if (!shouldRender()) return false
+        var handled = false
         for (button in buttons) {
-            if (button.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
-                return true
-            }
+            handled = handled or button.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
         }
-        return false
+        return handled
     }
 
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {

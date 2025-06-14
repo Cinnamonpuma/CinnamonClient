@@ -47,6 +47,14 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         }
     }
 
+    @Inject(method = "mouseDragged", at = @At("HEAD"), cancellable = true)
+    private void onMouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (SharedVariables.enabled && client.player != null && getHudElement().mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+            cir.setReturnValue(true);
+        }
+    }
+
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
     private void onMouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, CallbackInfoReturnable<Boolean> cir) {
         MinecraftClient client = MinecraftClient.getInstance();
