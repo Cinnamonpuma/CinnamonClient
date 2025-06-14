@@ -37,6 +37,9 @@ object HudManager {
     private var selectedElement: HudElement? = null
     private var hasUnsavedChanges = false
 
+    // Shared instance: referenced by mixins
+    val packetHandlerHudElement = PacketHandlerHudElement(10f, 90f)
+
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
     private val configDir = Paths.get("config", "cinnamon").toFile()
     private val configFile = File(configDir, "hud.json")
@@ -49,7 +52,7 @@ object HudManager {
         registerHudElement(FpsHudElement(10f, 10f))
         registerHudElement(PingHudElement(10f, 30f))
         registerHudElement(KeystrokesHudElement(10f, 60f))
-        // Remove PacketHandlerHudElement from here since it's handled by the mixin
+        registerHudElement(packetHandlerHudElement) // Always register the shared instance!
         loadHudConfig()
     }
     

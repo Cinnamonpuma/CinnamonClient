@@ -2,31 +2,39 @@ package code.cinnamon.mixin.client;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import code.cinnamon.hud.elements.PacketHandlerHudElement;
+import code.cinnamon.hud.HudManager;
 import code.cinnamon.SharedVariables;
 
 @Mixin(HandledScreen.class)
 public abstract class PacketHandlerHudHandledScreenMixin {
-    // Create a single instance that will be reused
-    private static PacketHandlerHudElement packetHandlerHudElement = null;
+    private static code.cinnamon.hud.elements.PacketHandlerHudElement getHudElement() {
+        return HudManager.INSTANCE.getPacketHandlerHudElement();
+    }
 
-    private static PacketHandlerHudElement getHudElement() {
-        if (packetHandlerHudElement == null) {
-            packetHandlerHudElement = new PacketHandlerHudElement(10.0f, 10.0f);
-        }
-        return packetHandlerHudElement;
+    // Utility: check if current screen is HudScreen
+    private boolean isHudScreen() {
+        Screen current = MinecraftClient.getInstance().currentScreen;
+        return current != null && current.getClass().getName().equals("code.cinnamon.hud.HudScreen");
     }
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderScreen(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (SharedVariables.enabled && client.player != null) {
+        boolean shouldRender = SharedVariables.enabled && client.player != null;
+
+        // Render if we're in the HudScreen (editor) as well
+        if (isHudScreen()) {
+            shouldRender = true;
+        }
+
+        if (shouldRender) {
             getHudElement().render(context, delta);
         }
     }
@@ -34,7 +42,11 @@ public abstract class PacketHandlerHudHandledScreenMixin {
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (SharedVariables.enabled && client.player != null && getHudElement().mouseClicked(mouseX, mouseY, button)) {
+        boolean shouldHandle = SharedVariables.enabled && client.player != null;
+        if (isHudScreen()) {
+            shouldHandle = true;
+        }
+        if (shouldHandle && getHudElement().mouseClicked(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
     }
@@ -42,7 +54,11 @@ public abstract class PacketHandlerHudHandledScreenMixin {
     @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true)
     private void onMouseReleased(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (SharedVariables.enabled && client.player != null && getHudElement().mouseReleased(mouseX, mouseY, button)) {
+        boolean shouldHandle = SharedVariables.enabled && client.player != null;
+        if (isHudScreen()) {
+            shouldHandle = true;
+        }
+        if (shouldHandle && getHudElement().mouseReleased(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
     }
@@ -50,7 +66,11 @@ public abstract class PacketHandlerHudHandledScreenMixin {
     @Inject(method = "mouseDragged", at = @At("HEAD"), cancellable = true)
     private void onMouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (SharedVariables.enabled && client.player != null && getHudElement().mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+        boolean shouldHandle = SharedVariables.enabled && client.player != null;
+        if (isHudScreen()) {
+            shouldHandle = true;
+        }
+        if (shouldHandle && getHudElement().mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
             cir.setReturnValue(true);
         }
     }
@@ -58,7 +78,11 @@ public abstract class PacketHandlerHudHandledScreenMixin {
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
     private void onMouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, CallbackInfoReturnable<Boolean> cir) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (SharedVariables.enabled && client.player != null && getHudElement().mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
+        boolean shouldHandle = SharedVariables.enabled && client.player != null;
+        if (isHudScreen()) {
+            shouldHandle = true;
+        }
+        if (shouldHandle && getHudElement().mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
             cir.setReturnValue(true);
         }
     }
