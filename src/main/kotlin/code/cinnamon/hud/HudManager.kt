@@ -37,13 +37,12 @@ object HudManager {
     private var selectedElement: HudElement? = null
     private var hasUnsavedChanges = false
 
-    // Shared instance: referenced by mixins
     val packetHandlerHudElement = PacketHandlerHudElement(10f, 90f)
 
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
     private val configDir = Paths.get("config", "cinnamon").toFile()
     private val configFile = File(configDir, "hud.json")
-    
+
     fun registerHudElement(element: HudElement) {
         hudElements.add(element)
     }
@@ -52,21 +51,21 @@ object HudManager {
         registerHudElement(FpsHudElement(10f, 10f))
         registerHudElement(PingHudElement(10f, 30f))
         registerHudElement(KeystrokesHudElement(10f, 60f))
-        registerHudElement(packetHandlerHudElement) // Always register the shared instance!
+        registerHudElement(packetHandlerHudElement)
         loadHudConfig()
     }
-    
+
     fun render(context: DrawContext, tickDelta: Float) {
         hudElements.filter { it.isEnabled }.forEach { it.render(context, tickDelta) }
-        
+
         val mc = MinecraftClient.getInstance()
         val currentScreen = mc.currentScreen
-        
+
         if (isEditMode() && currentScreen is HudScreen) {
             renderEditModeOverlay(context)
         }
     }
-    
+
     private fun renderEditModeOverlay(context: DrawContext) {
         val mc = MinecraftClient.getInstance()
         val text = Text.literal("HUD Edit Mode - ESC to exit").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
@@ -83,7 +82,7 @@ object HudManager {
     fun toggleElement(name: String) {
         hudElements.find { it.getName() == name }?.let { it.isEnabled = !it.isEnabled }
     }
-    
+
     fun onMouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!isEditMode()) return false
         hudElements.firstOrNull { it.isMouseOver(mouseX, mouseY) }?.let { element ->
@@ -93,7 +92,7 @@ object HudManager {
         }
         return false
     }
-    
+
     fun onMouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
         if (!isEditMode()) return false
         selectedElement?.let {
@@ -102,7 +101,7 @@ object HudManager {
         }
         return selectedElement != null
     }
-    
+
     fun onMouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!isEditMode()) return false
         selectedElement?.let {
@@ -112,7 +111,7 @@ object HudManager {
         }
         return false
     }
-    
+
     fun onMouseScrolled(mouseX: Double, mouseY: Double, delta: Double): Boolean {
         if (!isEditMode()) return false
         hudElements.firstOrNull { it.isMouseOver(mouseX, mouseY) }?.let { element ->
@@ -122,7 +121,7 @@ object HudManager {
         }
         return false
     }
-    
+
     fun toggleEditMode() {
         if (editMode && hasUnsavedChanges) {
             saveHudConfig()
@@ -133,7 +132,7 @@ object HudManager {
             selectedElement = null
         }
     }
-    
+
     fun onEditMenuClosed() {
         if (hasUnsavedChanges) {
             saveHudConfig()
@@ -141,7 +140,7 @@ object HudManager {
             println("[HudManager] HUD configuration saved on menu close")
         }
     }
-    
+
     fun getElements(): List<HudElement> = hudElements.toList()
 
     fun markChangesForSave() {
@@ -152,18 +151,20 @@ object HudManager {
         try {
             configDir.mkdirs()
             val configs = hudElements.map { element ->
-                HudElementConfig(
-                    name = element.getName(),
-                    x = element.getX(),
-                    y = element.getY(),
-                    scale = element.scale,
-                    isEnabled = element.isEnabled,
-                    textColor = element.textColor,
-                    backgroundColor = element.backgroundColor,
-                    textShadowEnabled = element.textShadowEnabled,
-                    keypressedTextColor = element.keypressedTextColor,
-                    keypressedBackgroundColor = element.keypressedBackgroundColor
-                )
+                when (element) {
+                    is PacketHandlerHudElement -> element.toConfig()
+                    is KeystrokesHudElement -> element.toConfig()
+                    else -> HudElementConfig(
+                        name = element.getName(),
+                        x = element.getX(),
+                        y = element.getY(),
+                        scale = element.scale,
+                        isEnabled = element.isEnabled,
+                        textColor = element.textColor,
+                        backgroundColor = element.backgroundColor,
+                        textShadowEnabled = element.textShadowEnabled
+                    )
+                }
             }
             val jsonString = json.encodeToString(configs)
             configFile.writeText(jsonString)
@@ -185,15 +186,19 @@ object HudManager {
 
             configs.forEach { config ->
                 hudElements.find { it.getName() == config.name }?.let { element ->
-                    element.setX(config.x)
-                    element.setY(config.y)
-                    element.scale = config.scale
-                    element.isEnabled = config.isEnabled
-                    element.textColor = config.textColor
-                    element.backgroundColor = config.backgroundColor
-                    element.textShadowEnabled = config.textShadowEnabled
-                    element.keypressedTextColor = config.keypressedTextColor
-                    element.keypressedBackgroundColor = config.keypressedBackgroundColor
+                    when (element) {
+                        is PacketHandlerHudElement -> element.applyConfig(config)
+                        is KeystrokesHudElement -> element.applyConfig(config)
+                        else -> {
+                            element.setX(config.x)
+                            element.setY(config.y)
+                            element.scale = config.scale
+                            element.isEnabled = config.isEnabled
+                            element.textColor = config.textColor
+                            element.backgroundColor = config.backgroundColor
+                            element.textShadowEnabled = config.textShadowEnabled
+                        }
+                    }
                 }
             }
             println("[HudManager] HUD config loaded successfully from ${configFile.absolutePath}")

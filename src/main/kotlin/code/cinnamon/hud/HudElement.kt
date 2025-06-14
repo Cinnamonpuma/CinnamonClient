@@ -23,8 +23,6 @@ abstract class HudElement(
     var textColor: Int = 0xFFFFFF // White
     var backgroundColor: Int = 0x80000000.toInt() // Semi-transparent black
     var textShadowEnabled: Boolean = true
-    var keypressedTextColor: Int = 0x000000 // Black
-    var keypressedBackgroundColor: Int = 0xFFFFFF // White
 
     private var isDragging: Boolean = false
     private var dragOffsetX: Float = 0f
@@ -35,19 +33,6 @@ abstract class HudElement(
     abstract fun getHeight(): Int
     abstract fun getName(): String
 
-    fun renderBackground(context: DrawContext) {
-        if (HudManager.isEditMode()) {
-            context.fill(
-                _x.toInt(),
-                _y.toInt(),
-                (_x + getWidth() * scale).toInt(),
-                (_y + getHeight() * scale).toInt(),
-                0x80000000.toInt()
-            )
-        }
-    }
-
-    // Make this open so subclasses can override if needed for multiple inheritance with Element
     open fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
         return mouseX >= _x && mouseX <= _x + getWidth() * scale &&
                mouseY >= _y && mouseY <= _y + getHeight() * scale

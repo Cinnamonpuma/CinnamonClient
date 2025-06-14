@@ -14,6 +14,7 @@ import code.cinnamon.SharedVariables;
 
 @Mixin(HandledScreen.class)
 public abstract class PacketHandlerHudHandledScreenMixin {
+
     private static code.cinnamon.hud.elements.PacketHandlerHudElement getHudElement() {
         return HudManager.INSTANCE.getPacketHandlerHudElement();
     }
@@ -34,7 +35,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
             shouldRender = true;
         }
 
-        if (shouldRender) {
+        if (shouldRender && getHudElement().isEnabled()) {
             getHudElement().render(context, delta);
         }
     }
@@ -46,7 +47,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         if (isHudScreen()) {
             shouldHandle = true;
         }
-        if (shouldHandle && getHudElement().mouseClicked(mouseX, mouseY, button)) {
+        if (shouldHandle && getHudElement().isEnabled() && getHudElement().mouseClicked(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
     }
@@ -58,7 +59,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         if (isHudScreen()) {
             shouldHandle = true;
         }
-        if (shouldHandle && getHudElement().mouseReleased(mouseX, mouseY, button)) {
+        if (shouldHandle && getHudElement().isEnabled() && getHudElement().mouseReleased(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
     }
@@ -70,7 +71,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         if (isHudScreen()) {
             shouldHandle = true;
         }
-        if (shouldHandle && getHudElement().mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+        if (shouldHandle && getHudElement().isEnabled() && getHudElement().mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
             cir.setReturnValue(true);
         }
     }
@@ -82,7 +83,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         if (isHudScreen()) {
             shouldHandle = true;
         }
-        if (shouldHandle && getHudElement().mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
+        if (shouldHandle && getHudElement().isEnabled() && getHudElement().mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
             cir.setReturnValue(true);
         }
     }

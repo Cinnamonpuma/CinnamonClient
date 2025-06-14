@@ -18,7 +18,7 @@ public abstract class HudMixin {
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderScreen(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (SharedVariables.enabled && MinecraftClient.getInstance().player != null) {
+        if (SharedVariables.enabled && MinecraftClient.getInstance().player != null && getHudElement().isEnabled()) {
             getHudElement().render(context, delta);
         }
     }
@@ -26,6 +26,7 @@ public abstract class HudMixin {
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         if (SharedVariables.enabled && MinecraftClient.getInstance().player != null
+                && getHudElement().isEnabled()
                 && getHudElement().mouseClicked(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
@@ -34,6 +35,7 @@ public abstract class HudMixin {
     @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true)
     private void onMouseReleased(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         if (SharedVariables.enabled && MinecraftClient.getInstance().player != null
+                && getHudElement().isEnabled()
                 && getHudElement().mouseReleased(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
@@ -42,6 +44,7 @@ public abstract class HudMixin {
     @Inject(method = "mouseDragged", at = @At("HEAD"), cancellable = true)
     private void onMouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
         if (SharedVariables.enabled && MinecraftClient.getInstance().player != null
+                && getHudElement().isEnabled()
                 && getHudElement().mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
             cir.setReturnValue(true);
         }
@@ -50,6 +53,7 @@ public abstract class HudMixin {
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
     private void onMouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, CallbackInfoReturnable<Boolean> cir) {
         if (SharedVariables.enabled && MinecraftClient.getInstance().player != null
+                && getHudElement().isEnabled()
                 && getHudElement().mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
             cir.setReturnValue(true);
         }

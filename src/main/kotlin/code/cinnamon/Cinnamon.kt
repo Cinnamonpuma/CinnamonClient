@@ -14,6 +14,8 @@ import code.cinnamon.keybindings.KeybindingManager
 import code.cinnamon.gui.theme.ThemeConfigManager
 import code.cinnamon.hud.HudManager
 import code.cinnamon.hud.HudScreen
+import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.screen.Screen
 
 object Cinnamon : ModInitializer {
     private val logger = LoggerFactory.getLogger("cinnamon")
@@ -52,6 +54,14 @@ object Cinnamon : ModInitializer {
             // Check AutoClicker keybinding
             if (KeybindingManager.wasPressed("cinnamon.toggle_autoclicker")) {
                 ModuleManager.toggleModule("AutoClicker")
+            }
+
+            // Check "Open Saved GUI" keybinding
+            if (KeybindingManager.wasPressed("cinnamon.open_saved_gui")) {
+                val storedScreen = code.cinnamon.SharedVariables.storedScreen
+                if (storedScreen is Screen) {
+                    MinecraftClient.getInstance().setScreen(storedScreen)
+                }
             }
         }
 

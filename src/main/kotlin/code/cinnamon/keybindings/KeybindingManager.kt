@@ -7,32 +7,10 @@ import org.lwjgl.glfw.GLFW
 
 /**
  * Manages the registration and state of keybindings for the Cinnamon mod.
- * 
- * **Keybinding Naming and Usage:**
- * - The `name` parameter provided to `registerKeybinding` (e.g., "cinnamon.toggle_autoclicker")
- *   serves as the internal identifier for that keybinding within this manager.
- *   This exact `name` string must be used when calling `getKeybinding(name)`,
- *   `isPressed(name)`, or `wasPressed(name)`.
- *
- * - The `category` parameter in `registerKeybinding` (which defaults to "CinnamonClient")
- *   determines how keybindings are grouped in Minecraft's keybinding settings menu.
- *
- * - The actual string displayed in the Minecraft settings (e.g., "Toggle AutoClicker" which might
- *   correspond to a translation key like "key.cinnamon.toggle_autoclicker") comes from the
- *   first argument of the `net.minecraft.client.option.KeyBinding` constructor.
- *   This is distinct from the internal `name` used by `KeybindingManager`.
- *   For example, `KeyBinding("key.cinnamon.toggle_autoclicker", ...)` uses "key.cinnamon.toggle_autoclicker"
- *   as its display/translation key.
- *
- * **Important for Custom Keybindings:**
- *   If you register a keybinding (e.g., `KeybindingManager.registerKeybinding("my_module.my_action", ...)`),
- *   you must check it using the same name: `KeybindingManager.isPressed("my_module.my_action")`.
- *   Do not add prefixes like "key." when querying `KeybindingManager` unless the
- *   keybinding was registered with that prefix in its `name`.
  */
 object KeybindingManager {
     private val keybindings = mutableMapOf<String, KeyBinding>()
-    
+
     fun registerKeybinding(name: String, key: Int, category: String = "CinnamonClient"): KeyBinding {
         val keyBinding = KeyBindingHelper.registerKeyBinding(
             KeyBinding(
@@ -45,24 +23,26 @@ object KeybindingManager {
         keybindings[name] = keyBinding
         return keyBinding
     }
-    
+
     fun getKeybinding(name: String): KeyBinding? {
         return keybindings[name]
     }
-    
+
     fun getAllKeybindings(): Map<String, KeyBinding> = keybindings.toMap()
-    
+
     fun isPressed(name: String): Boolean {
         return keybindings[name]?.isPressed ?: false
     }
-    
+
     fun wasPressed(name: String): Boolean {
         return keybindings[name]?.wasPressed() ?: false
     }
-    
+
     fun initialize() {
         // Register keybindings for existing modules only
         registerKeybinding("cinnamon.toggle_autoclicker", GLFW.GLFW_KEY_X)
+        // Register keybinding for opening saved GUI (default: V)
+        registerKeybinding("cinnamon.open_saved_gui", GLFW.GLFW_KEY_V)
     }
 
     fun updateKeybinding(name: String, newKey: Int) {
@@ -70,9 +50,5 @@ object KeybindingManager {
             it.setBoundKey(InputUtil.fromKeyCode(newKey, 0))
             KeyBinding.updateKeysByCode()
         }
-        // If logging for a non-existent key is desired, it would be:
-        // ?: run {
-        //    println("Keybinding not found: $name")
-        // }
     }
 }
