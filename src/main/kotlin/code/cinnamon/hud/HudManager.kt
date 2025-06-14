@@ -49,7 +49,7 @@ object HudManager {
         registerHudElement(FpsHudElement(10f, 10f))
         registerHudElement(PingHudElement(10f, 30f))
         registerHudElement(KeystrokesHudElement(10f, 60f))
-        registerHudElement(PacketHandlerHudElement(10f, 90f)) // Adjust coordinates as needed
+        // Remove PacketHandlerHudElement from here since it's handled by the mixin
         loadHudConfig()
     }
     

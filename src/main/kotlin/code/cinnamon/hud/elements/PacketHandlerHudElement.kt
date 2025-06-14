@@ -20,13 +20,11 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private val buttonHeight = 20
     private val buttonMargin = 2
 
-    // Position is managed by parent HudElement class
-
     // Custom font reference
     private val CINNA_FONT: Identifier = SharedVariables.CINNA_FONT
 
     private fun createStyledText(text: String): Text {
-        return Text.literal(text).fillStyle(Style.EMPTY.withFont(CINNA_FONT))
+        return Text.literal(text).setStyle(Style.EMPTY.withFont(CINNA_FONT))
     }
 
     private val closeWithoutPacketButton = CinnamonButton(
@@ -172,20 +170,13 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         return SharedVariables.enabled && screen != null && (screen !is net.minecraft.client.gui.screen.GameMenuScreen)
     }
 
-    // Method to update position using parent class setters
-    fun updatePosition(newX: Float, newY: Float) {
-        setX(newX)
-        setY(newY)
-    }
-
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!shouldRender()) return
         
-        // Use parent class position getters
         val hudXInt = getX().toInt()
         val hudYInt = getY().toInt()
         
-        // Render background directly
+        // Render background
         context.fill(hudXInt, hudYInt, hudXInt + getWidth(), hudYInt + getHeight(), 0x80000000.toInt())
         
         var currentY = hudYInt + buttonMargin
@@ -214,7 +205,6 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!shouldRender()) return false
         
-        // Check if click is within our HUD bounds first
         if (!isMouseOver(mouseX, mouseY)) return false
         
         for (cinnamonButton in buttons) {
