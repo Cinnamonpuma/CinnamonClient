@@ -62,7 +62,8 @@ class CinnamonButton(
             drawBorder(context, _x, _y, _width, _height, CinnamonTheme.accentColor)
         }
 
-        // Draw text
+        // Draw text using the Text object with style!
+        // DO NOT use text.string here, or you will lose font and style!
         val textWidth = client.textRenderer.getWidth(text)
         val textX = _x + (_width - textWidth) / 2
         val textY = _y + (_height - client.textRenderer.fontHeight) / 2
