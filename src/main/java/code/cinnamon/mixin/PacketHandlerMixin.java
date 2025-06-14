@@ -6,36 +6,36 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.packet.Packet;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.listener.PacketListener;
+import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import code.cinnamon.util.PacketHandlerAPI;
-
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import code.cinnamon.SharedVariables;
 
 @Mixin(ClientConnection.class)
 public class PacketHandlerMixin {
-    // Static fields must be private!
-    private static final Queue<Packet<? extends PacketListener>> packetQueue = PacketHandlerAPI.getPacketQueue();
-    private static boolean packetBlocking = false;
-    private static boolean safeClose = false;
-
     @Inject(method = "send(Lnet/minecraft/network/packet/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void onSendPacket(Packet<? extends PacketListener> packet, CallbackInfo ci) {
-        if (packetBlocking) {
-            packetQueue.offer(packet);
-            ci.cancel();
+        if (isInventoryActionPacket(packet)) {
+            if (PacketHandlerAPI.isPacketBlocking()) {
+                PacketHandlerAPI.getPacketQueue().offer(packet);
+                ci.cancel();
+            } else if (!SharedVariables.packetSendingEnabled) {
+                ci.cancel();
+            }
         }
-        // If you want to process delayed packets, call your API here as needed
+    }
+
+    private boolean isInventoryActionPacket(Packet<?> packet) {
+        return packet instanceof ClickSlotC2SPacket
+            || packet instanceof UpdateSelectedSlotC2SPacket;
     }
 
     @Inject(method = "disconnect", at = @At("HEAD"), cancellable = true)
     private void onDisconnect(CallbackInfo ci) {
-        if (safeClose) {
+        if (PacketHandlerAPI.isSafeCloseEnabled()) {
             PacketHandlerAPI.flushPacketQueue();
-            safeClose = false;
+            PacketHandlerAPI.disableSafeClose();
         }
     }
-
-    // Only private static if needed, but ideally all logic should go in PacketHandlerAPI
 }

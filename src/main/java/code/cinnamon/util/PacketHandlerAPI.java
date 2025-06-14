@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class PacketHandlerAPI {
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private static final Queue<DelayedPacket> delayedPackets = new ConcurrentLinkedQueue<>();
     private static final Queue<Packet<? extends PacketListener>> packetQueue = new ConcurrentLinkedQueue<>();
     private static boolean packetBlocking = false;
@@ -28,12 +28,17 @@ public class PacketHandlerAPI {
         }
     }
 
+    static {
+        // Start processing delayed packets every 50ms
+        scheduler.scheduleAtFixedRate(PacketHandlerAPI::processDelayedPackets, 50, 50, TimeUnit.MILLISECONDS);
+    }
+
     public static void processDelayedPackets() {
         long currentTime = System.currentTimeMillis();
         DelayedPacket delayed;
         while ((delayed = delayedPackets.peek()) != null && delayed.sendTime <= currentTime) {
             delayedPackets.poll();
-            if (MinecraftClient.getInstance().getNetworkHandler() != null) {
+            if (MinecraftClient.getInstance().getNetworkHandler() != null && SharedVariables.packetSendingEnabled) {
                 MinecraftClient.getInstance().getNetworkHandler().getConnection().send(delayed.packet);
             }
         }
@@ -71,6 +76,10 @@ public class PacketHandlerAPI {
         safeClose = true;
     }
 
+    public static void disableSafeClose() {
+        safeClose = false;
+    }
+
     public static void clearQueues() {
         packetQueue.clear();
         delayedPackets.clear();
@@ -100,7 +109,6 @@ public class PacketHandlerAPI {
         scheduler.shutdown();
     }
 
-    // For the mixin to access the queue
     public static Queue<Packet<? extends PacketListener>> getPacketQueue() {
         return packetQueue;
     }
