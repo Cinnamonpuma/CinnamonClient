@@ -2,7 +2,6 @@ package code.cinnamon.hud.elements
 
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.hud.HudElement
-// import code.cinnamon.hud.HudManager // No longer needed for config fetching
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Style
@@ -13,14 +12,13 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
     private var lastFps = 0
     private var fpsChangeAnimation = 0f
-    private val cornerRadius = 6 // Rounded corner radius
+    private val cornerRadius = 6
     
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
         
         val currentFps = mc.currentFps
         
-        // Simple fade animation for FPS changes
         if (currentFps != lastFps) {
             fpsChangeAnimation = 0.3f
             lastFps = currentFps
@@ -31,24 +29,22 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.matrices.scale(scale, scale, 1.0f)
         context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
         
-        // Background with rounded corners
         val width = getWidth()
         val height = getHeight()
         val padding = 6
         
-        // Draw rounded background
-        drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2, this.backgroundColor) // Use this.backgroundColor
+
+        drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2, this.backgroundColor)
         
-        // Clean white FPS text with slight shadow for readability
+
         val fpsText = Text.literal("$currentFps").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
         
-        // Subtle shadow for better readability
-        if (this.textShadowEnabled) { // Use this.textShadowEnabled
+
+        if (this.textShadowEnabled) {
             context.drawText(mc.textRenderer, fpsText, 1, 1, 0x40000000, false)
         }
         
-        // Use text color from this element
-        context.drawText(mc.textRenderer, fpsText, 0, 0, this.textColor, false) // Use this.textColor
+        context.drawText(mc.textRenderer, fpsText, 0, 0, this.textColor, false)
         
         context.matrices.pop()
     }
@@ -67,22 +63,18 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
             return
         }
         
-        // Draw the main body (center rectangle)
         context.fill(x + r, y, x + width - r, y + height, color)
         
-        // Draw the side rectangles (no overlap with corners)
         context.fill(x, y + r, x + r, y + height - r, color)
         context.fill(x + width - r, y + r, x + width, y + height - r, color)
         
-        // Draw the four rounded corners
-        drawRoundedCorner(context, x, y, r, color, 0) // Top-left
-        drawRoundedCorner(context, x + width - r, y, r, color, 1) // Top-right
-        drawRoundedCorner(context, x, y + height - r, r, color, 2) // Bottom-left
-        drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3) // Bottom-right
+        drawRoundedCorner(context, x, y, r, color, 0) 
+        drawRoundedCorner(context, x + width - r, y, r, color, 1) 
+        drawRoundedCorner(context, x, y + height - r, r, color, 2) 
+        drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3)
     }
     
     private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, corner: Int) {
-        // Use proper circle equation: x² + y² <= r²
         for (dy in 0 until radius) {
             for (dx in 0 until radius) {
                 val distanceSquared = dx * dx + dy * dy
@@ -91,19 +83,19 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
                     val pixelY: Int
                     
                     when (corner) {
-                        0 -> { // Top-left: draw in 3rd quadrant relative to corner
+                        0 -> { 
                             pixelX = x + (radius - 1 - dx)
                             pixelY = y + (radius - 1 - dy)
                         }
-                        1 -> { // Top-right: draw in 4th quadrant relative to corner
+                        1 -> { 
                             pixelX = x + dx
                             pixelY = y + (radius - 1 - dy)
                         }
-                        2 -> { // Bottom-left: draw in 2nd quadrant relative to corner
+                        2 -> { 
                             pixelX = x + (radius - 1 - dx)
                             pixelY = y + dy
                         }
-                        3 -> { // Bottom-right: draw in 1st quadrant relative to corner
+                        3 -> { 
                             pixelX = x + dx
                             pixelY = y + dy
                         }

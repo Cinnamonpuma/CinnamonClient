@@ -39,9 +39,7 @@ object KeybindingManager {
     }
 
     fun initialize() {
-        // Register keybindings for existing modules only
         registerKeybinding("cinnamon.toggle_autoclicker", GLFW.GLFW_KEY_X)
-        // Register keybinding for opening saved GUI (default: V)
         registerKeybinding("cinnamon.open_saved_gui", GLFW.GLFW_KEY_V)
     }
 

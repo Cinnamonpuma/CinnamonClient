@@ -12,7 +12,6 @@ import code.cinnamon.hud.HudScreen
 
 class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "cinna")))) {
     
-    // Create a reusable font identifier
     companion object {
         private val CINNA_FONT = Identifier.of("cinnamon", "cinna")
     }
@@ -24,27 +23,26 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
         val buttonHeight = CinnamonTheme.BUTTON_HEIGHT_LARGE
         val spacing = 45
         
-        // New calculation for startY for the first button:
-        val logoAreaHeight = 80 // Configurable estimate for logo and subtitle area
+        val logoAreaHeight = 80 
         val buttonsStartYAnchor = contentY + logoAreaHeight
         val availableHeightForButtons = getContentHeight() - logoAreaHeight
-        val totalButtonsHeight = (buttonHeight * 5) + (spacing * 4) // buttonHeight is CinnamonTheme.BUTTON_HEIGHT_LARGE
+        val totalButtonsHeight = (buttonHeight * 5) + (spacing * 4)
         val actualButtonsStartY = buttonsStartYAnchor + (availableHeightForButtons - totalButtonsHeight) / 2
         
-        // Main navigation buttons
+
         addButton(CinnamonButton(
             centerX - buttonWidth / 2,
-            actualButtonsStartY, // Use new startY
+            actualButtonsStartY, 
             buttonWidth,
             buttonHeight,
             Text.literal("Modules").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
             { _, _ -> CinnamonGuiManager.openModulesScreen() },
-            false // Changed from true to false
+            false
         ))
         
         addButton(CinnamonButton(
             centerX - buttonWidth / 2,
-            actualButtonsStartY + spacing, // Use new startY
+            actualButtonsStartY + spacing, 
             buttonWidth,
             buttonHeight,
             Text.literal("Keybindings").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
@@ -53,17 +51,16 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
         
         addButton(CinnamonButton(
             centerX - buttonWidth / 2,
-            actualButtonsStartY + spacing * 2, // New Y position for HUD Editor
+            actualButtonsStartY + spacing * 2,
             buttonWidth,
             buttonHeight,
             Text.literal("HUD Editor").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
-            { _, _ -> client?.setScreen(HudScreen()) } // Action to open HudScreen
+            { _, _ -> client?.setScreen(HudScreen()) }
         ))
         
-        // New Theme Manager button
         addButton(CinnamonButton(
             centerX - buttonWidth / 2,
-            actualButtonsStartY + spacing * 3, // Use new startY
+            actualButtonsStartY + spacing * 3,
             buttonWidth,
             buttonHeight,
             Text.literal("Theme Manager").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
@@ -72,7 +69,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
         
         addButton(CinnamonButton(
             centerX - buttonWidth / 2,
-            actualButtonsStartY + spacing * 4, // Use new startY
+            actualButtonsStartY + spacing * 4,
             buttonWidth,
             buttonHeight,
             Text.literal("Close").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
@@ -89,7 +86,6 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
     override fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         super.renderFooter(context, mouseX, mouseY, delta)
         
-        // Draw version info in footer area
         val versionText = Text.literal("v1.0.0 - Minecraft 1.21.5").fillStyle(Style.EMPTY.withFont(CINNA_FONT))
         val versionWidth = textRenderer.getWidth(versionText)
         context.drawText(
@@ -100,8 +96,6 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             CinnamonTheme.secondaryTextColor,
             false
         )
-        
-        // Draw status indicator
         val statusText = Text.literal("Ready").fillStyle(Style.EMPTY.withFont(CINNA_FONT))
         context.drawText(
             textRenderer,

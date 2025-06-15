@@ -30,11 +30,10 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val currentKey: Int
     )
     override fun close() {
-        // Instead of calling super.close(), open the main menu (just like HudScreen)
+
         CinnamonGuiManager.openMainMenu()
     }
     override fun initializeComponents() {
-        // Back button
         addButton(CinnamonButton(
             guiX + PADDING,
             getFooterY() + 8,
@@ -44,7 +43,6 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             { _, _ -> CinnamonGuiManager.openMainMenu() }
         ))
         
-        // Reset All button
         addButton(CinnamonButton(
             guiX + guiWidth - PADDING - 80,
             getFooterY() + 8,
@@ -53,8 +51,6 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             Text.literal("Reset All").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             { _, _ -> resetAllKeybindings() }
         ))
-        
-        // Save button
         addButton(CinnamonButton(
             guiX + guiWidth - PADDING - 170,
             getFooterY() + 8,
@@ -62,7 +58,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             CinnamonTheme.BUTTON_HEIGHT_SMALL,
             Text.literal("Save").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             { _, _ -> saveKeybindings() },
-            false // Changed from true to false
+            false
         ))
     }
     
@@ -72,20 +68,9 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val contentWidth = getContentWidth()
         val contentHeight = getContentHeight()
         
-        // Content background (now handled by CinnamonScreen's coreBackgroundPrimary)
-        // context.fill(
-        //     contentX,
-        //     contentY,
-        //     contentX + contentWidth,
-        //     contentY + contentHeight,
-        //     CinnamonTheme.contentBackground
-        // )
-        
-        // Header section
+
         val headerHeight = 50
 
-        
-        // Title
         context.drawText(
             textRenderer,
             Text.literal("Click on a key to change it").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
@@ -96,14 +81,14 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         )
         
         
-        // Listening indicator
+
         if (isListening && selectedKeybinding != null) {
             val indicatorText = "Press a key to bind to ${getDisplayName(selectedKeybinding!!)} (ESC to cancel)"
             val indicatorWidth = textRenderer.getWidth(indicatorText)
             val indicatorX = contentX + (contentWidth - indicatorWidth) / 2
             val indicatorY = contentY + headerHeight + 10
             
-            // Background
+
             context.fill(
                 indicatorX - 10,
                 indicatorY - 5,
@@ -122,13 +107,12 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             )
         }
         
-        // Keybinding list
+
         val listY = contentY + headerHeight + (if (isListening) 35 else 10)
         val listHeight = getKeybindingListHeight() - (if (isListening) 45 else 10)
         
         renderKeybindingList(context, contentX + 10, listY, contentWidth - 20, listHeight, mouseX, mouseY)
         
-        // Scroll indicator
         if (maxScrollOffset > 0) {
             renderScrollbar(context, contentX + contentWidth - 8, listY, 6, listHeight)
         }
@@ -137,13 +121,12 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
     private fun renderKeybindingList(context: DrawContext, x: Int, y: Int, width: Int, height: Int, mouseX: Int, mouseY: Int) {
         val entries = getKeybindingEntries()
         
-        // Enable clipping
+
         context.enableScissor(x, y, x + width, y + height)
         
         entries.forEachIndexed { index, entry ->
             val entryY = y - scrollOffset + index * (keybindingHeight + keybindingSpacing)
             
-            // Only render if visible
             if (entryY + keybindingHeight >= y && entryY <= y + height) {
                 renderKeybindingEntry(context, x, entryY, width, keybindingHeight, entry, mouseX, mouseY)
             }
@@ -164,10 +147,9 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             else -> CinnamonTheme.cardBackground
         }
         
-        // Entry background
+
         drawRoundedRect(context, x, y, width, height, backgroundColor)
         
-        // Entry border
         val borderColor = when {
             isListeningToThis -> CinnamonTheme.titleColor
             isSelected -> CinnamonTheme.accentColor
@@ -175,7 +157,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         }
         drawRoundedBorder(context, x, y, width, height, borderColor)
         
-        // Keybinding name
+
         val nameColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor
         context.drawText(
             textRenderer,
@@ -186,7 +168,6 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             true
         )
         
-        // Keybinding description
         val descColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.secondaryTextColor
         context.drawText(
             textRenderer,
@@ -197,14 +178,12 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             false
         )
         
-        // Current key display
         val keyName = getKeyName(entry.currentKey)
         val keyWidth = textRenderer.getWidth(keyName)
         val keyButtonWidth = maxOf(keyWidth + 20, 60)
         val keyButtonX = x + width - keyButtonWidth - 10
         val keyButtonY = y + (height - 24) / 2
         
-        // Key button background
         val keyButtonBg = when {
             isListeningToThis -> CinnamonTheme.primaryButtonBackgroundPressed
             isHovered && mouseX >= keyButtonX && mouseX < keyButtonX + keyButtonWidth -> CinnamonTheme.buttonBackgroundHover
@@ -214,7 +193,6 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         drawRoundedRect(context, keyButtonX, keyButtonY, keyButtonWidth, 24, keyButtonBg)
         drawRoundedBorder(context, keyButtonX, keyButtonY, keyButtonWidth, 24, CinnamonTheme.borderColor)
         
-        // Key text
         val keyTextColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor
         context.drawText(
             textRenderer,
@@ -225,18 +203,15 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             false
         )
         
-        // Conflict indicator (if key is used by multiple bindings)
         if (hasConflict(entry)) {
             context.fill(x + width - 25, y + 5, x + width - 5, y + 10, CinnamonTheme.errorColor)
         }
     }
     
     private fun renderScrollbar(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
-        // Scrollbar track
         context.fill(x, y, x + width, y + height, CinnamonTheme.borderColor)
         
         if (maxScrollOffset > 0) {
-            // Scrollbar thumb
             val thumbHeight = max(20, (height * height) / (maxScrollOffset + height))
             val thumbY = y + (scrollOffset * (height - thumbHeight)) / maxScrollOffset
             
@@ -307,11 +282,10 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
     }
     
     private fun getKeybindingListHeight(): Int {
-        return getContentHeight() - 60 // Account for header and padding
+        return getContentHeight() - 60
     }
     
     private fun resetAllKeybindings() {
-        // Reset to default values
         KeybindingManager.updateKeybinding("cinnamon.toggle_speed", GLFW.GLFW_KEY_V)
         KeybindingManager.updateKeybinding("cinnamon.toggle_flight", GLFW.GLFW_KEY_F)
         KeybindingManager.updateKeybinding("cinnamon.toggle_nofall", GLFW.GLFW_KEY_N)
@@ -321,15 +295,12 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
     }
     
     private fun saveKeybindings() {
-        // Here you would typically save to a config file
-        // For now, just close the listening state
         selectedKeybinding = null
         isListening = false
     }
     
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (isListening) {
-            // Cancel listening
             isListening = false
             selectedKeybinding = null
             return true
@@ -348,7 +319,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             entries.forEachIndexed { index, entry ->
                 val entryY = listY - scrollOffset + index * (keybindingHeight + keybindingSpacing)
                 
-                if (mouseY >= entryY && mouseY < entryY + keybindingHeight) { // Fixed: Added missing condition and return
+                if (mouseY >= entryY && mouseY < entryY + keybindingHeight) {
                     selectedKeybinding = entry.name
                     isListening = true
                     return true
@@ -359,7 +330,6 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         return super.mouseClicked(mouseX, mouseY, button)
     }
     
-    // Additional methods that might be missing - you can add these if needed
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
         val contentX = getContentX()
         val contentY = getContentY() + 60
@@ -380,11 +350,9 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         if (isListening && selectedKeybinding != null) {
             if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                // Cancel listening
                 isListening = false
                 selectedKeybinding = null
             } else {
-                // Set the new keybinding
                 KeybindingManager.updateKeybinding(selectedKeybinding!!, keyCode)
                 isListening = false
                 selectedKeybinding = null

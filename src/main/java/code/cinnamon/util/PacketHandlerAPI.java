@@ -29,7 +29,6 @@ public class PacketHandlerAPI {
     }
 
     static {
-        // Start processing delayed packets every 50ms
         scheduler.scheduleAtFixedRate(PacketHandlerAPI::processDelayedPackets, 50, 50, TimeUnit.MILLISECONDS);
     }
 

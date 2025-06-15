@@ -2,16 +2,17 @@
 	"schemaVersion": 1,
 	"id": "cinnamon",
 	"version": "${version}",
-	"name": "cinnamon",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "CinnamonClient",
+	"description": "A Minecraft client modification that enhances your gameplay experience with additional features and optimizations.",
 	"authors": [
-		"Me!"
+		"Cinnamonpuma"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/Cinnamonpuma/CinnamonClient",
+		"sources": "https://github.com/Cinnamonpuma/CinnamonClient",
+		"issues": "https://github.com/Cinnamonpuma/CinnamonClient/issues"
 	},
-	"license": "CC0-1.0",
+	"license": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License",
 	"icon": "assets/cinnamon/icon.png",
 	"environment": "*",
 	"entrypoints": {

@@ -36,13 +36,13 @@ class ColorPickerScreen(
     }
 
     override fun initializeComponents() {
-        // No buttons/components for this modal screen
+
     }
 
     override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        // Overlay background
+
         context.fill(0, 0, width, height, 0xC0000000.toInt())
-        // Picker background
+
         context.fill(pickerX, pickerY, pickerX + pickerWidth, pickerY + pickerHeight, 0xF0202020.toInt())
         context.drawBorder(pickerX, pickerY, pickerWidth, pickerHeight, CinnamonTheme.accentColor)
 
@@ -78,7 +78,7 @@ class ColorPickerScreen(
         val buttonY = pickerY + pickerHeight - 32
         val buttonStartX = pickerX + (pickerWidth - totalButtonWidth) / 2
 
-        // Apply button
+
         val applyHovered = mouseX in buttonStartX until (buttonStartX + buttonWidth) &&
             mouseY in buttonY until (buttonY + 30)
         context.fill(
@@ -93,7 +93,6 @@ class ColorPickerScreen(
             0xFFFFFFFF.toInt(),
             false
         )
-        // Cancel button
         val cancelX = buttonStartX + buttonWidth + buttonSpacing
         val cancelHovered = mouseX in cancelX until (cancelX + buttonWidth) &&
             mouseY in buttonY until (buttonY + 30)
@@ -134,7 +133,6 @@ class ColorPickerScreen(
             }
         }
 
-        // Draw selector
         val selRadius = saturation * radius
         val selAngle = Math.toRadians(hue.toDouble())
         val selX = centerX + (cos(selAngle) * selRadius).toInt()
@@ -198,7 +196,6 @@ class ColorPickerScreen(
         val mX = mouseX.toInt()
         val mY = mouseY.toInt()
 
-        // Buttons
         val buttonWidth = 80
         val buttonSpacing = 24
         val totalButtonWidth = buttonWidth * 2 + buttonSpacing
@@ -207,19 +204,16 @@ class ColorPickerScreen(
 
         if (mY in buttonY until (buttonY + 30)) {
             if (mX in buttonStartX until (buttonStartX + buttonWidth)) {
-                // Apply
                 val color = (hsvToRgb(hue, saturation, brightness) and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
                 onPick(color)
                 return true
             }
             if (mX in (buttonStartX + buttonWidth + buttonSpacing) until (buttonStartX + buttonWidth * 2 + buttonSpacing)) {
-                // Cancel
                 onCancel()
                 return true
             }
         }
 
-        // Color wheel
         val wheelSize = 180
         val wheelX = pickerX + (pickerWidth - wheelSize) / 2
         val wheelY = pickerY + 35
@@ -239,7 +233,6 @@ class ColorPickerScreen(
             }
         }
 
-        // Brightness slider
         val sliderHeight = 20
         val brightnessSliderY = wheelY + wheelSize + 16
         if (mX in (pickerX + 20) until (pickerX + pickerWidth - 20) &&
@@ -248,7 +241,7 @@ class ColorPickerScreen(
             return true
         }
 
-        // Alpha slider
+
         val alphaSliderY = brightnessSliderY + sliderHeight + 12
         if (mX in (pickerX + 20) until (pickerX + pickerWidth - 20) &&
             mY in alphaSliderY until (alphaSliderY + sliderHeight)) {
@@ -258,8 +251,6 @@ class ColorPickerScreen(
 
         return true
     }
-
-    // Color conversion utilities
     private fun hsvToRgb(h: Float, s: Float, v: Float): Int {
         val c = v * s
         val x = c * (1 - abs(((h / 60) % 2) - 1))

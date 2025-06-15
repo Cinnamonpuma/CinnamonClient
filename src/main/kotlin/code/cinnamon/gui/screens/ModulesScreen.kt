@@ -197,7 +197,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
     }
 
-    // Only show text/background/shadow for non-PacketHandler; only show button colors for PacketHandler.
     private fun renderHudElementSettings(
         context: DrawContext,
         x: Int,
@@ -285,9 +284,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         currentY += 15
         val textElementHeight = textRenderer.fontHeight
 
-        // Only for non-PacketHandlerHudElement: Text Color, Background, Text Shadow
         if (element !is PacketHandlerHudElement) {
-            // Text Color [Set]
             val setTextColorButtonText = "[Set]"
             val setTextColorButtonWidth = textRenderer.getWidth(setTextColorButtonText)
             val setTextColorButtonX = settingsX + settingsWidth - setTextColorButtonWidth
@@ -307,8 +304,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 return true
             }
             currentY += 14
-
-            // Background [Set]
             val setBgColorButtonText = "[Set]"
             val setBgColorButtonWidth = textRenderer.getWidth(setBgColorButtonText)
             val setBgColorButtonX = settingsX + settingsWidth - setBgColorButtonWidth
@@ -329,7 +324,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
             currentY += 14
 
-            // Text Shadow checkbox
             val checkboxSize = 10
             val shadowCheckboxX = settingsX
             val shadowCheckboxY = currentY
@@ -345,9 +339,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             currentY += 14
         }
 
-        // Keystrokes pressed colors
         if (element is KeystrokesHudElement) {
-            // Pressed Text [Set]
             val setKeyPressedTextColorButtonText = "[Set]"
             val setKeyPressedTextColorButtonWidth = textRenderer.getWidth(setKeyPressedTextColorButtonText)
             val setKeyPressedTextColorButtonX = settingsX + settingsWidth - setKeyPressedTextColorButtonWidth
@@ -368,7 +360,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
             currentY += 14
 
-            // Pressed Background [Set]
             val setKeyPressedBgColorButtonText = "[Set]"
             val setKeyPressedBgColorButtonWidth = textRenderer.getWidth(setKeyPressedBgColorButtonText)
             val setKeyPressedBgColorButtonX = settingsX + settingsWidth - setKeyPressedBgColorButtonWidth
@@ -390,9 +381,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             currentY += 14
         }
 
-        // PacketHandler button settings (only these are clickable for PacketHandler)
         if (element is PacketHandlerHudElement) {
-            // Button Color [Set]
             val setButtonColorButtonText = "[Set]"
             val setButtonColorButtonWidth = textRenderer.getWidth(setButtonColorButtonText)
             val setButtonColorButtonX = settingsX + settingsWidth - setButtonColorButtonWidth
@@ -413,7 +402,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
             currentY += 14
 
-            // Button Text [Set]
             val setButtonTextColorButtonText = "[Set]"
             val setButtonTextColorButtonWidth = textRenderer.getWidth(setButtonTextColorButtonText)
             val setButtonTextColorButtonX = settingsX + settingsWidth - setButtonTextColorButtonWidth
@@ -434,7 +422,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
             currentY += 14
 
-            // Button Text Shadow checkbox
             val checkboxSize = 10
             val buttonShadowCheckboxX = settingsX
             val buttonShadowCheckboxY = currentY
@@ -452,7 +439,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         return false
     }
 
-    // The following are utility and drawing helpers needed for this screen
 
     private fun drawCheckbox(context: DrawContext, x: Int, y: Int, text: String, checked: Boolean) {
         val checkboxSize = 10

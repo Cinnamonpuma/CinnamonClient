@@ -19,9 +19,8 @@ abstract class HudElement(
 
     var isEnabled: Boolean = true
 
-    // Properties for customization
-    var textColor: Int = 0xFFFFFF // White
-    var backgroundColor: Int = 0x80000000.toInt() // Semi-transparent black
+    var textColor: Int = 0xFFFFFF 
+    var backgroundColor: Int = 0x80000000.toInt() 
     var textShadowEnabled: Boolean = true
 
     private var isDragging: Boolean = false

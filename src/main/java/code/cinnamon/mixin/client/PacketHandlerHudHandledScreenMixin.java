@@ -19,7 +19,6 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         return HudManager.INSTANCE.getPacketHandlerHudElement();
     }
 
-    // Utility: check if current screen is HudScreen
     private boolean isHudScreen() {
         Screen current = MinecraftClient.getInstance().currentScreen;
         return current != null && current.getClass().getName().equals("code.cinnamon.hud.HudScreen");
@@ -30,7 +29,6 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         MinecraftClient client = MinecraftClient.getInstance();
         boolean shouldRender = SharedVariables.enabled && client.player != null;
 
-        // Render if we're in the HudScreen (editor) as well
         if (isHudScreen()) {
             shouldRender = true;
         }

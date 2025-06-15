@@ -34,7 +34,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         }),
         CORE_BUTTON_BACKGROUND("Button Background", { CinnamonTheme.coreButtonBackground }, { color ->
             CinnamonTheme.coreButtonBackground = color
-            CinnamonTheme.updateDependentColors() // Important to update dependents if button visuals rely on it
+            CinnamonTheme.updateDependentColors()
         }),
         CORE_STATUS_SUCCESS("Success Color", { CinnamonTheme.coreStatusSuccess }, { color ->
             CinnamonTheme.coreStatusSuccess = color
@@ -94,9 +94,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val listWidth = guiWidth - 80
         val listHeight = getContentHeight() - 170
 
-        // List background (now handled by CinnamonScreen's coreBackgroundPrimary)
-        // context.fill(listX, listY, listX + listWidth, listY + listHeight, CinnamonTheme.contentBackground)
-        context.drawBorder(listX, listY, listWidth, listHeight, CinnamonTheme.borderColor) // Keep border
+
+        context.drawBorder(listX, listY, listWidth, listHeight, CinnamonTheme.borderColor)
 
         context.enableScissor(listX, listY, listX + listWidth, listY + listHeight)
         val colors = ColorType.values()
@@ -111,14 +110,6 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             currentY += itemHeight
         }
         context.disableScissor()
-
-        // Scroll indicators
-        if (scrollOffset > 0) {
-            context.drawText(textRenderer, Text.literal("▲").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), listX + listWidth - 20, listY + 5, CinnamonTheme.accentColor, false)
-        }
-        if (colors.size * itemHeight > listHeight + scrollOffset) {
-            context.drawText(textRenderer, Text.literal("▼").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), listX + listWidth - 20, listY + listHeight - 15, CinnamonTheme.accentColor, false)
-        }
     }
 
     private fun renderColorItem(context: DrawContext, colorType: ColorType, x: Int, y: Int, width: Int, height: Int, mouseX: Int, mouseY: Int) {
@@ -151,7 +142,6 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        // Color list click for color picker
         val listOuterX = guiX + 40
         val listOuterY = getContentY() + 20
         val listContentWidth = guiWidth - 80
@@ -210,9 +200,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
 
     override fun close() {
-        // Auto-save theme config when this screen is closed
         ThemeConfigManager.saveTheme()
-        // Instead of calling super.close(), open the main menu (just like HudScreen)
         CinnamonGuiManager.openMainMenu()
     }
 
@@ -239,8 +227,6 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         )
     }
 
-    // Helper function to clear buttons (implement as needed in your base class)
     private fun clearButtons() {
-        // Implementation depends on your CinnamonScreen base class
     }
 }

@@ -22,41 +22,33 @@ object Cinnamon : ModInitializer {
     private lateinit var openGuiKeybinding: KeyBinding
 
     override fun onInitialize() {
-        // This code runs as soon as Minecraft is in a mod-load-ready state.
         logger.info("Initializing Cinnamon mod...")
 
-        // Initialize managers
         ThemeConfigManager.loadTheme()
         ModuleManager.initialize()
         KeybindingManager.initialize()
         
-        // Initialize HUD system
         HudManager.init()
         logger.info("HUD system initialized")
 
-        // Register main GUI keybinding
         openGuiKeybinding = KeyBindingHelper.registerKeyBinding(
             KeyBinding(
                 "key.cinnamon.open_gui",
                 InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_RIGHT_SHIFT, // Right Shift to open GUI
+                GLFW.GLFW_KEY_RIGHT_SHIFT,
                 "CinnamonClient"
             )
         )
 
-        // Register tick event to check for key presses
         ClientTickEvents.END_CLIENT_TICK.register { client ->
-            // Check if GUI key was pressed
             if (openGuiKeybinding.wasPressed()) {
                 CinnamonGuiManager.openMainMenu()
             }
 
-            // Check AutoClicker keybinding
             if (KeybindingManager.wasPressed("cinnamon.toggle_autoclicker")) {
                 ModuleManager.toggleModule("AutoClicker")
             }
 
-            // Check "Open Saved GUI" keybinding
             if (KeybindingManager.wasPressed("cinnamon.open_saved_gui")) {
                 val storedScreen = code.cinnamon.SharedVariables.storedScreen
                 if (storedScreen is Screen) {
@@ -65,9 +57,8 @@ object Cinnamon : ModInitializer {
             }
         }
 
-        // Register HUD rendering
+
         HudRenderCallback.EVENT.register { drawContext, renderTickCounter ->
-            // Extract the float value from RenderTickCounter using the 1.21.5 API
             val partialTick = renderTickCounter.getTickProgress(false)
             HudManager.render(drawContext, partialTick)
         }

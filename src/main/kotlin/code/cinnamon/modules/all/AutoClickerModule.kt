@@ -1,4 +1,3 @@
-// AutoClickerModule.kt
 package code.cinnamon.modules.all
 
 import code.cinnamon.modules.Module
@@ -16,14 +15,11 @@ import kotlin.math.abs
 
 class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse clicks using advanced timing patterns") {
 
-    // Thread management
     private var executor: ScheduledExecutorService? = null
     private var clickTask: ScheduledFuture<*>? = null
     
-    // Thread-safe state management
     private val isClicking = AtomicBoolean(false)
     
-    // Enhanced configuration options
     var minCPS: Float = 6.0f
         private set
     var maxCPS: Float = 10.0f
@@ -35,7 +31,6 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
     var onlyWhileHolding: Boolean = false
         private set
     
-    // Advanced humanization settings
     var enableHumanization: Boolean = true
         private set
     var burstMode: Boolean = false
@@ -45,15 +40,13 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
     var microPauses: Boolean = true
         private set
     
-    // Timing randomization parameters
-    var timingVariance: Float = 0.25f // 25% base variance
+    var timingVariance: Float = 0.25f
         private set
-    var burstVariance: Float = 0.15f // Additional variance during bursts
+    var burstVariance: Float = 0.15f
         private set
-    var fatigueRate: Float = 0.02f // How quickly "fatigue" builds up
+    var fatigueRate: Float = 0.02f
         private set
     
-    // Internal state for humanization
     private var lastClickTime: Long = 0
     private var consecutiveClicks: Int = 0
     private var fatigueLevel: Float = 0.0f
@@ -61,7 +54,6 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
     private var burstClicksRemaining: Int = 0
     private val clickHistory = mutableListOf<Long>()
     
-    // Statistics
     var totalClicks: Long = 0
         private set
     private var sessionStartTime: Long = 0
@@ -71,11 +63,10 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
         var instance: AutoclickerModule? = null
             private set
             
-        // Constants for humanization
         private const val MAX_CLICK_HISTORY = 50
         private const val BURST_MIN_CLICKS = 3
         private const val BURST_MAX_CLICKS = 8
-        private const val MICRO_PAUSE_CHANCE = 0.08f // 8% chance
+        private const val MICRO_PAUSE_CHANCE = 0.08f
         private const val MICRO_PAUSE_MIN_MS = 150L
         private const val MICRO_PAUSE_MAX_MS = 400L
         private const val FATIGUE_THRESHOLD = 100
@@ -90,8 +81,7 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
         get() {
             if (minCPS >= maxCPS) return minCPS
             
-            // Apply fatigue effect
-            val fatigueMultiplier = 1.0f - (fatigueLevel * 0.3f) // Max 30% reduction
+            val fatigueMultiplier = 1.0f - (fatigueLevel * 0.3f)
             val baseCPS = Random.nextFloat() * (maxCPS - minCPS) + minCPS
             
             return (baseCPS * fatigueMultiplier).coerceIn(minCPS * 0.5f, maxCPS)
@@ -186,14 +176,12 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
     private fun calculateNextDelay(): Long {
         val currentTime = System.currentTimeMillis()
         
-        // Handle micro pauses (realistic hesitations)
         if (enableHumanization && microPauses && Random.nextFloat() < MICRO_PAUSE_CHANCE) {
             val pauseTime = Random.nextLong(MICRO_PAUSE_MIN_MS, MICRO_PAUSE_MAX_MS + 1)
             println("AutoClicker: Micro pause for ${pauseTime}ms")
             return pauseTime
         }
         
-        // Get base interval from current target CPS
         val targetCPS = currentTargetCPS
         val baseInterval = (1000.0f / targetCPS).toLong()
         
@@ -201,38 +189,31 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
             return max(10L, baseInterval)
         }
         
-        // Apply sophisticated timing variance
         var finalInterval = baseInterval
         
-        // Base timing variance using normal distribution simulation
         val normalVariance = generateNormalVariance() * timingVariance
         finalInterval = (finalInterval * (1.0f + normalVariance)).toLong()
         
-        // Burst mode logic
         if (burstMode) {
             finalInterval = applyBurstTiming(finalInterval)
         }
         
-        // Apply rhythm-based variance (humans have natural rhythm patterns)
         finalInterval = applyRhythmVariance(finalInterval, currentTime)
         
-        // Update fatigue level
         updateFatigue()
         
-        // Ensure minimum delay
         return max(10L, finalInterval)
     }
     
     private fun generateNormalVariance(): Float {
-        // Box-Muller transform to generate normal distribution
         val u1 = Random.nextFloat()
         val u2 = Random.nextFloat()
         val z0 = kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1.toDouble())) * kotlin.math.cos(2.0 * kotlin.math.PI * u2)
-        return (z0 * 0.5).toFloat().coerceIn(-2.0f, 2.0f) // Clamp to reasonable range
+        return (z0 * 0.5).toFloat().coerceIn(-2.0f, 2.0f)
     }
     
     private fun applyBurstTiming(baseInterval: Long): Long {
-        if (!isInBurst && Random.nextFloat() < 0.15f) { // 15% chance to start burst
+        if (!isInBurst && Random.nextFloat() < 0.15f) {
             isInBurst = true
             burstClicksRemaining = Random.nextInt(BURST_MIN_CLICKS, BURST_MAX_CLICKS + 1)
             println("AutoClicker: Starting burst of $burstClicksRemaining clicks")
@@ -244,7 +225,6 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
                 isInBurst = false
             }
             
-            // Faster clicks during burst with additional variance
             val burstMultiplier = 0.6f + (Random.nextFloat() * burstVariance)
             return (baseInterval * burstMultiplier).toLong()
         }
@@ -253,7 +233,6 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
     }
     
     private fun applyRhythmVariance(baseInterval: Long, currentTime: Long): Long {
-        // Simulate natural rhythm by looking at recent click patterns
         if (clickHistory.size >= 3) {
             val recentIntervals = mutableListOf<Long>()
             for (i in max(0, clickHistory.size - 4) until clickHistory.size - 1) {
@@ -262,7 +241,7 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
             
             if (recentIntervals.isNotEmpty()) {
                 val avgRecentInterval = recentIntervals.average()
-                val rhythmInfluence = 0.15f // How much rhythm affects next click
+                val rhythmInfluence = 0.15f
                 val rhythmVariance = ((avgRecentInterval - baseInterval) * rhythmInfluence).toLong()
                 return baseInterval + rhythmVariance
             }
@@ -279,7 +258,6 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
         if (consecutiveClicks > FATIGUE_THRESHOLD) {
             fatigueLevel = min(MAX_FATIGUE, fatigueLevel + fatigueRate)
         } else {
-            // Slowly recover from fatigue during normal operation
             fatigueLevel = max(0.0f, fatigueLevel - (fatigueRate * 0.2f))
         }
     }
@@ -327,7 +305,6 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
                 
                 totalClicks++
                 
-                // Update click history for analysis
                 clickHistory.add(currentTime)
                 if (clickHistory.size > MAX_CLICK_HISTORY) {
                     clickHistory.removeAt(0)
@@ -353,11 +330,10 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
                (rightClickEnabled && client.options.useKey.isPressed)
     }
     
-    // Configuration methods
     fun setCPSRange(minCPS: Float, maxCPS: Float) {
         this.minCPS = minCPS.coerceIn(0.5f, 50.0f)
         this.maxCPS = max(this.minCPS, maxCPS.coerceIn(0.5f, 50.0f))
-        resetInternalState() // Reset to avoid weird transitions
+        resetInternalState()
         println("AutoClicker: CPS range updated to ${this.minCPS}-${this.maxCPS}")
     }
     
@@ -418,7 +394,6 @@ class AutoclickerModule : Module("AutoClicker", "Simulates realistic mouse click
         println("AutoClicker: Only while holding ${if (enabled) "enabled" else "disabled"}")
     }
     
-    // Getters
     fun getCurrentCPS(): Float = currentTargetCPS
     
     fun getSessionCPS(): Float {

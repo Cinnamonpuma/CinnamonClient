@@ -1,15 +1,12 @@
 package code.cinnamon.mixin.client;
 
-// Updated import to use the new shader renderer
 import code.cinnamon.client.gui.NewGlobalShaderBackgroundRenderer;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-// Removed specific screen imports
 
-import net.minecraft.text.Text; // For constructor injection
+import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
-// Removed java.util.List and java.util.Arrays as they are no longer needed
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -27,7 +24,6 @@ public class ScreenMixin {
         String screenClassName = screen.getClass().getName();
 
         if (screenClassName.startsWith("code.cinnamon.")) {
-            // Do nothing, let original background render for mod's own screens
         } else {
             ci.cancel();
             NewGlobalShaderBackgroundRenderer.INSTANCE.render(context, context.getScaledWindowWidth(), context.getScaledWindowHeight());

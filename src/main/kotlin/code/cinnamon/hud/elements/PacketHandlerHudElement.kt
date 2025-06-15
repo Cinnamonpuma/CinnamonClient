@@ -20,7 +20,6 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private val buttonMargin = 2
     private val CINNA_FONT: Identifier = CinnamonScreen.CINNA_FONT
 
-    // Custom HUD-wide button colors/settings (now persistent)
     var buttonColor: Int = 0xFF222222.toInt()
     var buttonTextColor: Int = 0xFFFFFFFF.toInt()
     var buttonTextShadowEnabled: Boolean = true
@@ -78,12 +77,11 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         }
     )
 
-    // --- Persistence/Config for custom button colors ---
+
     fun applyConfig(config: HudElementConfig) {
         if (config.buttonColor != null) buttonColor = config.buttonColor
         if (config.buttonTextColor != null) buttonTextColor = config.buttonTextColor
         if (config.buttonTextShadowEnabled != null) buttonTextShadowEnabled = config.buttonTextShadowEnabled
-        // Also apply base HudElement fields:
         this.setX(config.x)
         this.setY(config.y)
         this.scale = config.scale
@@ -150,11 +148,8 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         x: Int, y: Int, width: Int, height: Int,
         text: Text, hovered: Boolean
     ) {
-        // Button background
         context.fill(x, y, x + width, y + height, buttonColor)
-        // Optional border/highlight
         if (hovered) context.drawBorder(x, y, width, height, 0xFF00D0FF.toInt())
-        // Text
         val tr = client.textRenderer
         val textWidth = tr.getWidth(text)
         val textX = x + (width - textWidth) / 2
@@ -170,7 +165,6 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     override fun getName(): String = "PacketHandler"
 
-    // Mouse/keyboard event handling
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!shouldRender() || !isMouseOver(mouseX, mouseY)) return false
         if (button == 1 && HudManager.isEditMode()) {

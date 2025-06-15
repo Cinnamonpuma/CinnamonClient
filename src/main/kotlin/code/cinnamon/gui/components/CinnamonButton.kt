@@ -30,7 +30,6 @@ class CinnamonButton(
     private var animationProgress = 0f
     private val client = MinecraftClient.getInstance()
 
-    // Public accessors for position and size
     fun getX(): Int = _x
     fun setX(x: Int) { _x = x }
     fun getY(): Int = _y
@@ -47,23 +46,21 @@ class CinnamonButton(
         return mouseX >= _x && mouseX < _x + _width && mouseY >= _y && mouseY < _y + _height
     }
 
-    // Drawable method
+
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         updateAnimation(delta)
 
         val backgroundColor = getBackgroundColor()
         val textColor = getTextColor()
 
-        // Draw button background with rounded corners effect
+
         drawRoundedRect(context, _x, _y, _width, _height, backgroundColor)
 
-        // Draw border
+
         if (isHovered || isPressed) {
             drawBorder(context, _x, _y, _width, _height, CinnamonTheme.accentColor)
         }
 
-        // Draw text using the Text object with style!
-        // DO NOT use text.string here, or you will lose font and style!
         val textWidth = client.textRenderer.getWidth(text)
         val textX = _x + (_width - textWidth) / 2
         val textY = _y + (_height - client.textRenderer.fontHeight) / 2
@@ -77,7 +74,7 @@ class CinnamonButton(
             true
         )
 
-        // Draw hover effect
+
         if (isHovered && isEnabled) {
             val alpha = (animationProgress * 0.1f).toInt()
             val overlayColor = (alpha shl 24) or 0xffffff
@@ -112,11 +109,9 @@ class CinnamonButton(
     }
 
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
-        // Simple rounded rectangle effect by drawing main rect and corner pixels
         context.fill(x + 1, y, x + width - 1, y + height, color)
         context.fill(x, y + 1, x + width, y + height - 1, color)
 
-        // Corner pixels for rounded effect
         context.fill(x + 1, y + 1, x + 2, y + 2, color)
         context.fill(x + width - 2, y + 1, x + width - 1, y + 2, color)
         context.fill(x + 1, y + height - 2, x + 2, y + height - 1, color)
@@ -124,21 +119,20 @@ class CinnamonButton(
     }
 
     private fun drawBorder(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
-        // Top and bottom borders
+
         context.fill(x + 1, y, x + width - 1, y + 1, color)
         context.fill(x + 1, y + height - 1, x + width - 1, y + height, color)
 
-        // Left and right borders
+
         context.fill(x, y + 1, x + 1, y + height - 1, color)
         context.fill(x + width - 1, y + 1, x + width, y + height - 1, color)
     }
 
-    // Click handler
+
     fun handleOnClick(mouseX: Double, mouseY: Double) {
         if (isEnabled) {
             isPressed = true
             onClick.invoke(mouseX, mouseY)
-            // Reset pressed state after a short delay
             Thread {
                 Thread.sleep(100)
                 isPressed = false
@@ -156,7 +150,6 @@ class CinnamonButton(
 
     fun isEnabled(): Boolean = isEnabled
 
-    // Element methods
     override fun mouseMoved(mouseX: Double, mouseY: Double) {
         setHovered(isMouseOver(mouseX, mouseY))
     }
@@ -193,19 +186,18 @@ class CinnamonButton(
         return false
     }
 
-    // Selectable methods
+
     override fun getType(): Selectable.SelectionType {
         return if (isHovered && isEnabled) Selectable.SelectionType.HOVERED else Selectable.SelectionType.NONE
     }
 
-    // Simple narration implementation
+
     override fun appendNarrations(builder: net.minecraft.client.gui.screen.narration.NarrationMessageBuilder) {
         try {
-            // Use reflection to safely call methods in case of version differences
+
             val titleMethod = builder.javaClass.getMethod("put", net.minecraft.client.gui.screen.narration.NarrationPart::class.java, net.minecraft.text.Text::class.java)
             titleMethod.invoke(builder, net.minecraft.client.gui.screen.narration.NarrationPart.TITLE, text)
         } catch (e: Exception) {
-            // Fallback - do nothing if narration fails
         }
     }
 }

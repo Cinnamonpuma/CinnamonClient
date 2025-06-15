@@ -17,7 +17,6 @@ object ModuleManager {
 
     fun initialize() {
         registerModule(AutoclickerModule())
-        // Add more Module() registrations here ONLY IF you have those classes
     }
 }
 

@@ -12,6 +12,6 @@ public class PanoramaRendererMixin {
 
     @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;IIFF)V", at = @At("HEAD"), cancellable = true)
     private void cinnamon$cancelPanoramaRender(DrawContext context, int width, int height, float alpha, float tickDelta, CallbackInfo ci) {
-        ci.cancel(); // Prevent the panorama from drawing
+        ci.cancel(); 
     }
 }

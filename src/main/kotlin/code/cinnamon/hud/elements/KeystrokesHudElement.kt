@@ -10,8 +10,8 @@ import net.minecraft.text.Text
 import kotlin.math.*
 
 class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
-    var keypressedTextColor: Int = 0x000000 // Black
-    var keypressedBackgroundColor: Int = 0xFFFFFF // White
+    var keypressedTextColor: Int = 0xFFFFFF
+    var keypressedBackgroundColor: Int = 0xFFFFFF 
 
     private val mc = MinecraftClient.getInstance()
     private val keySize = 32
@@ -97,10 +97,10 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.fill(x, y + r, x + r, y + height - r, color)
         context.fill(x + width - r, y + r, x + width, y + height - r, color)
 
-        drawRoundedCorner(context, x, y, r, color, 0) // Top-left
-        drawRoundedCorner(context, x + width - r, y, r, color, 1) // Top-right
-        drawRoundedCorner(context, x, y + height - r, r, color, 2) // Bottom-left
-        drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3) // Bottom-right
+        drawRoundedCorner(context, x, y, r, color, 0) 
+        drawRoundedCorner(context, x + width - r, y, r, color, 1) 
+        drawRoundedCorner(context, x, y + height - r, r, color, 2)
+        drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3)
     }
 
     private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, corner: Int) {
@@ -129,7 +129,6 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     override fun getHeight(): Int = keySize * 2 + spacing
     override fun getName(): String = "Keystrokes"
 
-    // --- Persistence methods for pressed colors ---
     fun toConfig(): HudElementConfig = HudElementConfig(
         name = getName(),
         x = getX(),
