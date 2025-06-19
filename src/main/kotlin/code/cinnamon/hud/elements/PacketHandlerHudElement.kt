@@ -117,44 +117,68 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!shouldRender() || !isEnabled) return
 
-        val hudX = getX().toInt()
-        val hudY = getY().toInt()
-        val mouseX = client.mouse.x.toInt()
-        val mouseY = client.mouse.y.toInt()
+        val hudX = getX().toInt() // Base X position, unscaled
+        val hudY = getY().toInt() // Base Y position, unscaled
+        // Get mouse position in GUI coordinates
+        val scaleFactor = client.window.scaleFactor
+        val guiMouseX = (client.mouse.x / scaleFactor).toInt()
+        val guiMouseY = (client.mouse.y / scaleFactor).toInt()
 
-        var currentY = hudY + buttonMargin
+        val scaledButtonHeight = (buttonHeight * scale).toInt()
+        val scaledButtonMargin = (buttonMargin * scale).toInt()
+        // Calculate total width of the content area, scaled.
+        // getWidth() is unscaled, so scale it. Subtract scaled margins.
+        val scaledContentWidth = (getWidth() * scale).toInt() - 2 * scaledButtonMargin
+
+        var currentY = hudY + scaledButtonMargin // Start Y position for buttons, using scaled margin
         for ((index, btn) in buttons.withIndex()) {
             val btnText = createStyledText(btn.text())
-            val bx = hudX + buttonMargin
-            val by = currentY
-            val bw = getWidth() - 2 * buttonMargin
-            val bh = buttonHeight
+            val bx = hudX + scaledButtonMargin // Button X, using scaled margin
+            val by = currentY                 // Current Y for this button
+            val bw = scaledContentWidth       // Button width is the scaled content width
+            val bh = scaledButtonHeight       // Button height is scaled
 
-            val hovered = mouseX in bx until (bx + bw) && mouseY in by until (by + bh)
-            drawCustomButton(context, bx, by, bw, bh, btnText, hovered)
+            // Hover detection needs to use scaled coordinates and dimensions, comparing with GUI mouse coordinates
+            val isMouseOverButton = guiMouseX in bx until (bx + bw) && guiMouseY in by until (by + bh)
+            drawCustomButton(context, bx, by, bw, bh, btnText, isMouseOverButton, scale)
 
-            currentY += buttonHeight + buttonMargin
+            currentY += scaledButtonHeight + scaledButtonMargin // Increment Y by scaled height and margin
         }
 
         if (HudManager.isEditMode()) {
             context.drawBorder(
-                hudX, hudY, getWidth(), getHeight(), 0xFFFF0000.toInt()
+                hudX, hudY, (getWidth() * scale).toInt(), (getHeight() * scale).toInt(), 0xFFFF0000.toInt()
             )
         }
     }
 
     private fun drawCustomButton(
         context: DrawContext,
-        x: Int, y: Int, width: Int, height: Int,
-        text: Text, hovered: Boolean
+        x: Int, y: Int, width: Int, height: Int, // These are scaled screen coordinates and dimensions
+        text: Text, hovered: Boolean, currentScale: Float
     ) {
         context.fill(x, y, x + width, y + height, buttonColor)
         if (hovered) context.drawBorder(x, y, width, height, 0xFF00D0FF.toInt())
+
+        val matrices = context.matrices
+        matrices.push()
+        // Translate to the button's top-left corner (which is already scaled screen coords)
+        matrices.translate(x.toFloat(), y.toFloat(), 0f)
+        // Scale the context for drawing text
+        matrices.scale(currentScale, currentScale, 1.0f)
+
         val tr = client.textRenderer
-        val textWidth = tr.getWidth(text)
-        val textX = x + (width - textWidth) / 2
-        val textY = y + (height - tr.fontHeight) / 2
-        context.drawText(tr, text, textX, textY, buttonTextColor, buttonTextShadowEnabled)
+        // Calculate text position in *unscaled* coordinates, as the matrix will handle scaling
+        val unscaledButtonWidth = (width / currentScale)
+        val unscaledButtonHeight = (height / currentScale)
+        val unscaledTextWidth = tr.getWidth(text)
+        val unscaledFontHeight = tr.fontHeight
+
+        val textXInButtonUnscaled = ((unscaledButtonWidth - unscaledTextWidth) / 2).toInt()
+        val textYInButtonUnscaled = ((unscaledButtonHeight - unscaledFontHeight) / 2).toInt()
+
+        context.drawText(tr, text, textXInButtonUnscaled, textYInButtonUnscaled, buttonTextColor, buttonTextShadowEnabled)
+        matrices.pop()
     }
 
     override fun getWidth(): Int =
@@ -166,37 +190,67 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun getName(): String = "PacketHandler"
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (!shouldRender() || !isMouseOver(mouseX, mouseY)) return false
-        if (button == 1 && HudManager.isEditMode()) {
-            startDragging(mouseX, mouseY)
-            return true
+        if (!shouldRender()) return false // Initial check if it should render at all
+
+        if (HudManager.isEditMode()) {
+            // In edit mode, clicks are primarily for HudManager to select/drag.
+            // Return false to allow HudManager to process the event.
+            // The base HudElement's isMouseOver will be used by HudManager.
+            return false
         }
-        val hudX = getX().toInt() + buttonMargin
-        val hudY = getY().toInt() + buttonMargin
-        val bw = getWidth() - 2 * buttonMargin
-        for ((i, btn) in buttons.withIndex()) {
-            val by = hudY + i * (buttonHeight + buttonMargin)
-            if (mouseX in hudX.toDouble()..(hudX + bw).toDouble() &&
-                mouseY in by.toDouble()..(by + buttonHeight).toDouble()
-            ) {
+
+        // Non-edit mode: handle button clicks if mouse is over the element
+        // isMouseOver in HudElement uses scaled width/height, so this check is fine.
+        if (!isMouseOver(mouseX, mouseY)) return false
+
+        val scaledButtonHeight = (buttonHeight * scale).toInt()
+        val scaledButtonMargin = (buttonMargin * scale).toInt()
+        
+        // Base positions for click checking, relative to element's scaled top-left
+        val elementX = getX().toInt() // Unscaled X of the element
+        val elementY = getY().toInt() // Unscaled Y of the element
+
+        // Clickable area for buttons starts after the first scaled margin
+        val buttonsAreaX = elementX + scaledButtonMargin 
+        // Width of the area where buttons are, effectively (unscaled_width * scale) - 2 * scaled_margin
+        val buttonsAreaWidth = (getWidth() * scale).toInt() - 2 * scaledButtonMargin
+        
+        var currentButtonY = elementY + scaledButtonMargin // Start Y for the first button
+        
+        for (btn in buttons) {
+            val buttonTop = currentButtonY
+            val buttonBottom = currentButtonY + scaledButtonHeight
+            val buttonLeft = buttonsAreaX
+            val buttonRight = buttonsAreaX + buttonsAreaWidth
+
+            if (mouseX >= buttonLeft && mouseX < buttonRight && 
+                mouseY >= buttonTop && mouseY < buttonBottom) {
                 btn.action()
                 return true
             }
+            currentButtonY += scaledButtonHeight + scaledButtonMargin
         }
         return false
     }
     override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
         if (!shouldRender()) return false
-        if (HudManager.isEditMode()) {
-            updateDragging(mouseX, mouseY)
-            return true
+        // In edit mode, HudManager handles dragging.
+        return if (HudManager.isEditMode()) {
+            false // Do not consume, let HudManager handle.
+        } else {
+            // Potentially handle dragging for some custom non-edit mode interaction if ever needed.
+            false
         }
-        return false
     }
     override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!shouldRender()) return false
-        if (HudManager.isEditMode()) stopDragging()
-        return false
+        // In edit mode, HudManager handles releasing.
+        return if (HudManager.isEditMode()) {
+            false // Do not consume, let HudManager handle.
+        } else {
+            // Potentially handle releasing for some custom non-edit mode interaction if ever needed.
+            false
+        }
     }
     override fun mouseMoved(mouseX: Double, mouseY: Double) {}
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean = false
@@ -206,11 +260,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun setFocused(focused: Boolean) {}
     override fun isFocused(): Boolean = false
 
-    override fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
-        val hudX = getX().toDouble()
-        val hudY = getY().toDouble()
-        val w = getWidth().toDouble()
-        val h = getHeight().toDouble()
-        return mouseX >= hudX && mouseX <= hudX + w && mouseY >= hudY && mouseY <= hudY + h
+    public override fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
+        return super<HudElement>.isMouseOver(mouseX, mouseY)
     }
 }

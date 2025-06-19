@@ -45,7 +45,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         if (isHudScreen()) {
             shouldHandle = true;
         }
-        if (shouldHandle && getHudElement().isEnabled() && getHudElement().mouseClicked(mouseX, mouseY, button)) {
+        if (!HudManager.INSTANCE.isEditMode() && shouldHandle && getHudElement().isEnabled() && getHudElement().mouseClicked(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
     }
@@ -57,7 +57,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         if (isHudScreen()) {
             shouldHandle = true;
         }
-        if (shouldHandle && getHudElement().isEnabled() && getHudElement().mouseReleased(mouseX, mouseY, button)) {
+        if (!HudManager.INSTANCE.isEditMode() && shouldHandle && getHudElement().isEnabled() && getHudElement().mouseReleased(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
     }
@@ -69,7 +69,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         if (isHudScreen()) {
             shouldHandle = true;
         }
-        if (shouldHandle && getHudElement().isEnabled() && getHudElement().mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+        if (!HudManager.INSTANCE.isEditMode() && shouldHandle && getHudElement().isEnabled() && getHudElement().mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
             cir.setReturnValue(true);
         }
     }
@@ -81,7 +81,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         if (isHudScreen()) {
             shouldHandle = true;
         }
-        if (shouldHandle && getHudElement().isEnabled() && getHudElement().mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
+        if (!HudManager.INSTANCE.isEditMode() && shouldHandle && getHudElement().isEnabled() && getHudElement().mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
             cir.setReturnValue(true);
         }
     }
