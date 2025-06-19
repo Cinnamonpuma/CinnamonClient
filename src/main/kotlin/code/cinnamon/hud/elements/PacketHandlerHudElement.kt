@@ -2,6 +2,7 @@ package code.cinnamon.hud.elements
 
 import code.cinnamon.hud.HudElement
 import code.cinnamon.hud.HudElementConfig
+import code.cinnamon.gui.utils.GraphicsUtils // Import GraphicsUtils
 import code.cinnamon.util.PacketHandlerAPI
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.hud.HudManager
@@ -15,6 +16,10 @@ import net.minecraft.util.Identifier
 
 class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(initialX, initialY), Element {
 
+    companion object {
+        private const val BUTTON_CORNER_RADIUS_BASE = 4f
+    }
+
     private val client: MinecraftClient = MinecraftClient.getInstance()
     private val buttonHeight = 20
     private val buttonMargin = 2
@@ -23,6 +28,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     var buttonColor: Int = 0xFF222222.toInt()
     var buttonTextColor: Int = 0xFFFFFFFF.toInt()
     var buttonTextShadowEnabled: Boolean = true
+    var buttonHoverColor: Int = 0xFF00D0FF.toInt() // Default to the existing blue
 
     private fun createStyledText(text: String): Text =
         Text.literal(text).setStyle(Style.EMPTY.withFont(CINNA_FONT))
@@ -82,6 +88,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         if (config.buttonColor != null) buttonColor = config.buttonColor
         if (config.buttonTextColor != null) buttonTextColor = config.buttonTextColor
         if (config.buttonTextShadowEnabled != null) buttonTextShadowEnabled = config.buttonTextShadowEnabled
+        config.buttonHoverColor?.let { this.buttonHoverColor = it }
         this.setX(config.x)
         this.setY(config.y)
         this.scale = config.scale
@@ -103,7 +110,8 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
             textShadowEnabled = textShadowEnabled,
             buttonColor = buttonColor,
             buttonTextColor = buttonTextColor,
-            buttonTextShadowEnabled = buttonTextShadowEnabled
+            buttonTextShadowEnabled = buttonTextShadowEnabled,
+            buttonHoverColor = this.buttonHoverColor
         )
     }
 
@@ -157,8 +165,24 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         x: Int, y: Int, width: Int, height: Int, // These are scaled screen coordinates and dimensions
         text: Text, hovered: Boolean, currentScale: Float
     ) {
-        context.fill(x, y, x + width, y + height, buttonColor)
-        if (hovered) context.drawBorder(x, y, width, height, 0xFF00D0FF.toInt())
+        val scaledRadius = (BUTTON_CORNER_RADIUS_BASE * currentScale).coerceAtLeast(1f)
+
+        GraphicsUtils.drawFilledRoundedRect(
+            context,
+            x.toFloat(), y.toFloat(),
+            width.toFloat(), height.toFloat(),
+            scaledRadius,
+            buttonColor // Use existing property for background
+        )
+        if (hovered) {
+            GraphicsUtils.drawRoundedRectBorder(
+                context,
+                x.toFloat(), y.toFloat(),
+                width.toFloat(), height.toFloat(),
+                scaledRadius,
+                this.buttonHoverColor // Use the new property for hover border
+            )
+        }
 
         val matrices = context.matrices
         matrices.push()

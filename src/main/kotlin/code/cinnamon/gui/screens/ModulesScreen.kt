@@ -269,6 +269,14 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
             drawCheckbox(context, x, currentY, "Button Text Shadow", element.buttonTextShadowEnabled)
             currentY += 14
+
+            // Add this for Button Hover Color
+            val buttonHoverColorText = "Button Hover: ${element.buttonHoverColor.toRGBAHexString()}" // Or toRGBHexString if alpha is not intended for display
+            context.drawText(textRenderer, Text.literal(buttonHoverColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, false)
+            val setButtonHoverColorButtonText = "[Set]"
+            val setButtonHoverColorButtonWidth = textRenderer.getWidth(setButtonHoverColorButtonText)
+            context.drawText(textRenderer, Text.literal(setButtonHoverColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setButtonHoverColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
+            currentY += 14 // Increment Y for the next setting
         }
     }
 
@@ -435,6 +443,27 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 return true
             }
             currentY += 14
+
+            // Add this for Button Hover Color [Set] button
+            val setButtonHoverColorButtonText = "[Set]"
+            val setButtonHoverColorButtonWidth = textRenderer.getWidth(setButtonHoverColorButtonText)
+            val setButtonHoverColorButtonX = settingsX + settingsWidth - setButtonHoverColorButtonWidth
+            val setButtonHoverColorButtonY = currentY // currentY should now correspond to where "Button Hover Color" was rendered
+            if (mouseX >= setButtonHoverColorButtonX && mouseX < setButtonHoverColorButtonX + setButtonHoverColorButtonWidth &&
+                mouseY >= setButtonHoverColorButtonY && mouseY < setButtonHoverColorButtonY + textElementHeight // textElementHeight is already defined in this scope
+            ) {
+                CinnamonGuiManager.openScreen(ColorPickerScreen(
+                    initialColor = element.buttonHoverColor,
+                    onPick = { pickedColor ->
+                        element.buttonHoverColor = pickedColor
+                        HudManager.markChangesForSave()
+                        CinnamonGuiManager.openScreen(this)
+                    },
+                    onCancel = { CinnamonGuiManager.openScreen(this) }
+                ))
+                return true
+            }
+            currentY += 14 // Increment Y, matching the render method
         }
         return false
     }
