@@ -16,7 +16,7 @@ object GraphicsUtils {
         for (i in 0 until radius) {
             for (j in 0 until radius) {
                 val dist = sqrt((i * i + j * j).toDouble())
-                if (dist <= radius - 0.5f) { // Use 0.5f
+                if (dist <= radius - 0.5f) { 
                     val pixelX: Int
                     val pixelY: Int
                     when (type) {
@@ -48,7 +48,7 @@ object GraphicsUtils {
         for (i in 0 until radius) {
             for (j in 0 until radius) {
                 val dist = sqrt((i * i + j * j).toDouble())
-                if (dist >= radius - 1.5f && dist <= radius - 0.5f) { // Use 1.5f and 0.5f
+                if (dist >= radius - 1.5f && dist <= radius - 0.5f) { 
                     val pixelX: Int
                     val pixelY: Int
                     when (type) {
@@ -80,7 +80,7 @@ object GraphicsUtils {
         val y = yF.toInt()
         val width = widthF.toInt()
         val height = heightF.toInt()
-        var r = radiusF.toInt() // Use 'r' consistently for radius in this function
+        var r = radiusF.toInt() 
 
         if (width <= 0 || height <= 0) return
         r = r.coerceAtMost(width / 2).coerceAtMost(height / 2).coerceAtLeast(0)
@@ -90,22 +90,22 @@ object GraphicsUtils {
             return
         }
 
-        // Central rectangle
+        
         context.fill(x + r, y + r, x + width - r, y + height - r, color)
         
-        // Top rectangle (between top-left and top-right corners)
+        
         context.fill(x + r, y, x + width - r, y + r, color)
         
-        // Bottom rectangle (between bottom-left and bottom-right corners)
+        
         context.fill(x + r, y + height - r, x + width - r, y + height, color)
         
-        // Left rectangle (between top-left and bottom-left corners)
+        
         context.fill(x, y + r, x + r, y + height - r, color)
         
-        // Right rectangle (between top-right and bottom-right corners)
+        
         context.fill(x + width - r, y + r, x + width, y + height - r, color)
 
-        // Corners
+        
         drawFilledSingleCorner(context, x, y, r, color, Corner.TOP_LEFT)
         drawFilledSingleCorner(context, x + width - r, y, r, color, Corner.TOP_RIGHT)
         drawFilledSingleCorner(context, x, y + height - r, r, color, Corner.BOTTOM_LEFT)

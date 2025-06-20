@@ -2,7 +2,7 @@ package code.cinnamon.hud.elements
 
 import code.cinnamon.hud.HudElement
 import code.cinnamon.hud.HudElementConfig
-import code.cinnamon.gui.utils.GraphicsUtils // Import GraphicsUtils
+import code.cinnamon.gui.utils.GraphicsUtils 
 import code.cinnamon.util.PacketHandlerAPI
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.hud.HudManager
@@ -28,7 +28,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     var buttonColor: Int = 0xFF222222.toInt()
     var buttonTextColor: Int = 0xFFFFFFFF.toInt()
     var buttonTextShadowEnabled: Boolean = true
-    var buttonHoverColor: Int = 0xFF00D0FF.toInt() // Default to the existing blue
+    var buttonHoverColor: Int = 0xFF00D0FF.toInt() 
 
     private fun createStyledText(text: String): Text =
         Text.literal(text).setStyle(Style.EMPTY.withFont(CINNA_FONT))
@@ -125,32 +125,29 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!shouldRender() || !isEnabled) return
 
-        val hudX = getX().toInt() // Base X position, unscaled
-        val hudY = getY().toInt() // Base Y position, unscaled
-        // Get mouse position in GUI coordinates
+        val hudX = getX().toInt() 
+        val hudY = getY().toInt() 
         val scaleFactor = client.window.scaleFactor
         val guiMouseX = (client.mouse.x / scaleFactor).toInt()
         val guiMouseY = (client.mouse.y / scaleFactor).toInt()
 
         val scaledButtonHeight = (buttonHeight * scale).toInt()
         val scaledButtonMargin = (buttonMargin * scale).toInt()
-        // Calculate total width of the content area, scaled.
-        // getWidth() is unscaled, so scale it. Subtract scaled margins.
         val scaledContentWidth = (getWidth() * scale).toInt() - 2 * scaledButtonMargin
 
-        var currentY = hudY + scaledButtonMargin // Start Y position for buttons, using scaled margin
+        var currentY = hudY + scaledButtonMargin 
         for ((index, btn) in buttons.withIndex()) {
             val btnText = createStyledText(btn.text())
-            val bx = hudX + scaledButtonMargin // Button X, using scaled margin
-            val by = currentY                 // Current Y for this button
-            val bw = scaledContentWidth       // Button width is the scaled content width
-            val bh = scaledButtonHeight       // Button height is scaled
+            val bx = hudX + scaledButtonMargin 
+            val by = currentY                 
+            val bw = scaledContentWidth       
+            val bh = scaledButtonHeight       
 
-            // Hover detection needs to use scaled coordinates and dimensions, comparing with GUI mouse coordinates
+            
             val isMouseOverButton = guiMouseX in bx until (bx + bw) && guiMouseY in by until (by + bh)
             drawCustomButton(context, bx, by, bw, bh, btnText, isMouseOverButton, scale)
 
-            currentY += scaledButtonHeight + scaledButtonMargin // Increment Y by scaled height and margin
+            currentY += scaledButtonHeight + scaledButtonMargin
         }
 
         if (HudManager.isEditMode()) {
@@ -162,7 +159,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private fun drawCustomButton(
         context: DrawContext,
-        x: Int, y: Int, width: Int, height: Int, // These are scaled screen coordinates and dimensions
+        x: Int, y: Int, width: Int, height: Int,
         text: Text, hovered: Boolean, currentScale: Float
     ) {
         val scaledRadius = (BUTTON_CORNER_RADIUS_BASE * currentScale).coerceAtLeast(1f)
@@ -172,7 +169,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
             x.toFloat(), y.toFloat(),
             width.toFloat(), height.toFloat(),
             scaledRadius,
-            buttonColor // Use existing property for background
+            buttonColor 
         )
         if (hovered) {
             GraphicsUtils.drawRoundedRectBorder(
@@ -180,19 +177,18 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
                 x.toFloat(), y.toFloat(),
                 width.toFloat(), height.toFloat(),
                 scaledRadius,
-                this.buttonHoverColor // Use the new property for hover border
+                this.buttonHoverColor 
             )
         }
 
         val matrices = context.matrices
         matrices.push()
-        // Translate to the button's top-left corner (which is already scaled screen coords)
+        
         matrices.translate(x.toFloat(), y.toFloat(), 0f)
-        // Scale the context for drawing text
+        
         matrices.scale(currentScale, currentScale, 1.0f)
 
         val tr = client.textRenderer
-        // Calculate text position in *unscaled* coordinates, as the matrix will handle scaling
         val unscaledButtonWidth = (width / currentScale)
         val unscaledButtonHeight = (height / currentScale)
         val unscaledTextWidth = tr.getWidth(text)
@@ -214,32 +210,27 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun getName(): String = "PacketHandler"
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (!shouldRender()) return false // Initial check if it should render at all
+        if (!shouldRender()) return false 
 
         if (HudManager.isEditMode()) {
-            // In edit mode, clicks are primarily for HudManager to select/drag.
-            // Return false to allow HudManager to process the event.
-            // The base HudElement's isMouseOver will be used by HudManager.
             return false
         }
 
-        // Non-edit mode: handle button clicks if mouse is over the element
-        // isMouseOver in HudElement uses scaled width/height, so this check is fine.
+
         if (!isMouseOver(mouseX, mouseY)) return false
 
         val scaledButtonHeight = (buttonHeight * scale).toInt()
         val scaledButtonMargin = (buttonMargin * scale).toInt()
         
-        // Base positions for click checking, relative to element's scaled top-left
-        val elementX = getX().toInt() // Unscaled X of the element
-        val elementY = getY().toInt() // Unscaled Y of the element
+        
+        val elementX = getX().toInt() 
+        val elementY = getY().toInt() 
 
-        // Clickable area for buttons starts after the first scaled margin
+        
         val buttonsAreaX = elementX + scaledButtonMargin 
-        // Width of the area where buttons are, effectively (unscaled_width * scale) - 2 * scaled_margin
         val buttonsAreaWidth = (getWidth() * scale).toInt() - 2 * scaledButtonMargin
         
-        var currentButtonY = elementY + scaledButtonMargin // Start Y for the first button
+        var currentButtonY = elementY + scaledButtonMargin 
         
         for (btn in buttons) {
             val buttonTop = currentButtonY
@@ -258,21 +249,17 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     }
     override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
         if (!shouldRender()) return false
-        // In edit mode, HudManager handles dragging.
         return if (HudManager.isEditMode()) {
-            false // Do not consume, let HudManager handle.
+            false 
         } else {
-            // Potentially handle dragging for some custom non-edit mode interaction if ever needed.
             false
         }
     }
     override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!shouldRender()) return false
-        // In edit mode, HudManager handles releasing.
         return if (HudManager.isEditMode()) {
-            false // Do not consume, let HudManager handle.
+            false 
         } else {
-            // Potentially handle releasing for some custom non-edit mode interaction if ever needed.
             false
         }
     }

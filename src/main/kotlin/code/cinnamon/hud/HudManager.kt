@@ -1,5 +1,6 @@
 package code.cinnamon.hud
 
+import code.cinnamon.hud.elements.CoordinatesHudElement // Add this import
 import code.cinnamon.hud.elements.FpsHudElement
 import code.cinnamon.hud.elements.PingHudElement
 import code.cinnamon.hud.elements.KeystrokesHudElement
@@ -50,8 +51,9 @@ object HudManager {
     fun init() {
         registerHudElement(FpsHudElement(10f, 10f))
         registerHudElement(PingHudElement(10f, 30f))
-        registerHudElement(KeystrokesHudElement(10f, 60f))
-        registerHudElement(packetHandlerHudElement)
+        registerHudElement(CoordinatesHudElement(20f, 60f)) // Add this line
+        registerHudElement(KeystrokesHudElement(10f, 80f)) // Adjusted Y for Keystrokes
+        registerHudElement(packetHandlerHudElement) // packetHandlerHudElement Y might also need adjustment depending on its default
         loadHudConfig()
     }
 

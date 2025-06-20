@@ -21,6 +21,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 import code.cinnamon.gui.screens.ColorPickerScreen
+import code.cinnamon.modules.all.ChatPrefixModule
+import code.cinnamon.util.MinecraftColorCodes
 
 class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
     private var selectedCategory = "All"
@@ -270,13 +272,12 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             drawCheckbox(context, x, currentY, "Button Text Shadow", element.buttonTextShadowEnabled)
             currentY += 14
 
-            // Add this for Button Hover Color
-            val buttonHoverColorText = "Button Hover: ${element.buttonHoverColor.toRGBAHexString()}" // Or toRGBHexString if alpha is not intended for display
+            val buttonHoverColorText = "Button Hover: ${element.buttonHoverColor.toRGBAHexString()}" 
             context.drawText(textRenderer, Text.literal(buttonHoverColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, false)
             val setButtonHoverColorButtonText = "[Set]"
             val setButtonHoverColorButtonWidth = textRenderer.getWidth(setButtonHoverColorButtonText)
             context.drawText(textRenderer, Text.literal(setButtonHoverColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setButtonHoverColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
-            currentY += 14 // Increment Y for the next setting
+            currentY += 14
         }
     }
 
@@ -444,13 +445,12 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
             currentY += 14
 
-            // Add this for Button Hover Color [Set] button
             val setButtonHoverColorButtonText = "[Set]"
             val setButtonHoverColorButtonWidth = textRenderer.getWidth(setButtonHoverColorButtonText)
             val setButtonHoverColorButtonX = settingsX + settingsWidth - setButtonHoverColorButtonWidth
-            val setButtonHoverColorButtonY = currentY // currentY should now correspond to where "Button Hover Color" was rendered
+            val setButtonHoverColorButtonY = currentY 
             if (mouseX >= setButtonHoverColorButtonX && mouseX < setButtonHoverColorButtonX + setButtonHoverColorButtonWidth &&
-                mouseY >= setButtonHoverColorButtonY && mouseY < setButtonHoverColorButtonY + textElementHeight // textElementHeight is already defined in this scope
+                mouseY >= setButtonHoverColorButtonY && mouseY < setButtonHoverColorButtonY + textElementHeight
             ) {
                 CinnamonGuiManager.openScreen(ColorPickerScreen(
                     initialColor = element.buttonHoverColor,
@@ -463,7 +463,59 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 ))
                 return true
             }
-            currentY += 14 // Increment Y, matching the render method
+            currentY += 14 
+        }
+        return false
+    }
+
+    private fun handleChatPrefixSettingsClick(mouseX: Double, mouseY: Double, settingsX: Int, settingsY: Int, settingsWidth: Int, module: ChatPrefixModule): Boolean {
+        var currentY = settingsY 
+        currentY += 15 
+
+        val selectableColors = MinecraftColorCodes.entries.filter { it.isColor || it == MinecraftColorCodes.RESET }
+        
+        val itemBoxHeight = 20
+        val itemBoxWidth = 110
+        val horizontalSpacing = 4
+        val verticalSpacing = 4
+
+        val gridStartX = settingsX
+        var gridCurrentY = currentY 
+        
+
+        val effectiveSettingsContentHeight = settingsAreaHeight - 10
+        val availableGridHeight = (settingsY + effectiveSettingsContentHeight) - gridCurrentY - 5 
+
+        val itemsPerRow = max(1, (settingsWidth + horizontalSpacing) / (itemBoxWidth + horizontalSpacing))
+
+        var currentX = gridStartX
+        var itemsInCurrentRow = 0
+
+        for (colorEnumEntry in selectableColors) {
+            if (itemsInCurrentRow >= itemsPerRow) {
+                currentX = gridStartX
+                gridCurrentY += itemBoxHeight + verticalSpacing
+                itemsInCurrentRow = 0
+            }
+
+
+            if (gridCurrentY + itemBoxHeight > (settingsY + effectiveSettingsContentHeight) - 5) { 
+                break
+            }
+
+            val itemHitboxX = currentX
+            val itemHitboxY = gridCurrentY
+            val itemHitboxEndX = itemHitboxX + itemBoxWidth
+            val itemHitboxEndY = itemHitboxY + itemBoxHeight
+
+            if (mouseX >= itemHitboxX && mouseX < itemHitboxEndX &&
+                mouseY >= itemHitboxY && mouseY < itemHitboxEndY) {
+                module.setSelectedColorCode(colorEnumEntry.code)
+                return true 
+            }
+            
+            currentX += itemBoxWidth + horizontalSpacing
+            itemsInCurrentRow++
         }
         return false
     }
@@ -607,6 +659,86 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 drawCheckbox(context, x, settingY - 1, "Left Click", module.leftClickEnabled)
                 settingY += settingSpacing
                 drawCheckbox(context, x, settingY - 1, "Right Click", module.rightClickEnabled)
+            }
+            is ChatPrefixModule -> {
+                context.drawText(textRenderer, Text.literal("Settings").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.titleColor, true)
+                settingY += 15
+
+                val allColors = MinecraftColorCodes.entries 
+                val itemBoxHeight = 20 
+                val itemBoxWidth = 110 
+                val horizontalSpacing = 4
+                val verticalSpacing = 4
+                
+                val gridStartX = x
+                var gridCurrentY = settingY 
+                val availableGridWidth = width 
+                val availableGridHeight = (y + height) - gridCurrentY - 5 
+
+                val itemsPerRow = max(1, (availableGridWidth + horizontalSpacing) / (itemBoxWidth + horizontalSpacing))
+
+                var currentX = gridStartX
+                var itemsInCurrentRow = 0
+                var rowsRenderedCount = 0 
+                var firstItemInRowY = gridCurrentY
+
+                if (allColors.isNotEmpty()) rowsRenderedCount = 1
+
+                for (colorEnumEntry in allColors) {
+                    if (itemsInCurrentRow >= itemsPerRow) {
+                        currentX = gridStartX
+                        gridCurrentY += itemBoxHeight + verticalSpacing
+                        itemsInCurrentRow = 0
+                        rowsRenderedCount++
+                        firstItemInRowY = gridCurrentY
+                    }
+
+                    if (gridCurrentY + itemBoxHeight > (y + height) - 5) { 
+                        break 
+                    }
+
+                    val isSelected = (module.selectedColorCode == colorEnumEntry.code)
+                    
+                    val checkboxX = currentX + 2
+                    val checkboxY = gridCurrentY + (itemBoxHeight - 10) / 2 
+                    val checkboxSize = 10
+                    val checkboxBg = if (isSelected) CinnamonTheme.accentColor else CinnamonTheme.buttonBackground
+                    context.fill(checkboxX, checkboxY, checkboxX + checkboxSize, checkboxY + checkboxSize, checkboxBg)
+                    context.drawBorder(checkboxX, checkboxY, checkboxSize, checkboxSize, CinnamonTheme.borderColor)
+                    if (isSelected) {
+                        context.drawText(
+                            textRenderer,
+                            Text.literal("✓").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+                            checkboxX + 1, 
+                            checkboxY + 1,
+                            CinnamonTheme.titleColor,
+                            false
+                        )
+                    }
+
+                    val textX = checkboxX + checkboxSize + 6
+                    val textY = gridCurrentY + (itemBoxHeight - textRenderer.fontHeight) / 2
+                    context.drawText(
+                        textRenderer,
+                        Text.literal(colorEnumEntry.friendlyName).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+                        textX,
+                        textY,
+                        CinnamonTheme.primaryTextColor,
+                        false
+                    )
+                    
+                    currentX += itemBoxWidth + horizontalSpacing
+                    itemsInCurrentRow++
+                }
+
+                if (allColors.isNotEmpty()) {
+                    if (itemsInCurrentRow == 0 && rowsRenderedCount > 1) { 
+                        settingY = gridCurrentY - verticalSpacing 
+                    } else {
+                        settingY = firstItemInRowY + itemBoxHeight
+                    }
+                    settingY += 5 
+                }
             }
             else -> {
                 context.drawText(
@@ -772,6 +904,12 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                             if (handleAutoClickerSettings(mouseX, mouseY, settingsContentX, settingsContentY, cardWidth - 24, item)) {
                                 return true
                             }
+                        } else if (expandedStates[item.name] == true && item is ChatPrefixModule) { 
+                            val settingsContentX = cardX + 12
+                            val settingsContentY = currentY + 40 + 5 
+                            if (handleChatPrefixSettingsClick(mouseX, mouseY, settingsContentX, settingsContentY, cardWidth - 24, item)) {
+                                return true
+                            }
                         }
                     } else if (item is HudElement) {
                         val headerHeight = baseModuleHeight
@@ -816,7 +954,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 currentY += currentItemHeight + moduleSpacing
             }
         }
-
         return super.mouseClicked(mouseX, mouseY, button)
     }
 
@@ -906,7 +1043,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 return true
             }
         }
-
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 }
