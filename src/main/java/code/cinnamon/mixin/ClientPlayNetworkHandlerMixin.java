@@ -5,6 +5,7 @@ import code.cinnamon.modules.Module;
 import code.cinnamon.modules.all.ChatPrefixModule;
 import code.cinnamon.modules.all.FakeItemsModule;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.MinecraftClient;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -47,23 +48,45 @@ public abstract class ClientPlayNetworkHandlerMixin {
         cancellable = true
     )
     private void onSendChatMessageCommand(String message, CallbackInfo ci) {
-        // Only intercept /give if FakeItemsModule is enabled
-        if (message.startsWith("/give ") && FakeItemsModule.INSTANCE.isEnabled()) {
+        // Debug: Print all chat messages to see if mixin is working
+        System.out.println("[FakeItemsModule] Chat message intercepted: " + message);
+        System.out.println("[FakeItemsModule] Module enabled: " + FakeItemsModule.INSTANCE.isEnabled());
+        
+        // Check for any /give command (with or without space after)
+        if ((message.startsWith("/give ") || message.equals("/give")) && FakeItemsModule.INSTANCE.isEnabled()) {
             System.out.println("[FakeItemsModule] Intercepting /give command: " + message);
             
-            String[] args = message.substring(6).split(" ", 2); // Split into max 2 parts
+            // Handle empty /give command
+            if (message.equals("/give")) {
+                System.out.println("[FakeItemsModule] Empty /give command, sending usage help");
+                MinecraftClient client = MinecraftClient.getInstance();
+                if (client.player != null) {
+                    client.player.sendMessage(net.minecraft.text.Text.literal("§c[FakeItems] Usage: /give <item> [count]"), false);
+                }
+                ci.cancel();
+                return;
+            }
             
-            if (args.length >= 1 && !args[0].trim().isEmpty()) {
-                String itemNameOrId = args[0].trim();
+            // Parse the command properly
+            String[] parts = message.substring(6).trim().split("\\s+");
+            
+            if (parts.length >= 1 && !parts[0].isEmpty()) {
+                String itemNameOrId = parts[0];
                 int count = 1;
 
-                if (args.length >= 2) {
+                // Parse count if provided
+                if (parts.length >= 2) {
                     try {
-                        count = Integer.parseInt(args[1].trim());
+                        count = Integer.parseInt(parts[1]);
                         if (count < 1) count = 1;
                         if (count > 64) count = 64; // Reasonable limit
                     } catch (NumberFormatException e) {
-                        System.err.println("[FakeItemsModule] Invalid count: " + args[1] + ". Using 1.");
+                        System.err.println("[FakeItemsModule] Invalid count: " + parts[1] + ". Using 1.");
+                        // Send error message to player
+                        MinecraftClient client = MinecraftClient.getInstance();
+                        if (client.player != null) {
+                            client.player.sendMessage(net.minecraft.text.Text.literal("§c[FakeItems] Invalid count: " + parts[1]), false);
+                        }
                     }
                 }
 
@@ -73,9 +96,61 @@ public abstract class ClientPlayNetworkHandlerMixin {
                 ci.cancel(); // Prevent sending to server
                 return;
             } else {
-                System.out.println("[FakeItemsModule] Invalid /give syntax, letting server handle it");
+                System.out.println("[FakeItemsModule] Invalid /give syntax, sending usage help");
+                // Send usage help to player
+                MinecraftClient client = MinecraftClient.getInstance();
+                if (client.player != null) {
+                    client.player.sendMessage(net.minecraft.text.Text.literal("§c[FakeItems] Usage: /give <item> [count]"), false);
+                }
+                ci.cancel(); // Still cancel to prevent server error
+                return;
             }
         }
+        
+        // Also intercept our debug command
+        if (message.startsWith("/fakeitems ")) {
+            System.out.println("[FakeItemsModule] Debug command intercepted: " + message);
+            String[] args = message.substring(11).split(" ");
+            
+            if (args.length > 0) {
+                switch (args[0]) {
+                    case "enable":
+                        FakeItemsModule.INSTANCE.setEnabled(true);
+                        MinecraftClient.getInstance().player.sendMessage(
+                            net.minecraft.text.Text.literal("§a[FakeItems] Module enabled"), false);
+                        break;
+                        
+                    case "disable":
+                        FakeItemsModule.INSTANCE.setEnabled(false);
+                        MinecraftClient.getInstance().player.sendMessage(
+                            net.minecraft.text.Text.literal("§c[FakeItems] Module disabled"), false);
+                        break;
+                        
+                    case "clear":
+                        FakeItemsModule.INSTANCE.clearAllFakeData();
+                        break;
+                        
+                    case "test":
+                        if (FakeItemsModule.INSTANCE.isEnabled()) {
+                            FakeItemsModule.INSTANCE.debugAddItem("stone", 10);
+                            FakeItemsModule.INSTANCE.debugAddItem("dirt", 5);
+                            MinecraftClient.getInstance().player.sendMessage(
+                                net.minecraft.text.Text.literal("§a[FakeItems] Added test items"), false);
+                        } else {
+                            MinecraftClient.getInstance().player.sendMessage(
+                                net.minecraft.text.Text.literal("§c[FakeItems] Module is disabled"), false);
+                        }
+                        break;
+                        
+                    default:
+                        MinecraftClient.getInstance().player.sendMessage(
+                            net.minecraft.text.Text.literal("§e[FakeItems] Usage: /fakeitems <enable|disable|clear|test>"), false);
+                }
+            }
+            ci.cancel();
+            return;
+        }
+        
         // Let other messages through normally (including /give when module is disabled)
     }
 }

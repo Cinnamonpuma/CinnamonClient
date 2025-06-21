@@ -67,6 +67,11 @@ public abstract class HandledScreenMixin extends Screen {
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderFakeItemsInSlots(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        // Only render if FakeItemsModule is enabled
+        if (!FakeItemsModule.INSTANCE.isEnabled()) {
+            return;
+        }
+        
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.player == null) {
             return;
@@ -82,6 +87,9 @@ public abstract class HandledScreenMixin extends Screen {
         PlayerInventory playerInventory = client.player.getInventory();
 
         int fakeItemIndex = 0;
+
+        // Debug output
+        System.out.println("[FakeItemsModule] Rendering " + fakeItems.size() + " fake items");
 
         // Only render in main inventory slots (9-35 are the main inventory, 0-8 are hotbar)
         for (Slot slot : screenHandler.slots) {
@@ -101,10 +109,16 @@ public abstract class HandledScreenMixin extends Screen {
                     int renderX = getScreenX() + slot.x;
                     int renderY = getScreenY() + slot.y;
 
-                    // Render the item
+                    System.out.println("[FakeItemsModule] Rendering fake item " + fakeItemData.getFirst() + 
+                                     " at slot " + slot.getIndex() + " (screen pos: " + renderX + ", " + renderY + ")");
+
+                    // Render the item with a slightly transparent overlay to indicate it's fake
                     context.drawItem(itemToRender, renderX, renderY);
                     
-                    // Render count if > 1 (using the original working method)
+                    // Add a subtle overlay to indicate it's fake (optional)
+                    context.fill(renderX, renderY, renderX + 16, renderY + 16, 0x22FF0000); // Semi-transparent red tint
+                    
+                    // Render count if > 1
                     if (itemToRender.getCount() > 1) {
                         String countText = String.valueOf(itemToRender.getCount());
                         context.drawText(client.textRenderer, countText, 
@@ -116,5 +130,7 @@ public abstract class HandledScreenMixin extends Screen {
                 }
             }
         }
+        
+        System.out.println("[FakeItemsModule] Rendered " + fakeItemIndex + " fake items in inventory");
     }
 }

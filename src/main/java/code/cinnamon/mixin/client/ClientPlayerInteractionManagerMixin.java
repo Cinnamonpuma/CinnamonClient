@@ -24,6 +24,11 @@ public class ClientPlayerInteractionManagerMixin {
     private void onInteractBlock(ClientPlayerEntity player, Hand hand, BlockHitResult hitResult,
                                  CallbackInfoReturnable<ActionResult> cir) {
         
+        // Only process if FakeItemsModule is enabled
+        if (!FakeItemsModule.INSTANCE.isEnabled()) {
+            return;
+        }
+        
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null || client.player == null) {
             return;
@@ -34,19 +39,27 @@ public class ClientPlayerInteractionManagerMixin {
             return; // Not a block item
         }
 
+        System.out.println("[FakeItemsModule] Attempting to place block: " + stackInHand.getItem().getName().getString());
+
         // Try to consume from fake inventory
         boolean consumed = FakeItemsModule.INSTANCE.consumeFakeItem(stackInHand);
         
         if (consumed) {
+            System.out.println("[FakeItemsModule] Successfully consumed fake item for placement");
+            
             BlockItem blockItem = (BlockItem) stackInHand.getItem();
             Block block = blockItem.getBlock();
             
             // Calculate placement position
             BlockPos placementPos = hitResult.getBlockPos().offset(hitResult.getSide());
             
-            // Check if placement position is valid (not occupied)
+            System.out.println("[FakeItemsModule] Attempting to place at: " + placementPos);
+            
+            // Check if placement position is valid (not occupied by solid blocks)
             if (!client.world.getBlockState(placementPos).isReplaceable()) {
                 // Position is occupied, don't place but still consume the item
+                System.out.println("[FakeItemsModule] Position occupied, cannot place but item consumed");
+                client.player.sendMessage(net.minecraft.text.Text.literal("§e[FakeItems] Cannot place here (position occupied)"), true);
                 cir.setReturnValue(ActionResult.FAIL);
                 return;
             }
@@ -66,6 +79,7 @@ public class ClientPlayerInteractionManagerMixin {
                     1.0f, 
                     1.0f
                 );
+                System.out.println("[FakeItemsModule] Played placement sound");
             } catch (Exception e) {
                 // Sound playing failed, continue anyway
                 System.err.println("[FakeItemsModule] Failed to play placement sound: " + e.getMessage());
@@ -73,6 +87,8 @@ public class ClientPlayerInteractionManagerMixin {
 
             // Return success to indicate the interaction was handled
             cir.setReturnValue(ActionResult.SUCCESS);
+        } else {
+            System.out.println("[FakeItemsModule] Item not found in fake inventory, allowing normal placement");
         }
         // If not consumed (not a fake item), let normal placement proceed
     }

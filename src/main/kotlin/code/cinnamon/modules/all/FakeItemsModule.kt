@@ -10,6 +10,7 @@ import net.minecraft.item.Item
 import net.minecraft.item.Items
 import net.minecraft.registry.Registries
 import net.minecraft.util.Identifier
+import net.minecraft.client.MinecraftClient
 
 object FakeItemsModule : Module("FakeItems", "Fake items system for client-side items.") {
 
@@ -33,26 +34,40 @@ object FakeItemsModule : Module("FakeItems", "Fake items system for client-side 
     }
 
     fun handleFakeGiveCommand(itemName: String, count: Int) {
+        println("[$name] Processing fake give command: $itemName x$count")
+        
         // Validate the item exists before adding
         val itemStack = createItemStack(itemName, count)
         if (itemStack.isEmpty) {
             println("[$name] Invalid item: $itemName")
+            // Send feedback to player
+            val client = MinecraftClient.getInstance()
+            client.player?.sendMessage(net.minecraft.text.Text.literal("§c[FakeItems] Invalid item: $itemName"), false)
             return
         }
         
+        // Use the registry ID for consistency
+        val itemId = Registries.ITEM.getId(itemStack.item).toString()
+        
         // Check if we already have this item, if so, increase count
-        val existingIndex = fakeItems.indexOfFirst { it.first == itemName }
+        val existingIndex = fakeItems.indexOfFirst { it.first == itemId }
         if (existingIndex != -1) {
             val existing = fakeItems[existingIndex]
             val newCount = (existing.second + count).coerceAtMost(64 * 64) // Reasonable limit
-            fakeItems[existingIndex] = Pair(itemName, newCount)
-            println("[$name] Updated existing item $itemName: ${existing.second} -> $newCount")
+            fakeItems[existingIndex] = Pair(itemId, newCount)
+            println("[$name] Updated existing item $itemId: ${existing.second} -> $newCount")
         } else {
-            fakeItems.add(Pair(itemName, count))
-            println("[$name] Added new fake item: $itemName x$count")
+            fakeItems.add(Pair(itemId, count))
+            println("[$name] Added new fake item: $itemId x$count")
         }
         
+        // Send success feedback to player
+        val client = MinecraftClient.getInstance()
+        val displayName = itemStack.item.name.string
+        client.player?.sendMessage(net.minecraft.text.Text.literal("§a[FakeItems] Added $displayName x$count to fake inventory"), false)
+        
         println("[$name] Total fake items: ${fakeItems.size}")
+        printFakeInventory()
     }
 
     private fun createItemStack(itemNameOrId: String, count: Int): ItemStack {
@@ -88,6 +103,12 @@ object FakeItemsModule : Module("FakeItems", "Fake items system for client-side 
 
         val itemId = Registries.ITEM.getId(itemStackToConsume.item).toString()
         
+        println("[$name] Attempting to consume: $itemId")
+        println("[$name] Available fake items:")
+        fakeItems.forEachIndexed { index, item ->
+            println("  [$index] ${item.first} x${item.second}")
+        }
+        
         for (i in fakeItems.indices) {
             val fakeItem = fakeItems[i]
             if (fakeItem.first == itemId) {
@@ -104,12 +125,17 @@ object FakeItemsModule : Module("FakeItems", "Fake items system for client-side 
             }
         }
         
+        println("[$name] Item $itemId not found in fake inventory")
         return false // Item not found in fake inventory
     }
     
     fun addPlacedFakeBlock(pos: BlockPos, block: Block, itemUsed: ItemStack) {
         placedFakeBlocks.add(Triple(pos, block, itemUsed.copy()))
         println("[$name] Placed fake block: $block at $pos")
+        
+        // Send feedback to player
+        val client = MinecraftClient.getInstance()
+        client.player?.sendMessage(net.minecraft.text.Text.literal("§e[FakeItems] Placed fake ${block.name.string} at ${pos.x}, ${pos.y}, ${pos.z}"), false)
     }
 
     fun getPlacedFakeBlocks(): List<Triple<BlockPos, Block, ItemStack>> {
@@ -132,5 +158,31 @@ object FakeItemsModule : Module("FakeItems", "Fake items system for client-side 
         placedFakeBlocks.clear()
         
         println("[$name] Cleared $itemCount fake items and $blockCount fake blocks")
+        
+        // Send feedback to player if available
+        try {
+            val client = MinecraftClient.getInstance()
+            if (client.player != null) {
+                client.player?.sendMessage(net.minecraft.text.Text.literal("§6[FakeItems] Cleared all fake data"), false)
+            }
+        } catch (e: Exception) {
+            // Player might not be available during disconnect
+        }
+    }
+    
+    private fun printFakeInventory() {
+        println("[$name] Current fake inventory:")
+        if (fakeItems.isEmpty()) {
+            println("  (empty)")
+        } else {
+            fakeItems.forEachIndexed { index, item ->
+                println("  [$index] ${item.first} x${item.second}")
+            }
+        }
+    }
+    
+    // Debug function to manually add items for testing
+    fun debugAddItem(itemName: String, count: Int = 1) {
+        handleFakeGiveCommand(itemName, count)
     }
 }
