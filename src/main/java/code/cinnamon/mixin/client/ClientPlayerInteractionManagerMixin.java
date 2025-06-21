@@ -7,6 +7,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -19,54 +20,60 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ClientPlayerInteractionManager.class)
 public class ClientPlayerInteractionManagerMixin {
 
-    // Method signature based on common Fabric mappings (Yarn). Actual names/types can vary.
-    // interactBlock(Lnet/minecraft/client/network/ClientPlayerEntity;Lnet/minecraft/util/Hand;Lnet/minecraft/util/hit/BlockHitResult;)Lnet/minecraft/util/ActionResult;
     @Inject(method = "interactBlock", at = @At("HEAD"), cancellable = true)
     private void onInteractBlock(ClientPlayerEntity player, Hand hand, BlockHitResult hitResult,
                                  CallbackInfoReturnable<ActionResult> cir) {
         
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return; // Should not happen if interacting with a block
-
-        ItemStack stackInHand = player.getStackInHand(hand);
-
-        if (stackInHand.isEmpty() || !(stackInHand.getItem() instanceof BlockItem)) {
-            return; // Not a block item, proceed with normal interaction
+        if (client.world == null || client.player == null) {
+            return;
         }
 
-        // Attempt to consume this item from our fake item list
-        // This relies on FakeItemsModule.consumeFakeItem being able to identify if stackInHand
-        // corresponds to an item in its fakeItems list.
-        boolean consumed = FakeItemsModule.INSTANCE.consumeFakeItem(stackInHand);
+        ItemStack stackInHand = player.getStackInHand(hand);
+        if (stackInHand.isEmpty() || !(stackInHand.getItem() instanceof BlockItem)) {
+            return; // Not a block item
+        }
 
+        // Try to consume from fake inventory
+        boolean consumed = FakeItemsModule.INSTANCE.consumeFakeItem(stackInHand);
+        
         if (consumed) {
-            // Item was found in FakeItemsModule and consumed
             BlockItem blockItem = (BlockItem) stackInHand.getItem();
             Block block = blockItem.getBlock();
             
-            // Determine the position to place the block
-            // BlockHitResult.getBlockPos() is the block that was hit.
-            // We need to place it adjacent, often using hitResult.getSide().
+            // Calculate placement position
             BlockPos placementPos = hitResult.getBlockPos().offset(hitResult.getSide());
+            
+            // Check if placement position is valid (not occupied)
+            if (!client.world.getBlockState(placementPos).isReplaceable()) {
+                // Position is occupied, don't place but still consume the item
+                cir.setReturnValue(ActionResult.FAIL);
+                return;
+            }
 
-            // Add to our list of placed fake blocks
-            // We pass a copy of the stackInHand in case its count was > 1,
-            // though consumeFakeItem should have handled the count.
-            // Storing the original stack (or a representation of it) is good.
+            // Add to fake placed blocks
             ItemStack representativeStack = stackInHand.copy();
-            representativeStack.setCount(1); // We are placing one block
-
+            representativeStack.setCount(1);
             FakeItemsModule.INSTANCE.addPlacedFakeBlock(placementPos, block, representativeStack);
 
-            // TODO: Play block placement sound locally?
-            // client.world.playSound(player, placementPos, block.getSoundGroup(block.getDefaultState()).getPlaceSound(), 
-            //                        SoundCategory.BLOCKS, 1.0f, 1.0f);
+            // Play placement sound locally
+            try {
+                client.world.playSound(
+                    client.player, 
+                    placementPos, 
+                    block.getDefaultState().getSoundGroup().getPlaceSound(), 
+                    SoundCategory.BLOCKS, 
+                    1.0f, 
+                    1.0f
+                );
+            } catch (Exception e) {
+                // Sound playing failed, continue anyway
+                System.err.println("[FakeItemsModule] Failed to play placement sound: " + e.getMessage());
+            }
 
-
-            // Prevent server-side placement and return SUCCESS or CONSUME
-            cir.setReturnValue(ActionResult.SUCCESS); // Or ActionResult.CONSUME, depending on desired behavior
-            // No need to call ci.cancel() explicitly when setReturnValue is used.
+            // Return success to indicate the interaction was handled
+            cir.setReturnValue(ActionResult.SUCCESS);
         }
-        // If not consumed (not a fake item we manage), do nothing and let original method proceed.
+        // If not consumed (not a fake item), let normal placement proceed
     }
 }

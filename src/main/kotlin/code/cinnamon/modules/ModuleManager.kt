@@ -20,7 +20,7 @@ object ModuleManager {
     fun initialize() {
         registerModule(AutoclickerModule())
         registerModule(ChatPrefixModule())
-        FakeItemsModule.init() // Initialize FakeItemsModule
+        FakeItemsModule.init()
     }
 }
 
