@@ -2,6 +2,7 @@ package code.cinnamon.modules
 
 import code.cinnamon.modules.all.AutoclickerModule
 import code.cinnamon.modules.all.ChatPrefixModule
+import code.cinnamon.modules.all.FakeItemsModule
 
 object ModuleManager {
     private val modules = mutableListOf<Module>()
@@ -19,6 +20,7 @@ object ModuleManager {
     fun initialize() {
         registerModule(AutoclickerModule())
         registerModule(ChatPrefixModule())
+        FakeItemsModule.init() // Initialize FakeItemsModule
     }
 }
 

@@ -11,7 +11,11 @@
 		"PacketHandlerMixin",
 		"client.PacketHandlerHudHandledScreenMixin",
 		"client.HudMixin",
-		"ClientPlayNetworkHandlerMixin"
+		"ClientPlayNetworkHandlerMixin",
+		"client.HandledScreenMixin",
+		"client.ClientPlayerInteractionManagerMixin",
+		"client.WorldRendererMixin",
+		"client.MinecraftClientMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
