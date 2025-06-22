@@ -10,7 +10,8 @@
 		"client.ScreenMixin",
 		"PacketHandlerMixin",
 		"client.PacketHandlerHudHandledScreenMixin",
-		"client.HudMixin"
+		"client.HudMixin",
+		"ClientPlayNetworkHandlerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
