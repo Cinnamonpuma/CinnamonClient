@@ -1,6 +1,6 @@
 <table>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/ab8e350a-ecb2-4548-865d-f7a0beb871bc" width="100"/></td>
+    <td><img src="https://github.com/user-attachments/assets/95fb0910-5221-4ad6-ba35-f272971d752f" width="100"/></td>
     <td style="vertical-align: middle; padding-left: 10px;"><h1>CinnamonClient</h1></td>
   </tr>
 </table>
