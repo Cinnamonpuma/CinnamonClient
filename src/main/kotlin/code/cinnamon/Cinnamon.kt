@@ -26,6 +26,7 @@ object Cinnamon : ModInitializer {
 
         ThemeConfigManager.loadTheme()
         ModuleManager.initialize()
+        code.cinnamon.modules.ModuleConfigManager.loadModules() 
         KeybindingManager.initialize()
         
         HudManager.init()

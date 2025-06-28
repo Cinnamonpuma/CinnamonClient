@@ -86,7 +86,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
     override fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         super.renderFooter(context, mouseX, mouseY, delta)
         
-        val versionText = Text.literal("v1.0.0 - Minecraft 1.21.5").fillStyle(Style.EMPTY.withFont(CINNA_FONT))
+        val versionText = Text.literal("v1.2 - Minecraft 1.21.5").fillStyle(Style.EMPTY.withFont(CINNA_FONT))
         val versionWidth = textRenderer.getWidth(versionText)
         context.drawText(
             textRenderer,

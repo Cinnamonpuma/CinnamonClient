@@ -26,20 +26,26 @@ abstract class Module(val name: String, val description: String) {
     var isEnabled = false
         private set
 
-    open fun enable() {
+    open fun enable(fromLoad: Boolean = false) {
         if (!isEnabled) {
             isEnabled = true
             onEnable()
+            if (!fromLoad) {
+                ModuleConfigManager.saveModules()
+            }
         }
     }
-    open fun disable() {
+    open fun disable(fromLoad: Boolean = false) {
         if (isEnabled) {
             isEnabled = false
             onDisable()
+            if (!fromLoad) {
+                ModuleConfigManager.saveModules()
+            }
         }
     }
     fun toggle() {
-        if (isEnabled) disable() else enable()
+        if (isEnabled) disable(fromLoad = false) else enable(fromLoad = false)
     }
     protected abstract fun onEnable()
     protected abstract fun onDisable()

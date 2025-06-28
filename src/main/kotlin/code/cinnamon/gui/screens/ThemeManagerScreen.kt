@@ -55,8 +55,9 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val contentY = getContentY()
         val buttonY = contentY + getContentHeight() - 45
         clearButtons()
+
         addButton(CinnamonButton(
-            guiX + PADDING,
+            centerX - 50,
             buttonY,
             100,
             CinnamonTheme.BUTTON_HEIGHT,
@@ -64,26 +65,16 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             { _, _ -> CinnamonGuiManager.openMainMenu() }
         ))
         addButton(CinnamonButton(
-            centerX - 50,
+            guiX + guiWidth - PADDING - 100, 
             buttonY,
             100,
             CinnamonTheme.BUTTON_HEIGHT,
             Text.literal("Reset").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
             { _, _ -> resetToDefaults() }
         ))
-        addButton(CinnamonButton(
-            guiX + guiWidth - PADDING - 100,
-            buttonY,
-            100,
-            CinnamonTheme.BUTTON_HEIGHT,
-            Text.literal("Save").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
-            { _, _ -> saveTheme() },
-            false
-        ))
     }
 
     override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        val centerX = guiX + guiWidth / 2
         val contentY = getContentY()
         renderColorList(context, mouseX, mouseY, contentY)
     }
@@ -92,7 +83,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val listX = guiX + 40
         val listY = contentYPos + 20
         val listWidth = guiWidth - 80
-        val listHeight = getContentHeight() - 170
+        val listHeight = getContentHeight() - 170 
 
 
         context.drawBorder(listX, listY, listWidth, listHeight, CinnamonTheme.borderColor)
