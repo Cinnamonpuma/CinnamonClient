@@ -40,7 +40,7 @@ object CinnamonTheme {
     var coreStatusSuccess = 0xFF4caf50.toInt()     
     var coreStatusWarning = 0xFFff9800.toInt()       
     var coreStatusError = 0xFFf44336.toInt()           
-
+    var enableTextShadow: Boolean = true
 
     var currentTheme: Theme = Theme.DARK
 
@@ -120,6 +120,7 @@ object CinnamonTheme {
         overlayColor = 0x80000000.toInt()
         glassHighlight = 0x20ffffff.toInt()
         glassShadow = 0x40000000.toInt()
+        enableTextShadow = true
     }
     
     fun updateDependentColors() {

@@ -94,7 +94,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             guiX + guiWidth - versionWidth - PADDING,
             getFooterY() + (FOOTER_HEIGHT - textRenderer.fontHeight) / 2,
             CinnamonTheme.secondaryTextColor,
-            false
+            CinnamonTheme.enableTextShadow 
         )
         val statusText = Text.literal("Ready").fillStyle(Style.EMPTY.withFont(CINNA_FONT))
         context.drawText(
@@ -103,7 +103,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             guiX + PADDING,
             getFooterY() + (FOOTER_HEIGHT - textRenderer.fontHeight) / 2,
             CinnamonTheme.successColor,
-            false
+            CinnamonTheme.enableTextShadow 
         )
     }
 }

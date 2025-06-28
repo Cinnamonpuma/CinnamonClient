@@ -77,7 +77,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             contentX + 15,
             contentY + 20,
             CinnamonTheme.titleColor,
-            true
+            CinnamonTheme.enableTextShadow 
         )
         
         
@@ -103,7 +103,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
                 indicatorX,
                 indicatorY,
                 CinnamonTheme.titleColor,
-                true
+                CinnamonTheme.enableTextShadow 
             )
         }
         
@@ -165,7 +165,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             x + 12,
             y + 8,
             nameColor,
-            true
+            CinnamonTheme.enableTextShadow 
         )
         
         val descColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.secondaryTextColor
@@ -175,7 +175,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             x + 12,
             y + 22,
             descColor,
-            false
+            CinnamonTheme.enableTextShadow 
         )
         
         val keyName = getKeyName(entry.currentKey)
@@ -200,7 +200,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             keyButtonX + (keyButtonWidth - keyWidth) / 2,
             keyButtonY + 8,
             keyTextColor,
-            false
+            CinnamonTheme.enableTextShadow 
         )
         
         if (hasConflict(entry)) {

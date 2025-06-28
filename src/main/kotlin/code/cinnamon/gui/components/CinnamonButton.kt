@@ -71,7 +71,7 @@ class CinnamonButton(
             textX,
             textY,
             textColor,
-            true
+            CinnamonTheme.enableTextShadow
         )
 
 

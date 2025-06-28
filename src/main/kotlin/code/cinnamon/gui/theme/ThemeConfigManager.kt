@@ -16,7 +16,8 @@ data class ThemeConfig(
     val coreButtonBackground: Int = 0xE6404040.toInt(), 
     val coreStatusSuccess: Int = 0xFF4caf50.toInt(),
     val coreStatusWarning: Int = 0xFFff9800.toInt(),
-    val coreStatusError: Int = 0xFFf44336.toInt()
+    val coreStatusError: Int = 0xFFf44336.toInt(),
+    val enableTextShadow: Boolean = true
 )
 
 object ThemeConfigManager {
@@ -40,7 +41,8 @@ object ThemeConfigManager {
                 coreButtonBackground = CinnamonTheme.coreButtonBackground,
                 coreStatusSuccess = CinnamonTheme.coreStatusSuccess,
                 coreStatusWarning = CinnamonTheme.coreStatusWarning,
-                coreStatusError = CinnamonTheme.coreStatusError
+                coreStatusError = CinnamonTheme.coreStatusError,
+                enableTextShadow = CinnamonTheme.enableTextShadow
             )
 
             println("[ThemeConfigManager] Preparing to save theme configuration:")
@@ -76,6 +78,7 @@ object ThemeConfigManager {
             CinnamonTheme.coreStatusSuccess = config.coreStatusSuccess
             CinnamonTheme.coreStatusWarning = config.coreStatusWarning
             CinnamonTheme.coreStatusError = config.coreStatusError
+            CinnamonTheme.enableTextShadow = config.enableTextShadow
             
             CinnamonTheme.updateDependentColors()
             println("[ThemeConfigManager] Theme loaded successfully from ${themeFile.absolutePath}")

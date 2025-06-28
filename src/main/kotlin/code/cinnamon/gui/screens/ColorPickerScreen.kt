@@ -54,7 +54,7 @@ class ColorPickerScreen(
             pickerX + (pickerWidth - titleWidth) / 2,
             pickerY + 8,
             CinnamonTheme.primaryTextColor,
-            true
+            CinnamonTheme.enableTextShadow 
         )
 
         val wheelSize = 180
@@ -91,7 +91,7 @@ class ColorPickerScreen(
             buttonStartX + (buttonWidth - textRenderer.getWidth("Apply")) / 2,
             buttonY + 10,
             0xFFFFFFFF.toInt(),
-            false
+            CinnamonTheme.enableTextShadow 
         )
         val cancelX = buttonStartX + buttonWidth + buttonSpacing
         val cancelHovered = mouseX in cancelX until (cancelX + buttonWidth) &&
@@ -106,7 +106,7 @@ class ColorPickerScreen(
             cancelX + (buttonWidth - textRenderer.getWidth("Cancel")) / 2,
             buttonY + 10,
             CinnamonTheme.primaryTextColor,
-            false
+            CinnamonTheme.enableTextShadow 
         )
     }
 

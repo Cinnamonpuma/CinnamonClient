@@ -143,7 +143,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
             titleX,
             headerY + (HEADER_HEIGHT - textRenderer.fontHeight) / 2,
             theme.titleColor,
-            true
+            theme.enableTextShadow
         )
         
         context.fill(

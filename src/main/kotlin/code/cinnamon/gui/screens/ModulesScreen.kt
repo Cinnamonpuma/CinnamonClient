@@ -157,7 +157,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             x + 12,
             y + 8,
             if (element.isEnabled) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor,
-            true
+            CinnamonTheme.enableTextShadow 
         )
 
         val toggleWidth = 30
@@ -178,7 +178,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             expandButtonX,
             y + 8,
             CinnamonTheme.primaryTextColor,
-            true
+            CinnamonTheme.enableTextShadow 
         )
 
         if (expandedStates[element.getName()] == true) {
@@ -215,68 +215,68 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         context.drawText(
             textRenderer,
             Text.literal("Settings").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
-            x, currentY, CinnamonTheme.titleColor, true
+            x, currentY, CinnamonTheme.titleColor, CinnamonTheme.enableTextShadow 
         )
         currentY += 15
 
         if (element !is PacketHandlerHudElement) {
             val textColorText = "Text Color: ${element.textColor.toRGBHexString()}"
-            context.drawText(textRenderer, Text.literal(textColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, false)
+            context.drawText(textRenderer, Text.literal(textColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow) 
             val setTextColorButtonText = "[Set]"
             val setTextColorButtonWidth = textRenderer.getWidth(setTextColorButtonText)
             context.drawText(textRenderer, Text.literal(setTextColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setTextColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
             currentY += 14
 
             val bgColorText = "Background: ${element.backgroundColor.toRGBAHexString()}"
-            context.drawText(textRenderer, Text.literal(bgColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, false)
+            context.drawText(textRenderer, Text.literal(bgColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
             val setBgColorButtonText = "[Set]"
             val setBgColorButtonWidth = textRenderer.getWidth(setBgColorButtonText)
             context.drawText(textRenderer, Text.literal(setBgColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setBgColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
             currentY += 14
 
-            drawCheckbox(context, x, currentY, "Enable Text Shadow", element.textShadowEnabled)
+            drawCheckbox(context, x, currentY, "Enable Text Shadow", element.textShadowEnabled) 
             currentY += 14
         }
 
         if (element is KeystrokesHudElement) {
             val keyPressedTextColorText = "Pressed Text: ${element.keypressedTextColor.toRGBHexString()}"
-            context.drawText(textRenderer, Text.literal(keyPressedTextColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, false)
+            context.drawText(textRenderer, Text.literal(keyPressedTextColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow) 
             val setKeyPressedTextColorButtonText = "[Set]"
             val setKeyPressedTextColorButtonWidth = textRenderer.getWidth(setKeyPressedTextColorButtonText)
-            context.drawText(textRenderer, Text.literal(setKeyPressedTextColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setKeyPressedTextColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
+            context.drawText(textRenderer, Text.literal(setKeyPressedTextColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setKeyPressedTextColorButtonWidth, currentY, CinnamonTheme.accentColor, false) 
             currentY += 14
 
             val keyPressedBgColorText = "Pressed Background: ${element.keypressedBackgroundColor.toRGBAHexString()}"
-            context.drawText(textRenderer, Text.literal(keyPressedBgColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, false)
+            context.drawText(textRenderer, Text.literal(keyPressedBgColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow) 
             val setKeyPressedBgColorButtonText = "[Set]"
             val setKeyPressedBgColorButtonWidth = textRenderer.getWidth(setKeyPressedBgColorButtonText)
-            context.drawText(textRenderer, Text.literal(setKeyPressedBgColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setKeyPressedBgColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
+            context.drawText(textRenderer, Text.literal(setKeyPressedBgColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setKeyPressedBgColorButtonWidth, currentY, CinnamonTheme.accentColor, false) 
             currentY += 14
         }
 
         if (element is PacketHandlerHudElement) {
             val buttonColorText = "Button Color: ${element.buttonColor.toRGBAHexString()}"
-            context.drawText(textRenderer, Text.literal(buttonColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, false)
+            context.drawText(textRenderer, Text.literal(buttonColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow) 
             val setButtonColorButtonText = "[Set]"
             val setButtonColorButtonWidth = textRenderer.getWidth(setButtonColorButtonText)
-            context.drawText(textRenderer, Text.literal(setButtonColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setButtonColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
+            context.drawText(textRenderer, Text.literal(setButtonColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setButtonColorButtonWidth, currentY, CinnamonTheme.accentColor, false) 
             currentY += 14
 
             val buttonTextColorText = "Button Text: ${element.buttonTextColor.toRGBHexString()}"
-            context.drawText(textRenderer, Text.literal(buttonTextColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, false)
+            context.drawText(textRenderer, Text.literal(buttonTextColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow) 
             val setButtonTextColorButtonText = "[Set]"
             val setButtonTextColorButtonWidth = textRenderer.getWidth(setButtonTextColorButtonText)
-            context.drawText(textRenderer, Text.literal(setButtonTextColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setButtonTextColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
+            context.drawText(textRenderer, Text.literal(setButtonTextColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setButtonTextColorButtonWidth, currentY, CinnamonTheme.accentColor, false) 
             currentY += 14
 
-            drawCheckbox(context, x, currentY, "Button Text Shadow", element.buttonTextShadowEnabled)
+            drawCheckbox(context, x, currentY, "Button Text Shadow", element.buttonTextShadowEnabled) 
             currentY += 14
 
-            val buttonHoverColorText = "Button Hover: ${element.buttonHoverColor.toRGBAHexString()}" 
-            context.drawText(textRenderer, Text.literal(buttonHoverColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, false)
+            val buttonHoverColorText = "Button Hover: ${element.buttonHoverColor.toRGBAHexString()}"
+            context.drawText(textRenderer, Text.literal(buttonHoverColorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow) 
             val setButtonHoverColorButtonText = "[Set]"
             val setButtonHoverColorButtonWidth = textRenderer.getWidth(setButtonHoverColorButtonText)
-            context.drawText(textRenderer, Text.literal(setButtonHoverColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setButtonHoverColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
+            context.drawText(textRenderer, Text.literal(setButtonHoverColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x + width - setButtonHoverColorButtonWidth, currentY, CinnamonTheme.accentColor, false) 
             currentY += 14
         }
     }
@@ -545,7 +545,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             x + checkboxSize + 6,
             y + 1,
             CinnamonTheme.primaryTextColor,
-            false
+            CinnamonTheme.enableTextShadow 
         )
     }
 
@@ -567,7 +567,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             x + 12,
             y + 8,
             if (module.isEnabled) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor,
-            true
+            CinnamonTheme.enableTextShadow 
         )
 
         val expandButtonText = if (expandedStates[module.name] == true) "-" else "+"
@@ -578,7 +578,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             x + width - expandButtonWidth - 12,
             y + 8,
             CinnamonTheme.primaryTextColor,
-            true
+            CinnamonTheme.enableTextShadow 
         )
 
         context.drawText(
@@ -587,7 +587,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             x + 12,
             y + 22,
             CinnamonTheme.secondaryTextColor,
-            false
+            CinnamonTheme.enableTextShadow 
         )
 
         val bottomSectionY = if (expandedStates[module.name] == true) {
@@ -609,7 +609,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 x + width - keybindWidth - 60,
                 bottomSectionY + 16,
                 CinnamonTheme.secondaryTextColor,
-                false
+                CinnamonTheme.enableTextShadow 
             )
         }
 
@@ -635,36 +635,36 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         var settingY = y
         when (module) {
             is AutoclickerModule -> {
-                context.drawText(textRenderer, Text.literal("Settings").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.titleColor, true)
+                context.drawText(textRenderer, Text.literal("Settings").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.titleColor, CinnamonTheme.enableTextShadow) 
                 settingY += 15
                 val buttonWidth = 16
                 val buttonHeight = 12
                 val settingSpacing = 14
                 val minCpsText = "Min CPS: %.1f".format(module.minCPS)
-                context.drawText(textRenderer, Text.literal(minCpsText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.primaryTextColor, false)
+                context.drawText(textRenderer, Text.literal(minCpsText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow) 
                 val minCpsButtonsX = x + width - 40
                 drawSettingButton(context, minCpsButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
                 drawSettingButton(context, minCpsButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
                 settingY += settingSpacing
                 val maxCpsText = "Max CPS: %.1f".format(module.maxCPS)
-                context.drawText(textRenderer, Text.literal(maxCpsText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.primaryTextColor, false)
+                context.drawText(textRenderer, Text.literal(maxCpsText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
                 val maxCpsButtonsX = x + width - 40
                 drawSettingButton(context, maxCpsButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
                 drawSettingButton(context, maxCpsButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
                 settingY += settingSpacing
-                drawCheckbox(context, x, settingY - 1, "Humanization", module.enableHumanization)
+                drawCheckbox(context, x, settingY - 1, "Humanization", module.enableHumanization) 
                 settingY += settingSpacing
-                drawCheckbox(context, x, settingY - 1, "Burst Mode", module.burstMode)
+                drawCheckbox(context, x, settingY - 1, "Burst Mode", module.burstMode) 
                 settingY += settingSpacing
-                drawCheckbox(context, x, settingY - 1, "Left Click", module.leftClickEnabled)
+                drawCheckbox(context, x, settingY - 1, "Left Click", module.leftClickEnabled) 
                 settingY += settingSpacing
                 drawCheckbox(context, x, settingY - 1, "Right Click", module.rightClickEnabled)
             }
             is ChatPrefixModule -> {
-                context.drawText(textRenderer, Text.literal("Settings").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.titleColor, true)
+                context.drawText(textRenderer, Text.literal("Settings").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)), x, settingY, CinnamonTheme.titleColor, CinnamonTheme.enableTextShadow)
                 settingY += 15
 
-                val allColors = MinecraftColorCodes.entries 
+                val allColors = MinecraftColorCodes.entries
                 val itemBoxHeight = 20 
                 val itemBoxWidth = 110 
                 val horizontalSpacing = 4
@@ -724,7 +724,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                         textX,
                         textY,
                         CinnamonTheme.primaryTextColor,
-                        false
+                        CinnamonTheme.enableTextShadow
                     )
                     
                     currentX += itemBoxWidth + horizontalSpacing
@@ -747,7 +747,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                     x,
                     settingY,
                     CinnamonTheme.secondaryTextColor,
-                    false
+                    CinnamonTheme.enableTextShadow
                 )
             }
         }
