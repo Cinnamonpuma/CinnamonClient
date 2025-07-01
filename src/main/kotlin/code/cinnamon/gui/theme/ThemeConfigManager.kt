@@ -17,6 +17,8 @@ data class ThemeConfig(
     val coreStatusSuccess: Int = 0xFF4caf50.toInt(),
     val coreStatusWarning: Int = 0xFFff9800.toInt(),
     val coreStatusError: Int = 0xFFf44336.toInt(),
+    val buttonOutlineColor: Int = 0xFF808080.toInt(),
+    val buttonOutlineHoverColor: Int = 0xFFA0A0A0.toInt(),
     val enableTextShadow: Boolean = true,
     val useMinecraftFont: Boolean = false
 )
@@ -43,6 +45,8 @@ object ThemeConfigManager {
                 coreStatusSuccess = CinnamonTheme.coreStatusSuccess,
                 coreStatusWarning = CinnamonTheme.coreStatusWarning,
                 coreStatusError = CinnamonTheme.coreStatusError,
+                buttonOutlineColor = CinnamonTheme.buttonOutlineColor,
+                buttonOutlineHoverColor = CinnamonTheme.buttonOutlineHoverColor,
                 enableTextShadow = CinnamonTheme.enableTextShadow,
                 useMinecraftFont = CinnamonTheme.useMinecraftFont
             )
@@ -51,6 +55,8 @@ object ThemeConfigManager {
             println("[ThemeConfigManager]   Core Background Primary: ${String.format("#%08X", config.coreBackgroundPrimary)}")
             println("[ThemeConfigManager]   Core Accent Primary: ${String.format("#%08X", config.coreAccentPrimary)}")
             println("[ThemeConfigManager]   Core Text Primary: ${String.format("#%08X", config.coreTextPrimary)}")
+            println("[ThemeConfigManager]   Button Outline Color: ${String.format("#%08X", config.buttonOutlineColor)}")
+            println("[ThemeConfigManager]   Button Outline Hover Color: ${String.format("#%08X", config.buttonOutlineHoverColor)}")
             
             val jsonString = json.encodeToString(config)
             themeFile.writeText(jsonString)
@@ -80,6 +86,8 @@ object ThemeConfigManager {
             CinnamonTheme.coreStatusSuccess = config.coreStatusSuccess
             CinnamonTheme.coreStatusWarning = config.coreStatusWarning
             CinnamonTheme.coreStatusError = config.coreStatusError
+            CinnamonTheme.buttonOutlineColor = config.buttonOutlineColor
+            CinnamonTheme.buttonOutlineHoverColor = config.buttonOutlineHoverColor
             CinnamonTheme.enableTextShadow = config.enableTextShadow
             CinnamonTheme.useMinecraftFont = config.useMinecraftFont
             
