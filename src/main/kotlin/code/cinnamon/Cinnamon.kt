@@ -50,6 +50,10 @@ object Cinnamon : ModInitializer {
                 ModuleManager.toggleModule("AutoClicker")
             }
 
+            if (KeybindingManager.wasPressed("cinnamon.toggle_fullbright")) {
+                ModuleManager.toggleModule("Fullbright")
+            }
+
             if (KeybindingManager.wasPressed("cinnamon.open_saved_gui")) {
                 val storedScreen = code.cinnamon.SharedVariables.storedScreen
                 if (storedScreen is Screen) {

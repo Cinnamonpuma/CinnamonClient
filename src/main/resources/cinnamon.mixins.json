@@ -10,7 +10,8 @@
 		"PacketHandlerMixin",
 		"client.PacketHandlerHudHandledScreenMixin",
 		"client.HudMixin",
-		"ClientPlayNetworkHandlerMixin"
+		"ClientPlayNetworkHandlerMixin",
+		"LightmapTextureManagerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

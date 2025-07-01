@@ -2,6 +2,7 @@ package code.cinnamon.modules
 
 import code.cinnamon.modules.all.AutoclickerModule
 import code.cinnamon.modules.all.ChatPrefixModule
+import code.cinnamon.modules.all.FullbrightModule 
 
 object ModuleManager {
     private val modules = mutableListOf<Module>()
@@ -16,9 +17,13 @@ object ModuleManager {
     fun toggleModule(name: String) = getModule(name)?.toggle()
     fun getEnabledModules(): List<Module> = modules.filter { it.isEnabled }
 
+
+    fun isModuleEnabled(name: String): Boolean = getModule(name)?.isEnabled ?: false
+
     fun initialize() {
         registerModule(AutoclickerModule())
         registerModule(ChatPrefixModule())
+        registerModule(FullbrightModule())
     }
 }
 
