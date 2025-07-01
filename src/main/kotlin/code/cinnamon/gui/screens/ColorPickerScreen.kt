@@ -50,7 +50,7 @@ class ColorPickerScreen(
         val titleWidth = textRenderer.getWidth(title)
         context.drawText(
             textRenderer,
-            Text.literal(title).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal(title).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             pickerX + (pickerWidth - titleWidth) / 2,
             pickerY + 8,
             CinnamonTheme.primaryTextColor,
@@ -87,7 +87,7 @@ class ColorPickerScreen(
         )
         context.drawText(
             textRenderer,
-            Text.literal("Apply").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal("Apply").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             buttonStartX + (buttonWidth - textRenderer.getWidth("Apply")) / 2,
             buttonY + 10,
             0xFFFFFFFF.toInt(),
@@ -102,7 +102,7 @@ class ColorPickerScreen(
         )
         context.drawText(
             textRenderer,
-            Text.literal("Cancel").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal("Cancel").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             cancelX + (buttonWidth - textRenderer.getWidth("Cancel")) / 2,
             buttonY + 10,
             CinnamonTheme.primaryTextColor,

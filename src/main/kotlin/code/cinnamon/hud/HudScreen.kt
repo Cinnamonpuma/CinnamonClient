@@ -7,8 +7,9 @@ import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Style
 import net.minecraft.text.Text
 import code.cinnamon.gui.CinnamonGuiManager
+import code.cinnamon.gui.theme.CinnamonTheme
 
-class HudScreen : Screen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
+class HudScreen : Screen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))) {
 
     override fun init() {
         super.init()
@@ -22,7 +23,7 @@ class HudScreen : Screen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFon
         context.drawCenteredTextWithShadow(
             textRenderer,
             Text.literal("Drag elements to move them - Scroll on elements to scale them")
-                .setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+                .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             width / 2,
             15,
             0xFFFFFF

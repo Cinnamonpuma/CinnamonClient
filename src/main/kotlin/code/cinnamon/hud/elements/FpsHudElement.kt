@@ -1,6 +1,7 @@
 package code.cinnamon.hud.elements
 
 import code.cinnamon.gui.CinnamonScreen
+import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
@@ -35,8 +36,7 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
 
         drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2, this.backgroundColor)
 
-        // Change here: show "60 Fps" instead of just "60"
-        val fpsText = Text.literal("$currentFps Fps").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val fpsText = Text.literal("$currentFps Fps").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
         if (this.textShadowEnabled) {
             context.drawText(mc.textRenderer, fpsText, 1, 1, 0x40000000, false)
@@ -107,8 +107,7 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
     }
 
     override fun getWidth(): Int {
-        // Change here: calculate width for "60 Fps" instead of just "60"
-        val text = Text.literal("${mc.currentFps} Fps").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val text = Text.literal("${mc.currentFps} Fps").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         return mc.textRenderer.getWidth(text)
     }
 

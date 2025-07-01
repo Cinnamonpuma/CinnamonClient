@@ -17,7 +17,8 @@ data class ThemeConfig(
     val coreStatusSuccess: Int = 0xFF4caf50.toInt(),
     val coreStatusWarning: Int = 0xFFff9800.toInt(),
     val coreStatusError: Int = 0xFFf44336.toInt(),
-    val enableTextShadow: Boolean = true
+    val enableTextShadow: Boolean = true,
+    val useMinecraftFont: Boolean = false
 )
 
 object ThemeConfigManager {
@@ -42,7 +43,8 @@ object ThemeConfigManager {
                 coreStatusSuccess = CinnamonTheme.coreStatusSuccess,
                 coreStatusWarning = CinnamonTheme.coreStatusWarning,
                 coreStatusError = CinnamonTheme.coreStatusError,
-                enableTextShadow = CinnamonTheme.enableTextShadow
+                enableTextShadow = CinnamonTheme.enableTextShadow,
+                useMinecraftFont = CinnamonTheme.useMinecraftFont
             )
 
             println("[ThemeConfigManager] Preparing to save theme configuration:")
@@ -79,6 +81,7 @@ object ThemeConfigManager {
             CinnamonTheme.coreStatusWarning = config.coreStatusWarning
             CinnamonTheme.coreStatusError = config.coreStatusError
             CinnamonTheme.enableTextShadow = config.enableTextShadow
+            CinnamonTheme.useMinecraftFont = config.useMinecraftFont
             
             CinnamonTheme.updateDependentColors()
             println("[ThemeConfigManager] Theme loaded successfully from ${themeFile.absolutePath}")

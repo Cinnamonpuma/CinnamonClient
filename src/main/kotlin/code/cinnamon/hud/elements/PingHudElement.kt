@@ -1,6 +1,7 @@
 package code.cinnamon.hud.elements
 
 import code.cinnamon.gui.CinnamonScreen
+import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
@@ -35,7 +36,7 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
         
         drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2, this.backgroundColor)
         
-        val pingText = Text.literal("${currentPing}ms").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val pingText = Text.literal("${currentPing}ms").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         
         if (this.textShadowEnabled) { 
             context.drawText(mc.textRenderer, pingText, 1, 1, 0x40000000, false)
@@ -111,7 +112,7 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
     }
     
     override fun getWidth(): Int {
-        val text = Text.literal("${getPing()}ms").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val text = Text.literal("${getPing()}ms").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         return mc.textRenderer.getWidth(text)
     }
     

@@ -41,6 +41,7 @@ object CinnamonTheme {
     var coreStatusWarning = 0xFFff9800.toInt()       
     var coreStatusError = 0xFFf44336.toInt()           
     var enableTextShadow: Boolean = true
+    var useMinecraftFont: Boolean = false
 
     var currentTheme: Theme = Theme.DARK
 
@@ -121,6 +122,7 @@ object CinnamonTheme {
         glassHighlight = 0x20ffffff.toInt()
         glassShadow = 0x40000000.toInt()
         enableTextShadow = true
+        useMinecraftFont = false
     }
     
     fun updateDependentColors() {
@@ -159,4 +161,12 @@ object CinnamonTheme {
     const val BORDER_RADIUS = 4
     const val CARD_PADDING = 16
     const val COMPONENT_SPACING = 8
+
+    fun getCurrentFont(): net.minecraft.util.Identifier {
+        return if (useMinecraftFont) {
+            net.minecraft.util.Identifier.of("minecraft", "default")
+        } else {
+            code.cinnamon.gui.CinnamonScreen.CINNA_FONT
+        }
+    }
 }

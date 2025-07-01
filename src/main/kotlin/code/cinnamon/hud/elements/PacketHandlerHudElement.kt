@@ -5,6 +5,7 @@ import code.cinnamon.hud.HudElementConfig
 import code.cinnamon.gui.utils.GraphicsUtils 
 import code.cinnamon.util.PacketHandlerAPI
 import code.cinnamon.gui.CinnamonScreen
+import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudManager
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
@@ -23,7 +24,6 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private val client: MinecraftClient = MinecraftClient.getInstance()
     private val buttonHeight = 20
     private val buttonMargin = 2
-    private val CINNA_FONT: Identifier = CinnamonScreen.CINNA_FONT
 
     var buttonColor: Int = 0xFF222222.toInt()
     var buttonTextColor: Int = 0xFFFFFFFF.toInt()
@@ -31,7 +31,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     var buttonHoverColor: Int = 0xFF00D0FF.toInt() 
 
     private fun createStyledText(text: String): Text =
-        Text.literal(text).setStyle(Style.EMPTY.withFont(CINNA_FONT))
+        Text.literal(text).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
     private data class HudButton(
         var text: () -> String,

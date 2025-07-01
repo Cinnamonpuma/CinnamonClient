@@ -10,11 +10,9 @@ import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudScreen
 
-class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(Style.EMPTY.withFont(Identifier.of("cinnamon", "cinna")))) {
+
+class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))) {
     
-    companion object {
-        private val CINNA_FONT = Identifier.of("cinnamon", "cinna")
-    }
     
     override fun initializeComponents() {
         val centerX = guiX + guiWidth / 2
@@ -35,7 +33,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             actualButtonsStartY, 
             buttonWidth,
             buttonHeight,
-            Text.literal("Modules").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
+            Text.literal("Modules").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> CinnamonGuiManager.openModulesScreen() },
             false
         ))
@@ -45,7 +43,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             actualButtonsStartY + spacing, 
             buttonWidth,
             buttonHeight,
-            Text.literal("Keybindings").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
+            Text.literal("Keybindings").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> CinnamonGuiManager.openKeybindingsScreen() }
         ))
         
@@ -54,7 +52,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             actualButtonsStartY + spacing * 2,
             buttonWidth,
             buttonHeight,
-            Text.literal("HUD Editor").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
+            Text.literal("HUD Editor").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> client?.setScreen(HudScreen()) }
         ))
         
@@ -63,7 +61,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             actualButtonsStartY + spacing * 3,
             buttonWidth,
             buttonHeight,
-            Text.literal("Theme Manager").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
+            Text.literal("Theme Manager").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> CinnamonGuiManager.openThemeManagerScreen() }
         ))
         
@@ -72,7 +70,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             actualButtonsStartY + spacing * 4,
             buttonWidth,
             buttonHeight,
-            Text.literal("Close").fillStyle(Style.EMPTY.withFont(CINNA_FONT)),
+            Text.literal("Close").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> CinnamonGuiManager.closeCurrentScreen() }
         ))
     }
@@ -86,7 +84,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
     override fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         super.renderFooter(context, mouseX, mouseY, delta)
         
-        val versionText = Text.literal("v1.2 - Minecraft 1.21.5").fillStyle(Style.EMPTY.withFont(CINNA_FONT))
+        val versionText = Text.literal("v1.3 - Minecraft 1.21.5").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val versionWidth = textRenderer.getWidth(versionText)
         context.drawText(
             textRenderer,
@@ -96,7 +94,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             CinnamonTheme.secondaryTextColor,
             CinnamonTheme.enableTextShadow 
         )
-        val statusText = Text.literal("Ready").fillStyle(Style.EMPTY.withFont(CINNA_FONT))
+        val statusText = Text.literal("Ready").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         context.drawText(
             textRenderer,
             statusText,

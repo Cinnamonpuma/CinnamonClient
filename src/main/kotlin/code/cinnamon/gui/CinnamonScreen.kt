@@ -132,7 +132,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
             desiredLogoWidth, desiredLogoHeight
         )
         
-        val titleText = this.title 
+        val titleText = this.title.copy().setStyle(Style.EMPTY.withFont(theme.getCurrentFont()))
         val titleTextWidth = textRenderer.getWidth(titleText)
        
         val titleX = guiX + (guiWidth - titleTextWidth) / 2

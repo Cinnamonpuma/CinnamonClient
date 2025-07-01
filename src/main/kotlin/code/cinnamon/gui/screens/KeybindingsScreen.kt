@@ -39,7 +39,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             getFooterY() + 8,
             60,
             CinnamonTheme.BUTTON_HEIGHT_SMALL,
-            Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> CinnamonGuiManager.openMainMenu() }
         ))
         
@@ -48,7 +48,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             getFooterY() + 8,
             80,
             CinnamonTheme.BUTTON_HEIGHT_SMALL,
-            Text.literal("Reset All").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal("Reset All").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> resetAllKeybindings() }
         ))
         addButton(CinnamonButton(
@@ -56,7 +56,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             getFooterY() + 8,
             80,
             CinnamonTheme.BUTTON_HEIGHT_SMALL,
-            Text.literal("Save").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal("Save").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> saveKeybindings() },
             false
         ))
@@ -73,7 +73,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
 
         context.drawText(
             textRenderer,
-            Text.literal("Click on a key to change it").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal("Click on a key to change it").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             contentX + 15,
             contentY + 20,
             CinnamonTheme.titleColor,
@@ -99,7 +99,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             
             context.drawText(
                 textRenderer,
-                Text.literal(indicatorText).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+                Text.literal(indicatorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
                 indicatorX,
                 indicatorY,
                 CinnamonTheme.titleColor,
@@ -161,7 +161,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val nameColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor
         context.drawText(
             textRenderer,
-            Text.literal(entry.displayName).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal(entry.displayName).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             x + 12,
             y + 8,
             nameColor,
@@ -171,7 +171,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val descColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.secondaryTextColor
         context.drawText(
             textRenderer,
-            Text.literal(entry.description).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal(entry.description).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             x + 12,
             y + 22,
             descColor,
@@ -196,7 +196,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val keyTextColor = if (isListeningToThis) CinnamonTheme.titleColor else CinnamonTheme.primaryTextColor
         context.drawText(
             textRenderer,
-            Text.literal(keyName).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal(keyName).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             keyButtonX + (keyButtonWidth - keyWidth) / 2,
             keyButtonY + 8,
             keyTextColor,

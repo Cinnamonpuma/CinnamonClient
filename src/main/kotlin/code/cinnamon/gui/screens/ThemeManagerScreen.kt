@@ -15,6 +15,11 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     private val itemHeight = 35
     private val maxVisibleItems = 12
 
+    private var textShadowButton: CinnamonButton? = null
+    private var fontToggleButton: CinnamonButton? = null
+    private var backButton: CinnamonButton? = null
+    private var resetButton: CinnamonButton? = null
+
     enum class ColorType(val displayName: String, val currentColor: () -> Int, val setter: (Int) -> Unit) {
         CORE_BACKGROUND_PRIMARY("Primary Background", { CinnamonTheme.coreBackgroundPrimary }, { color ->
             CinnamonTheme.coreBackgroundPrimary = color
@@ -49,52 +54,92 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             CinnamonTheme.updateDependentColors()
         });
     }
+    private fun getListDimensions(): ListDimensions {
+        val listX = guiX + 40
+        val contentY = getContentY()
+        val listY = contentY + 20
+        val listWidth = guiWidth - 80
+        val listHeight = getContentHeight() - (2 * CinnamonTheme.BUTTON_HEIGHT) - 85
+        return ListDimensions(listX, listY, listWidth, listHeight)
+    }
+
+    data class ListDimensions(val x: Int, val y: Int, val width: Int, val height: Int)
 
     override fun initializeComponents() {
         val centerX = guiX + guiWidth / 2
         val contentY = getContentY()
-        val bottomControlsY = contentY + getContentHeight() - 45 
+        val bottomControlsY = contentY + getContentHeight() - 45
         clearButtons()
 
-        
-        val textShadowButtonY = bottomControlsY - CinnamonTheme.BUTTON_HEIGHT - 10 
+        val buttonStartY = bottomControlsY - (CinnamonTheme.BUTTON_HEIGHT * 2) - 20 
+
+
         textShadowButton = CinnamonButton(
-            centerX - 75, 
-            textShadowButtonY,
+            guiX + PADDING, 
+            buttonStartY + 42,
             150,
             CinnamonTheme.BUTTON_HEIGHT,
             getTextShadowButtonText(),
-            { _, _ ->
+            { _, _ -> 
                 CinnamonTheme.enableTextShadow = !CinnamonTheme.enableTextShadow
                 ThemeConfigManager.saveTheme()
-                textShadowButton?.text = getTextShadowButtonText()
+                textShadowButton?.text = getTextShadowButtonText() 
             }
         )
         addButton(textShadowButton!!)
 
-        addButton(CinnamonButton(
-            centerX - 50,
-            bottomControlsY,
+        val fontToggleButtonY = buttonStartY + CinnamonTheme.BUTTON_HEIGHT + 10
+        fontToggleButton = CinnamonButton(
+            guiX + PADDING, 
+            fontToggleButtonY + 42,
+            150,
+            CinnamonTheme.BUTTON_HEIGHT,
+            getFontToggleButtonText(),
+            { mouseX: Double, mouseY: Double -> 
+                CinnamonTheme.useMinecraftFont = !CinnamonTheme.useMinecraftFont
+                ThemeConfigManager.saveTheme()
+                fontToggleButton?.text = getFontToggleButtonText()
+                textShadowButton?.text = getTextShadowButtonText() 
+                backButton?.text = Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+                resetButton?.text = Text.literal("Reset").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+            }
+        )
+        addButton(fontToggleButton!!)
+
+        val backAndResetButtonY = bottomControlsY 
+        backButton = CinnamonButton(
+            centerX - 50, 
+            backAndResetButtonY,
             100,
             CinnamonTheme.BUTTON_HEIGHT,
-            Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> CinnamonGuiManager.openMainMenu() }
-        ))
-        addButton(CinnamonButton(
+        )
+        addButton(backButton!!)
+        
+        resetButton = CinnamonButton(
             guiX + guiWidth - PADDING - 100,
-            bottomControlsY,
+            backAndResetButtonY,
             100,
             CinnamonTheme.BUTTON_HEIGHT,
-            Text.literal("Reset").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
-            { _, _ -> resetToDefaults() }
-        ))
+            Text.literal("Reset").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
+            { _, _ -> 
+                this.resetToDefaults() 
+                initializeComponents() 
+            }
+        )
+        addButton(resetButton!!)
     }
 
     private fun getTextShadowButtonText(): Text {
         val status = if (CinnamonTheme.enableTextShadow) "Enabled" else "Disabled"
-        return Text.literal("Text Shadow: $status").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        return Text.literal("Text Shadow: $status").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
     }
-    private var textShadowButton: CinnamonButton? = null
+
+    private fun getFontToggleButtonText(): Text {
+        val fontName = if (CinnamonTheme.useMinecraftFont) "Minecraft" else "Custom"
+        return Text.literal("Font: $fontName").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+    }
 
     override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         val contentY = getContentY()
@@ -102,24 +147,20 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
 
     private fun renderColorList(context: DrawContext, mouseX: Int, mouseY: Int, contentYPos: Int) {
-        val listX = guiX + 40
-        val listY = contentYPos + 20
-        val listWidth = guiWidth - 80
-        val listHeight = getContentHeight() - 170 - CinnamonTheme.BUTTON_HEIGHT - 10
+        val dims = getListDimensions()
+        
+        context.drawBorder(dims.x, dims.y, dims.width, dims.height, CinnamonTheme.borderColor)
 
-
-        context.drawBorder(listX, listY, listWidth, listHeight, CinnamonTheme.borderColor)
-
-        context.enableScissor(listX, listY, listX + listWidth, listY + listHeight)
+        context.enableScissor(dims.x, dims.y, dims.x + dims.width, dims.y + dims.height)
         val colors = ColorType.values()
-        var currentY = listY + 10 - scrollOffset
+        var currentY = dims.y + 10 - scrollOffset
         for ((index, colorType) in colors.withIndex()) {
-            if (currentY > listY + listHeight) break
-            if (currentY + itemHeight < listY) {
+            if (currentY > dims.y + dims.height) break
+            if (currentY + itemHeight < dims.y) {
                 currentY += itemHeight
                 continue
             }
-            renderColorItem(context, colorType, listX + 10, currentY, listWidth - 20, itemHeight - 5, mouseX, mouseY)
+            renderColorItem(context, colorType, dims.x + 10, currentY, dims.width - 20, itemHeight - 5, mouseX, mouseY)
             currentY += itemHeight
         }
         context.disableScissor()
@@ -136,7 +177,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         context.drawBorder(x + 10, y + 5, colorSquareSize, colorSquareSize, 0xFFFFFFFF.toInt())
         context.drawText(
             textRenderer,
-            Text.literal(colorType.displayName).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal(colorType.displayName).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             x + 20 + colorSquareSize,
             y + (height - textRenderer.fontHeight) / 2,
             CinnamonTheme.primaryTextColor,
@@ -146,7 +187,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val hexWidth = textRenderer.getWidth(hexValue)
         context.drawText(
             textRenderer,
-            Text.literal(hexValue).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT)),
+            Text.literal(hexValue).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             x + width - hexWidth - 10,
             y + (height - textRenderer.fontHeight) / 2,
             CinnamonTheme.secondaryTextColor,
@@ -155,22 +196,31 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        val listOuterX = guiX + 40
-        val listOuterY = getContentY() + 20
-        val listContentWidth = guiWidth - 80
-        val listContentHeight = getContentHeight() - 170
-
-        if (mouseX >= listOuterX && mouseX < listOuterX + listContentWidth &&
-            mouseY >= listOuterY && mouseY < listOuterY + listContentHeight) {
+        val dims = getListDimensions()
+        
+        
+        if (mouseX >= dims.x && mouseX < dims.x + dims.width &&
+            mouseY >= dims.y && mouseY < dims.y + dims.height) {
 
             val colors = ColorType.values()
-            val relativeMouseY = mouseY - (listOuterY + 10 - scrollOffset)
-            if (relativeMouseY >= 0) {
-                val clickedIndex = (relativeMouseY / itemHeight).toInt()
+            
+            
+            val listContentY = dims.y + 10 
+            val adjustedMouseY = mouseY + scrollOffset - listContentY
+            
+            if (adjustedMouseY >= 0) {
+                val clickedIndex = (adjustedMouseY / itemHeight).toInt()
+                
+                
                 if (clickedIndex >= 0 && clickedIndex < colors.size) {
-                    val colorType = colors[clickedIndex]
-                    openColorPicker(colorType)
-                    return true
+                    val itemY = listContentY + (clickedIndex * itemHeight) - scrollOffset
+                    
+                    
+                    if (itemY + itemHeight > dims.y && itemY < dims.y + dims.height) {
+                        val colorType = colors[clickedIndex]
+                        openColorPicker(colorType)
+                        return true
+                    }
                 }
             }
         }
@@ -194,17 +244,18 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
-        val listY = getContentY() + 80
-        val listHeight = getContentHeight() - 170
-        if (mouseY >= listY && mouseY < listY + listHeight) {
-            val maxScroll = maxOf(0, ColorType.values().size * itemHeight - listHeight)
+        val dims = getListDimensions()
+        
+        if (mouseY >= dims.y && mouseY < dims.y + dims.height) {
+            val totalContentHeight = ColorType.values().size * itemHeight + 20 
+            val maxScroll = maxOf(0, totalContentHeight - dims.height)
             scrollOffset = (scrollOffset - verticalAmount.toInt() * 20).coerceIn(0, maxScroll)
             return true
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 
-    private fun resetToDefaults() {
+    private fun resetToDefaults() { 
         CinnamonTheme.resetToDefaults()
     }
 
@@ -219,7 +270,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
 
     override fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         super.renderFooter(context, mouseX, mouseY, delta)
-        val statusText = Text.literal("Theme Editor").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val statusText = Text.literal("Theme Editor").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         context.drawText(
             textRenderer,
             statusText,
@@ -228,7 +279,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             CinnamonTheme.infoColor,
             CinnamonTheme.enableTextShadow 
         )
-        val colorCountText = Text.literal("${ColorType.values().size} Colors Available").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val colorCountText = Text.literal("${ColorType.values().size} Colors Available").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val colorCountWidth = textRenderer.getWidth(colorCountText)
         context.drawText(
             textRenderer,
@@ -239,7 +290,11 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             CinnamonTheme.enableTextShadow 
         )
     }
+    
     private fun clearButtons() {
-        textShadowButton = null 
+        textShadowButton = null
+        fontToggleButton = null
+        backButton = null
+        resetButton = null
     }
 }

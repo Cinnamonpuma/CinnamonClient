@@ -1,6 +1,7 @@
 package code.cinnamon.hud.elements
 
 import code.cinnamon.gui.CinnamonScreen
+import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudElement
 import code.cinnamon.hud.HudElementConfig
 import net.minecraft.client.MinecraftClient
@@ -57,7 +58,7 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
 
         drawRoundedRect(context, x, y, keySize, keySize, cornerRadius, currentBgColor)
 
-        val keyText = Text.literal(key).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val keyText = Text.literal(key).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val currentTextColor = if (pressed) {
             this.keypressedTextColor
         } else {

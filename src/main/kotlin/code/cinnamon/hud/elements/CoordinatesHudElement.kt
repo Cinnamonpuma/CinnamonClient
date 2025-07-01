@@ -1,6 +1,7 @@
 package code.cinnamon.hud.elements
 
 import code.cinnamon.gui.CinnamonScreen
+import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
@@ -8,12 +9,12 @@ import net.minecraft.text.Style
 import net.minecraft.text.Text
 import kotlin.math.floor
 import kotlin.math.min
-import kotlin.math.max // Added import for max function
+import kotlin.math.max 
 
 class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
     private val cornerRadius = 6
-    private val lineSpacing = 2 // Added lineSpacing property
+    private val lineSpacing = 2 
 
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
@@ -21,9 +22,9 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         val player = mc.player ?: return
         val pos = player.pos
 
-        val xText = Text.literal(String.format("X: %.1f", pos.x)).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
-        val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
-        val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val xText = Text.literal(String.format("X: %.1f", pos.x)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+        val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+        val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
         context.matrices.push()
         context.matrices.scale(scale, scale, 1.0f)
@@ -35,7 +36,7 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
              drawRoundedBackground(context, -padding, -padding, getWidth() + padding * 2, getHeight() + padding * 2, this.backgroundColor)
         }
 
-        val textYOffset = 0 // Initial Y offset for the first line
+        val textYOffset = 0
 
         if (this.textShadowEnabled) {
             context.drawText(mc.textRenderer, xText, 1, textYOffset + 1, 0x40000000, false)
@@ -92,15 +93,15 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
     override fun getWidth(): Int {
         val player = mc.player ?: return 0
         val pos = player.pos
-        val xText = Text.literal(String.format("X: %.1f", pos.x)).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
-        val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
-        val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val xText = Text.literal(String.format("X: %.1f", pos.x)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+        val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+        val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         
         return maxOf(mc.textRenderer.getWidth(xText), mc.textRenderer.getWidth(yText), mc.textRenderer.getWidth(zText))
     }
 
     override fun getHeight(): Int {
-        return (mc.textRenderer.fontHeight * 3) + (lineSpacing * 2) // 3 lines of text + 2 lines of spacing
+        return (mc.textRenderer.fontHeight * 3) + (lineSpacing * 2) 
     }
 
     override fun getName(): String = "Coordinates"

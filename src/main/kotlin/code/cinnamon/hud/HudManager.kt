@@ -1,6 +1,6 @@
 package code.cinnamon.hud
 
-import code.cinnamon.hud.elements.CoordinatesHudElement // Add this import
+import code.cinnamon.hud.elements.CoordinatesHudElement 
 import code.cinnamon.hud.elements.FpsHudElement
 import code.cinnamon.hud.elements.PingHudElement
 import code.cinnamon.hud.elements.KeystrokesHudElement
@@ -10,6 +10,7 @@ import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
 import code.cinnamon.hud.HudScreen
 import code.cinnamon.gui.CinnamonScreen
+import code.cinnamon.gui.theme.CinnamonTheme
 import net.minecraft.text.Style
 import net.minecraft.text.Text
 import kotlinx.serialization.json.Json
@@ -51,9 +52,9 @@ object HudManager {
     fun init() {
         registerHudElement(FpsHudElement(10f, 10f))
         registerHudElement(PingHudElement(10f, 30f))
-        registerHudElement(CoordinatesHudElement(20f, 60f)) // Add this line
-        registerHudElement(KeystrokesHudElement(10f, 80f)) // Adjusted Y for Keystrokes
-        registerHudElement(packetHandlerHudElement) // packetHandlerHudElement Y might also need adjustment depending on its default
+        registerHudElement(CoordinatesHudElement(20f, 60f)) 
+        registerHudElement(KeystrokesHudElement(10f, 80f)) 
+        registerHudElement(packetHandlerHudElement) 
         loadHudConfig()
     }
 
@@ -70,7 +71,7 @@ object HudManager {
 
     private fun renderEditModeOverlay(context: DrawContext) {
         val mc = MinecraftClient.getInstance()
-        val text = Text.literal("HUD Edit Mode - ESC to exit").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))
+        val text = Text.literal("HUD Edit Mode - ESC to exit").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val x = (mc.window.scaledWidth - mc.textRenderer.getWidth(text)) / 2
         context.drawText(mc.textRenderer, text, x, 5, 0xFFFFFF, true)
     }
