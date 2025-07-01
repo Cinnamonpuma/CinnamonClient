@@ -56,10 +56,12 @@ class CinnamonButton(
 
         drawRoundedRect(context, _x, _y, _width, _height, backgroundColor)
 
-
-        if (isHovered || isPressed) {
-            drawBorder(context, _x, _y, _width, _height, CinnamonTheme.accentColor)
+        val currentOutlineColor = if (isHovered || isPressed) {
+            CinnamonTheme.buttonOutlineHoverColor
+        } else {
+            CinnamonTheme.buttonOutlineColor
         }
+        drawBorder(context, _x, _y, _width, _height, currentOutlineColor)
 
         val textWidth = client.textRenderer.getWidth(text)
         val textX = _x + (_width - textWidth) / 2

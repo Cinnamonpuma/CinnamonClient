@@ -32,7 +32,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     internal val expandedStates = mutableMapOf<String, Boolean>()
     private val baseModuleHeight = 60
     private val settingsModuleHeight = 200
-    private val settingsHudElementHeight = 148
+    private val settingsHudElementHeight = 148 + 14 
     private val moduleSpacing = 8
     private val settingsAreaHeight = 120
 
@@ -272,11 +272,18 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             drawCheckbox(context, x, currentY, "Button Text Shadow", element.buttonTextShadowEnabled) 
             currentY += 14
 
-            val buttonHoverColorText = "Button Hover: ${element.buttonHoverColor.toRGBAHexString()}"
-            context.drawText(textRenderer, Text.literal(buttonHoverColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow) 
+            val buttonHoverColorText = "Hover Outline: ${element.buttonHoverColor.toRGBAHexString()}"
+            context.drawText(textRenderer, Text.literal(buttonHoverColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
             val setButtonHoverColorButtonText = "[Set]"
             val setButtonHoverColorButtonWidth = textRenderer.getWidth(setButtonHoverColorButtonText)
-            context.drawText(textRenderer, Text.literal(setButtonHoverColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x + width - setButtonHoverColorButtonWidth, currentY, CinnamonTheme.accentColor, false) 
+            context.drawText(textRenderer, Text.literal(setButtonHoverColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x + width - setButtonHoverColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
+            currentY += 14
+
+            val buttonOutlineColorText = "Button Outline: ${element.buttonOutlineColor.toRGBAHexString()}"
+            context.drawText(textRenderer, Text.literal(buttonOutlineColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
+            val setButtonOutlineColorButtonText = "[Set]"
+            val setButtonOutlineColorButtonWidth = textRenderer.getWidth(setButtonOutlineColorButtonText)
+            context.drawText(textRenderer, Text.literal(setButtonOutlineColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x + width - setButtonOutlineColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
             currentY += 14
         }
     }
@@ -463,7 +470,27 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 ))
                 return true
             }
-            currentY += 14 
+            currentY += 14
+
+            val setButtonOutlineColorButtonText = "[Set]"
+            val setButtonOutlineColorButtonWidth = textRenderer.getWidth(setButtonOutlineColorButtonText)
+            val setButtonOutlineColorButtonX = settingsX + settingsWidth - setButtonOutlineColorButtonWidth
+            val setButtonOutlineColorButtonY = currentY
+            if (mouseX >= setButtonOutlineColorButtonX && mouseX < setButtonOutlineColorButtonX + setButtonOutlineColorButtonWidth &&
+                mouseY >= setButtonOutlineColorButtonY && mouseY < setButtonOutlineColorButtonY + textElementHeight
+            ) {
+                CinnamonGuiManager.openScreen(ColorPickerScreen(
+                    initialColor = element.buttonOutlineColor,
+                    onPick = { pickedColor ->
+                        element.buttonOutlineColor = pickedColor
+                        HudManager.markChangesForSave()
+                        CinnamonGuiManager.openScreen(this)
+                    },
+                    onCancel = { CinnamonGuiManager.openScreen(this) }
+                ))
+                return true
+            }
+            currentY += 14
         }
         return false
     }

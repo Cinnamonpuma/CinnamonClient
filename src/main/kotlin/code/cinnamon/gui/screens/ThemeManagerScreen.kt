@@ -52,6 +52,13 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         CORE_STATUS_ERROR("Error Color", { CinnamonTheme.coreStatusError }, { color ->
             CinnamonTheme.coreStatusError = color
             CinnamonTheme.updateDependentColors()
+        }),
+        BUTTON_OUTLINE_COLOR("Button Outline", { CinnamonTheme.buttonOutlineColor }, { color ->
+            CinnamonTheme.buttonOutlineColor = color
+
+        }),
+        BUTTON_OUTLINE_HOVER_COLOR("Button Hover Outline", { CinnamonTheme.buttonOutlineHoverColor }, { color ->
+            CinnamonTheme.buttonOutlineHoverColor = color
         });
     }
     private fun getListDimensions(): ListDimensions {

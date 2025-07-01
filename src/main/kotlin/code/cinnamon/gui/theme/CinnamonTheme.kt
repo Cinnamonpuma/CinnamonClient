@@ -60,6 +60,10 @@ object CinnamonTheme {
     var buttonBackgroundPressed: Int = 0
     var moduleEnabledColor: Int = 0
 
+
+    var buttonOutlineColor: Int = 0xFF808080.toInt()
+    var buttonOutlineHoverColor: Int = 0xFFA0A0A0.toInt() 
+
     val guiBackground: Int get() = coreBackgroundPrimary
     val backgroundTop: Int get() = coreBackgroundPrimary 
     val backgroundBottom: Int get() = adjustBrightness(coreBackgroundPrimary, -0.05f)
@@ -107,6 +111,9 @@ object CinnamonTheme {
         coreBorder = theme.colors.coreBorder
         coreButtonBackground = theme.colors.coreButtonBackgroundDef
 
+        buttonOutlineColor = coreAccentPrimary 
+        buttonOutlineHoverColor = adjustBrightness(coreAccentPrimary, -0.1f)
+
         updateDependentColors()
     }
     
@@ -123,6 +130,8 @@ object CinnamonTheme {
         glassShadow = 0x40000000.toInt()
         enableTextShadow = true
         useMinecraftFont = false
+        buttonOutlineColor = currentTheme.colors.coreAccentPrimary
+        buttonOutlineHoverColor = adjustBrightness(currentTheme.colors.coreAccentPrimary, -0.1f)
     }
     
     fun updateDependentColors() {

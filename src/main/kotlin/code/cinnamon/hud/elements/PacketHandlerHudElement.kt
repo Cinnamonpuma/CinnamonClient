@@ -29,6 +29,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     var buttonTextColor: Int = 0xFFFFFFFF.toInt()
     var buttonTextShadowEnabled: Boolean = true
     var buttonHoverColor: Int = 0xFF00D0FF.toInt() 
+    var buttonOutlineColor: Int = CinnamonTheme.buttonOutlineColor 
 
     private fun createStyledText(text: String): Text =
         Text.literal(text).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
@@ -89,6 +90,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         if (config.buttonTextColor != null) buttonTextColor = config.buttonTextColor
         if (config.buttonTextShadowEnabled != null) buttonTextShadowEnabled = config.buttonTextShadowEnabled
         config.buttonHoverColor?.let { this.buttonHoverColor = it }
+        config.buttonOutlineColor?.let { this.buttonOutlineColor = it }
         this.setX(config.x)
         this.setY(config.y)
         this.scale = config.scale
@@ -111,7 +113,8 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
             buttonColor = buttonColor,
             buttonTextColor = buttonTextColor,
             buttonTextShadowEnabled = buttonTextShadowEnabled,
-            buttonHoverColor = this.buttonHoverColor
+            buttonHoverColor = this.buttonHoverColor,
+            buttonOutlineColor = this.buttonOutlineColor
         )
     }
 
@@ -169,17 +172,22 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
             x.toFloat(), y.toFloat(),
             width.toFloat(), height.toFloat(),
             scaledRadius,
-            buttonColor 
+            buttonColor
         )
-        if (hovered) {
-            GraphicsUtils.drawRoundedRectBorder(
-                context,
-                x.toFloat(), y.toFloat(),
-                width.toFloat(), height.toFloat(),
-                scaledRadius,
-                this.buttonHoverColor 
-            )
+
+        val currentOutlineColor = if (hovered) {
+            this.buttonHoverColor 
+        } else {
+            this.buttonOutlineColor
         }
+
+        GraphicsUtils.drawRoundedRectBorder(
+            context,
+            x.toFloat(), y.toFloat(),
+            width.toFloat(), height.toFloat(),
+            scaledRadius,
+            currentOutlineColor
+        )
 
         val matrices = context.matrices
         matrices.push()
