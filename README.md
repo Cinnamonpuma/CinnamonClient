@@ -7,7 +7,7 @@
 
 **CinnamonClient** is a modular and performance-focused Minecraft 1.21.5 client mod for Fabric. It offers a clean, customizable HUD system, a modern UI framework, and advanced developer utilities—built entirely in Kotlin.
 
-Designed for both users and mod developers, CinnamonClient emphasizes clarity, extensibility, and real-time control.
+Designed for users, CinnamonClient emphasizes clarity, extensibility, and real-time control.
 
 ---
 
@@ -16,7 +16,6 @@ Designed for both users and mod developers, CinnamonClient emphasizes clarity, e
 - Lightweight and modular architecture
 - Fully customizable HUD with live editing
 - UI toolkit for building polished screens
-- Shader-enhanced interfaces and visuals
 - Packet-level integration and controls
 - Clean Kotlin codebase with minimal dependencies
 
@@ -43,15 +42,13 @@ All modules are toggleable and configurable through the in-game GUI.
 | **HUD Edit Mode**   | Allows drag-and-drop repositioning of all HUD elements. Includes snapping and alignment helpers. |
 | **Fullbright**      | Enables full brightness regardless of lighting conditions. |
 | **Packet Handler**  | Provides packet-layer utilities and powers internal UI interactions. |
-| **CinnamonScreen**  | Base screen class for themed UIs with consistent styling, fonts, and layout support. |
-
 ---
 
 ## Customization
 
 ### Live HUD Editing
 
-Activate **HUD Edit Mode** via the main menu screento move and align modules directly on-screen. Includes edge snapping and alignment guides for precision. Also includes scaling.
+Activate **HUD Edit Mode** via the main menu screen to move and align modules directly on-screen. Includes edge snapping and alignment guides for precision. Also includes scaling.
 
 ### Per-Module Configuration
 
