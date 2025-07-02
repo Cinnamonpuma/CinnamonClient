@@ -1,10 +1,11 @@
 package code.cinnamon.hud
 
-import code.cinnamon.hud.elements.CoordinatesHudElement 
+import code.cinnamon.hud.elements.CoordinatesHudElement
 import code.cinnamon.hud.elements.FpsHudElement
 import code.cinnamon.hud.elements.PingHudElement
 import code.cinnamon.hud.elements.KeystrokesHudElement
 import code.cinnamon.hud.elements.PacketHandlerHudElement
+import code.cinnamon.hud.elements.ArmorHudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
@@ -52,9 +53,10 @@ object HudManager {
     fun init() {
         registerHudElement(FpsHudElement(10f, 10f))
         registerHudElement(PingHudElement(10f, 30f))
-        registerHudElement(CoordinatesHudElement(20f, 60f)) 
-        registerHudElement(KeystrokesHudElement(10f, 80f)) 
-        registerHudElement(packetHandlerHudElement) 
+        registerHudElement(CoordinatesHudElement(20f, 60f))
+        registerHudElement(KeystrokesHudElement(10f, 80f))
+        registerHudElement(packetHandlerHudElement)
+        registerHudElement(ArmorHudElement(10f, 120f)) 
         loadHudConfig()
     }
 

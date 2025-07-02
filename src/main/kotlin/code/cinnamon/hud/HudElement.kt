@@ -20,7 +20,7 @@ abstract class HudElement(
     var isEnabled: Boolean = true
 
     var textColor: Int = 0xFFFFFF 
-    var backgroundColor: Int = 0x80000000.toInt() 
+    var backgroundColor: Int = 0x00000000.toInt()
     var textShadowEnabled: Boolean = true
 
     private var isDragging: Boolean = false
