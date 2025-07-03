@@ -5,56 +5,73 @@
   </tr>
 </table>
 
+**CinnamonClient** is a modular and performance-focused Minecraft 1.21.5 client mod for Fabric. It offers a clean, customizable HUD system, a modern UI framework, and advanced developer utilities—built entirely in Kotlin.
 
-**CinnamonClient** is a modular and customizable Minecraft 1.21.5 Fabric client mod focused on providing a lightweight and extensible framework for player-centric HUDs, UI utilities, shaders, and packet-level control.
-
-It’s built from the ground up with **Kotlin**, **Mixin**, and **Fabric**, aiming to offer a dev-friendly experience while giving users fine-tuned control over their in-game interface.
-
----
-
-## 🔧 Core Features
-
-- 🎯 **Modular HUD System** – Toggle, move, and configure individual HUD elements in real time.
-- 🎨 **Shader-Enhanced GUI** – Background shader support to elevate UI visuals.
-- 🧰 **Custom UI Toolkit** – Reusable buttons, screen helpers, and widget utilities.
-- 📦 **Ui Utils Rip Off** – Interact with Minecraft’s packet layer directly.
-- ⚡ **Built for Performance** – Minimal dependencies and clean Kotlin architecture.
+Designed for users, CinnamonClient emphasizes clarity, extensibility, and real-time control.
 
 ---
 
-## 🧩 Modules Overview
+## Overview
 
-All modules are fully toggleable and configurable through the in-game GUI.
-
-### 📊 HUD Modules
-| Module         | Description |
-|----------------|-------------|
-| `Keystrokes`   | Renders WASD/mouse buttons visually. Supports custom key mappings, colors, and layout. |
-| `FPS Display`  | Shows your current FPS with customizable formatting, color, and position. |
-| `Ping Display` | Renders ping to the server or localhost in SP. Custom position and color scaling. |
-
-### 🛠️ UI Tools & Modules
-| Module             | Description |
-|--------------------|-------------|
-| `HUD Edit Mode`    | Enter edit mode with `ESC` or bound key to drag & place modules. |
-| `Packet Handler`    | Backing module to power screen interactions, button injection, styling. |
-| `CinnamonScreen`   | Base class for creating styled screens with consistent theming and fonts. |
-
-## 🎨 Customization
-
-CinnamonClient puts **you** in control.
-
-### 🧩 Drag-and-Drop HUD
-- Use the **HUD Edit Mode** to reposition any module.
-- Snapping and alignment helpers ensure clean layouts.
-- Press `ESC` to exit layout mode.
-
-### 🎛️ Per-Module Settings
-- Each module offers individual settings in the GUI:
-  - Font & size
-  - Colors
-  - Positioning
-  
+- Lightweight and modular architecture
+- Fully customizable HUD with live editing
+- UI toolkit for building polished screens
+- Packet-level integration and controls
+- Clean Kotlin codebase with minimal dependencies
 
 ---
-All coded my me - Cinnamonpuma
+
+## Core Modules
+
+All modules are toggleable and configurable through the in-game GUI.
+
+### HUD Elements
+
+| Name              | Description |
+|-------------------|-------------|
+| **Keystrokes**    | Visualizes input (WASD, mouse buttons). Supports layout customization, remapping, and color control. |
+| **FPS Display**   | Displays current frames per second. Format, color, and position are configurable. |
+| **Ping Display**  | Shows your latency to the server or local host. Adjustable style and scaling. |
+| **Armor HUD**     | Renders armor icons and durability. Layout and positioning are fully customizable. |
+| **Coordinates HUD** | Displays player's X, Y, Z coordinates. Supports axis labeling, formatting, and screen placement. |
+
+### Utility Modules
+
+| Name                | Description |
+|---------------------|-------------|
+| **HUD Edit Mode**   | Allows drag-and-drop repositioning of all HUD elements. Includes snapping and alignment helpers. |
+| **Fullbright**      | Enables full brightness regardless of lighting conditions. |
+| **Packet Handler**  | Provides packet-layer utilities and powers internal UI interactions. |
+---
+
+## Customization
+
+### Live HUD Editing
+
+Activate **HUD Edit Mode** via the main menu screen to move and align modules directly on-screen. Includes edge snapping and alignment guides for precision. Also includes scaling.
+
+### Per-Module Configuration
+
+Each module includes dedicated settings via the GUI:
+
+- Scaling
+- Color customization
+- Screen positioning
+
+---
+
+## Development
+
+CinnamonClient is built using:
+
+- **Kotlin** — clean syntax and expressive language features
+- **Fabric** — lightweight and widely supported modding framework
+- **Mixin** — powerful method injection for low-level control
+
+Its architecture is designed for easy module creation and clean UI logic separation.
+
+---
+
+## Author
+
+All code is written by **Cinnamonpuma**. For inquiries, contributions, or custom builds, contact via GitHub or Discord.
