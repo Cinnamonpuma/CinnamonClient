@@ -17,10 +17,11 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!isEnabled || mc.player == null) return
 
-        context.matrices.push()
-        context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
-
+        val scaledX = (getX() / scale).toInt()
+        val scaledY = (getY() / scale).toInt()
+        // val width = getWidth() // getWidth() is already available via this.getWidth() or super.getWidth()
+        // val height = getHeight() // getHeight() is already available via this.getHeight() or super.getHeight()
+        // val padding = 6 // padding is already a class member
 
         val armorSlotsInDisplayOrder = listOf(
             EquipmentSlot.HEAD,
@@ -29,28 +30,27 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
             EquipmentSlot.FEET
         )
 
-        var currentY = 0
+        var currentRelativeY = 0
 
         for (slot in armorSlotsInDisplayOrder) {
             val itemStack = mc.player!!.getEquippedStack(slot)
             if (itemStack.isEmpty) continue
 
-            val itemHeight = 16 
+            val itemHeight = 16
             val textHeight = mc.textRenderer.fontHeight
-            val elementHeight = itemHeight 
+            val elementHeight = itemHeight
 
+            // Adjust drawing coordinates by adding scaledX and scaledY
             drawRoundedBackground(
                 context,
-                -padding, 
-                currentY - padding, 
-                getWidth() + padding * 2, 
-                elementHeight + padding * 2, 
+                scaledX - padding,
+                scaledY + currentRelativeY - padding,
+                getWidth() + padding * 2,
+                elementHeight + padding * 2,
                 this.backgroundColor
             )
 
-
-            context.drawItem(itemStack, 0, currentY) 
-
+            context.drawItem(itemStack, scaledX, scaledY + currentRelativeY)
 
             val durability = itemStack.maxDamage - itemStack.damage
             val maxDurability = itemStack.maxDamage
@@ -60,24 +60,23 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
                 Text.literal("").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
             }
 
-            val textX = 16 + padding 
-
-            val textY = currentY + (itemHeight - textHeight) / 2 + 2
-
+            val relativeTextX = 16 + padding
+            val textX = scaledX + relativeTextX
+            
+            val relativeTextY = currentRelativeY + (itemHeight - textHeight) / 2 + 2
+            val textY = scaledY + relativeTextY
 
             if (this.textShadowEnabled) {
                 context.drawText(mc.textRenderer, durabilityText, textX + 1, textY + 1, 0x40000000, false)
             }
             context.drawText(mc.textRenderer, durabilityText, textX, textY, this.textColor, false)
             
-
-            currentY += elementHeight + padding 
+            currentRelativeY += elementHeight + padding
         }
-
-        context.matrices.pop()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {
+        // Pass scaled coordinates directly to drawRoundedRect
         drawRoundedRect(context, x, y, width, height, cornerRadius, backgroundColor)
     }
 

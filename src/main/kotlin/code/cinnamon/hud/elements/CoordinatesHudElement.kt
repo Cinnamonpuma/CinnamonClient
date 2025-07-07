@@ -26,31 +26,32 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
-        context.matrices.push()
-        context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
-        
-        val padding = 2
-        
+        val scaledX = (getX() / scale).toInt()
+        val scaledY = (getY() / scale).toInt()
+        // val width = getWidth() // Available via this.getWidth()
+        // val height = getHeight() // Available via this.getHeight()
+        val padding = 2 // This element uses a specific padding for its background
+
         if (backgroundColor != 0) {
-             drawRoundedBackground(context, -padding, -padding, getWidth() + padding * 2, getHeight() + padding * 2, this.backgroundColor)
+            // Add scaledX and scaledY to the background drawing coordinates
+            drawRoundedBackground(context, scaledX - padding, scaledY - padding, getWidth() + padding * 2, getHeight() + padding * 2, this.backgroundColor)
         }
 
-        val textYOffset = 0
+        val relativeTextYOffset = 0
 
+        // Add scaledX and scaledY to all text drawing coordinates
         if (this.textShadowEnabled) {
-            context.drawText(mc.textRenderer, xText, 1, textYOffset + 1, 0x40000000, false)
-            context.drawText(mc.textRenderer, yText, 1, textYOffset + mc.textRenderer.fontHeight + lineSpacing + 1, 0x40000000, false)
-            context.drawText(mc.textRenderer, zText, 1, textYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2 + 1, 0x40000000, false)
+            context.drawText(mc.textRenderer, xText, scaledX + 1, scaledY + relativeTextYOffset + 1, 0x40000000, false)
+            context.drawText(mc.textRenderer, yText, scaledX + 1, scaledY + relativeTextYOffset + mc.textRenderer.fontHeight + lineSpacing + 1, 0x40000000, false)
+            context.drawText(mc.textRenderer, zText, scaledX + 1, scaledY + relativeTextYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2 + 1, 0x40000000, false)
         }
-        context.drawText(mc.textRenderer, xText, 0, textYOffset, this.textColor, false)
-        context.drawText(mc.textRenderer, yText, 0, textYOffset + mc.textRenderer.fontHeight + lineSpacing, this.textColor, false)
-        context.drawText(mc.textRenderer, zText, 0, textYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2, this.textColor, false)
-
-        context.matrices.pop()
+        context.drawText(mc.textRenderer, xText, scaledX, scaledY + relativeTextYOffset, this.textColor, false)
+        context.drawText(mc.textRenderer, yText, scaledX, scaledY + relativeTextYOffset + mc.textRenderer.fontHeight + lineSpacing, this.textColor, false)
+        context.drawText(mc.textRenderer, zText, scaledX, scaledY + relativeTextYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2, this.textColor, false)
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {
+        // Pass scaled coordinates directly to drawRoundedRect
         drawRoundedRect(context, x, y, width, height, cornerRadius, backgroundColor)
     }
 

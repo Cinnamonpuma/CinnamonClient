@@ -29,17 +29,18 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
 
         updateKeyStates()
 
-        context.matrices.push()
-        context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
+        val scaledX = (getX() / scale).toInt()
+        val scaledY = (getY() / scale).toInt()
+        // val width = getWidth() // Not directly used in the same way as other elements for a single background
+        // val height = getHeight() // Not directly used in the same way
+        // val padding = 6 // Not applicable here due to composite nature
 
-        val wX = keySize + spacing
-        drawKey(context, "W", wX, 0, wPressed)
-        drawKey(context, "A", 0, keySize + spacing, aPressed)
-        drawKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
-        drawKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
-
-        context.matrices.pop()
+        // Adjust coordinates passed to drawKey
+        val wRelativeX = keySize + spacing
+        drawKey(context, "W", scaledX + wRelativeX, scaledY + 0, wPressed)
+        drawKey(context, "A", scaledX + 0, scaledY + keySize + spacing, aPressed)
+        drawKey(context, "S", scaledX + keySize + spacing, scaledY + keySize + spacing, sPressed)
+        drawKey(context, "D", scaledX + (keySize + spacing) * 2, scaledY + keySize + spacing, dPressed)
     }
 
     private fun updateKeyStates() {

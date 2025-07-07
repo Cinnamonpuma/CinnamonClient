@@ -6,7 +6,7 @@ import net.minecraft.util.Identifier
 import net.minecraft.client.gl.RenderPipelines
 
 class Background {
-    private val backgroundImage = Identifier.of("cinnamon", "textures/gui/Background.png")
+    private val backgroundImage = Identifier.of("cinnamon", "textures/gui/background.png")
 
     fun render(context: DrawContext, width: Int, height: Int) {
         context.drawTexture(

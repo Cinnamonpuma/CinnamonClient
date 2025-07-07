@@ -26,28 +26,27 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
         }
         pingChangeAnimation = maxOf(0f, pingChangeAnimation - tickDelta * 0.1f)
         
-        context.matrices.push()
-        context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
-        
+        val scaledX = (getX() / scale).toInt()
+        val scaledY = (getY() / scale).toInt()
         val width = getWidth()
         val height = getHeight()
-        val padding = 6
+        val padding = 6 // This element uses the example padding value
         
-        drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2, this.backgroundColor)
+        // Adjust background drawing coordinates
+        drawRoundedBackground(context, scaledX - padding, scaledY - padding, width + padding * 2, height + padding * 2, this.backgroundColor)
         
         val pingText = Text.literal("${currentPing}ms").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         
+        // Adjust text drawing coordinates
         if (this.textShadowEnabled) { 
-            context.drawText(mc.textRenderer, pingText, 1, 1, 0x40000000, false)
+            context.drawText(mc.textRenderer, pingText, scaledX + 1, scaledY + 1, 0x40000000, false)
         }
         
-        context.drawText(mc.textRenderer, pingText, 0, 0, this.textColor, false)
-        
-        context.matrices.pop()
+        context.drawText(mc.textRenderer, pingText, scaledX, scaledY, this.textColor, false)
     }
     
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {
+        // Pass scaled coordinates directly
         drawRoundedRect(context, x, y, width, height, cornerRadius, backgroundColor)
     }
     
