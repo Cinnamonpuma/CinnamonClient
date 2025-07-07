@@ -7,7 +7,7 @@ import net.minecraft.text.Text
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.gui.theme.CinnamonTheme
 import net.minecraft.util.Identifier
-import net.minecraft.client.render.RenderLayer
+import net.minecraft.client.gl.RenderPipelines
 import kotlin.math.max
 import kotlin.math.min
 
@@ -124,7 +124,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         val logoY = guiY + (HEADER_HEIGHT - desiredLogoHeight) / 2 
 
         context.drawTexture(
-            RenderLayer::getGuiTextured,
+            RenderPipelines.GUI_TEXTURED,
             LOGO_TEXTURE, 
             logoX, logoY, 
             0f, 0f, 
