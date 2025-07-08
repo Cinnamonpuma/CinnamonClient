@@ -14,7 +14,7 @@ class ColorPickerScreen(
 ) : CinnamonScreen(Text.literal("Color Picker").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
 
     private val pickerWidth = 300
-    private val pickerHeight = 370
+    private val pickerHeight = 320
     private var pickerX = 0
     private var pickerY = 0
 
@@ -40,9 +40,7 @@ class ColorPickerScreen(
     }
 
     override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-
         context.fill(0, 0, width, height, 0xC0000000.toInt())
-
         context.fill(pickerX, pickerY, pickerX + pickerWidth, pickerY + pickerHeight, 0xF0202020.toInt())
         context.drawBorder(pickerX, pickerY, pickerWidth, pickerHeight, CinnamonTheme.accentColor)
 
@@ -57,27 +55,37 @@ class ColorPickerScreen(
             CinnamonTheme.enableTextShadow 
         )
 
-        val wheelSize = 180
-        val wheelX = pickerX + (pickerWidth - wheelSize) / 2
-        val wheelY = pickerY + 35
-        renderColorWheel(context, wheelX, wheelY, wheelSize)
-
+        val sliderWidth = pickerWidth - 40
         val sliderHeight = 20
-        val brightnessSliderY = wheelY + wheelSize + 16
-        renderBrightnessSlider(context, pickerX + 20, brightnessSliderY, pickerWidth - 40, sliderHeight)
+        val sliderX = pickerX + 20
+        var currentY = pickerY + 35
 
-        val alphaSliderY = brightnessSliderY + sliderHeight + 12
-        renderAlphaSlider(context, pickerX + 20, alphaSliderY, pickerWidth - 40, sliderHeight)
+        // Hue slider (rainbow gradient)
+        renderHueSlider(context, sliderX, currentY, sliderWidth, sliderHeight)
+        currentY += sliderHeight + 16
 
-        val previewBoxY = alphaSliderY + sliderHeight + 18
-        renderColorPreview(context, pickerX + 20, previewBoxY, pickerWidth - 40, 32)
+        // Saturation slider (white to current hue)
+        renderSaturationSlider(context, sliderX, currentY, sliderWidth, sliderHeight)
+        currentY += sliderHeight + 16
 
+        // Brightness slider (black to current color)
+        renderBrightnessSlider(context, sliderX, currentY, sliderWidth, sliderHeight)
+        currentY += sliderHeight + 16
+
+        // Alpha slider (transparent to opaque)
+        renderAlphaSlider(context, sliderX, currentY, sliderWidth, sliderHeight)
+        currentY += sliderHeight + 20
+
+        // Color preview
+        renderColorPreview(context, sliderX, currentY, sliderWidth, 40)
+        currentY += 50
+
+        // Buttons
         val buttonWidth = 80
         val buttonSpacing = 24
         val totalButtonWidth = buttonWidth * 2 + buttonSpacing
         val buttonY = pickerY + pickerHeight - 32
         val buttonStartX = pickerX + (pickerWidth - totalButtonWidth) / 2
-
 
         val applyHovered = mouseX in buttonStartX until (buttonStartX + buttonWidth) &&
             mouseY in buttonY until (buttonY + 30)
@@ -93,6 +101,7 @@ class ColorPickerScreen(
             0xFFFFFFFF.toInt(),
             CinnamonTheme.enableTextShadow 
         )
+
         val cancelX = buttonStartX + buttonWidth + buttonSpacing
         val cancelHovered = mouseX in cancelX until (cancelX + buttonWidth) &&
             mouseY in buttonY until (buttonY + 30)
@@ -110,51 +119,71 @@ class ColorPickerScreen(
         )
     }
 
-    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        super.render(context, mouseX, mouseY, delta)
-        renderContent(context, mouseX, mouseY, delta)
+    private fun renderHueSlider(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
+        // Draw hue gradient using vertical stripes (much more efficient)
+        val stripeWidth = 4
+        for (i in 0 until width step stripeWidth) {
+            val hueValue = (i.toFloat() / width) * 360f
+            val color = hsvToRgb(hueValue, 1f, 1f)
+            val endX = minOf(x + i + stripeWidth, x + width)
+            context.fill(x + i, y, endX, y + height, color)
+        }
+        
+        context.drawBorder(x, y, width, height, CinnamonTheme.borderColor)
+        
+        // Draw handle
+        val handleX = x + (hue / 360f * width).toInt() - 2
+        context.fill(handleX, y - 2, handleX + 4, y + height + 2, 0xFFFFFFFF.toInt())
+        context.drawBorder(handleX - 1, y - 3, 6, height + 4, 0xFF000000.toInt())
+        
+        // Label
+        context.drawText(textRenderer, Text.literal("Hue"), x, y - 12, CinnamonTheme.primaryTextColor, false)
     }
 
-    private fun renderColorWheel(context: DrawContext, x: Int, y: Int, size: Int) {
-        val centerX = x + size / 2
-        val centerY = y + size / 2
-        val radius = size / 2 - 1
-
-        for (dy in -radius..radius) {
-            for (dx in -radius..radius) {
-                val dist = sqrt((dx * dx + dy * dy).toDouble())
-                if (dist <= radius) {
-                    val angle = atan2(dy.toDouble(), dx.toDouble())
-                    val hue = ((Math.toDegrees(angle) + 360) % 360).toFloat()
-                    val sat = (dist / radius).toFloat()
-                    val color = hsvToRgb(hue, sat, brightness)
-                    context.fill(centerX + dx, centerY + dy, centerX + dx + 1, centerY + dy + 1, color)
-                }
-            }
+    private fun renderSaturationSlider(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
+        // Draw saturation gradient using vertical stripes
+        val stripeWidth = 4
+        for (i in 0 until width step stripeWidth) {
+            val satValue = i.toFloat() / width
+            val color = hsvToRgb(hue, satValue, brightness)
+            val endX = minOf(x + i + stripeWidth, x + width)
+            context.fill(x + i, y, endX, y + height, color)
         }
-
-        val selRadius = saturation * radius
-        val selAngle = Math.toRadians(hue.toDouble())
-        val selX = centerX + (cos(selAngle) * selRadius).toInt()
-        val selY = centerY + (sin(selAngle) * selRadius).toInt()
-        context.fill(selX - 6, selY - 6, selX + 6, selY + 6, 0xFFFFFFFF.toInt())
-        context.fill(selX - 4, selY - 4, selX + 4, selY + 4, 0xFF000000.toInt())
-        context.fill(selX - 2, selY - 2, selX + 2, selY + 2, 0xFFFFFFFF.toInt())
+        
+        context.drawBorder(x, y, width, height, CinnamonTheme.borderColor)
+        
+        // Draw handle
+        val handleX = x + (saturation * width).toInt() - 2
+        context.fill(handleX, y - 2, handleX + 4, y + height + 2, 0xFFFFFFFF.toInt())
+        context.drawBorder(handleX - 1, y - 3, 6, height + 4, 0xFF000000.toInt())
+        
+        // Label
+        context.drawText(textRenderer, Text.literal("Saturation"), x, y - 12, CinnamonTheme.primaryTextColor, false)
     }
 
     private fun renderBrightnessSlider(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
-        for (i in 0 until width) {
-            val b = i.toFloat() / width
-            val color = hsvToRgb(hue, saturation, b)
-            context.fill(x + i, y, x + i + 1, y + height, color)
+        // Draw brightness gradient using vertical stripes
+        val stripeWidth = 4
+        for (i in 0 until width step stripeWidth) {
+            val brightValue = i.toFloat() / width
+            val color = hsvToRgb(hue, saturation, brightValue)
+            val endX = minOf(x + i + stripeWidth, x + width)
+            context.fill(x + i, y, endX, y + height, color)
         }
+        
         context.drawBorder(x, y, width, height, CinnamonTheme.borderColor)
+        
+        // Draw handle
         val handleX = x + (brightness * width).toInt() - 2
         context.fill(handleX, y - 2, handleX + 4, y + height + 2, 0xFFFFFFFF.toInt())
         context.drawBorder(handleX - 1, y - 3, 6, height + 4, 0xFF000000.toInt())
+        
+        // Label
+        context.drawText(textRenderer, Text.literal("Brightness"), x, y - 12, CinnamonTheme.primaryTextColor, false)
     }
 
     private fun renderAlphaSlider(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
+        // Draw checkerboard background
         val checkerSize = 8
         for (i in 0 until width step checkerSize) {
             for (j in 0 until height step checkerSize) {
@@ -164,20 +193,31 @@ class ColorPickerScreen(
                 context.fill(x + i, y + j, endX, endY, color)
             }
         }
+        
+        // Draw alpha gradient using vertical stripes
         val baseColor = hsvToRgb(hue, saturation, brightness)
-        for (i in 0 until width) {
-            val alphaVal = i.toFloat() / width
-            val color = (baseColor and 0x00FFFFFF) or ((alphaVal * 255).toInt() shl 24)
-            context.fill(x + i, y, x + i + 1, y + height, color)
+        val stripeWidth = 4
+        for (i in 0 until width step stripeWidth) {
+            val alphaValue = i.toFloat() / width
+            val color = (baseColor and 0x00FFFFFF) or ((alphaValue * 255).toInt() shl 24)
+            val endX = minOf(x + i + stripeWidth, x + width)
+            context.fill(x + i, y, endX, y + height, color)
         }
+        
         context.drawBorder(x, y, width, height, CinnamonTheme.borderColor)
+        
+        // Draw handle
         val handleX = x + (alpha * width).toInt() - 2
         context.fill(handleX, y - 2, handleX + 4, y + height + 2, 0xFFFFFFFF.toInt())
         context.drawBorder(handleX - 1, y - 3, 6, height + 4, 0xFF000000.toInt())
+        
+        // Label
+        context.drawText(textRenderer, Text.literal("Alpha"), x, y - 12, CinnamonTheme.primaryTextColor, false)
     }
 
     private fun renderColorPreview(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
-        val checkerSize = 8
+        // Draw checkerboard background
+        val checkerSize = 16
         for (i in 0 until width step checkerSize) {
             for (j in 0 until height step checkerSize) {
                 val color = if ((i / checkerSize + j / checkerSize) % 2 == 0) 0xFFCCCCCC.toInt() else 0xFF999999.toInt()
@@ -186,16 +226,27 @@ class ColorPickerScreen(
                 context.fill(x + i, y + j, endX, endY, color)
             }
         }
+        
+        // Draw current color
         val currentColor = hsvToRgb(hue, saturation, brightness)
         val finalColor = (currentColor and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
         context.fill(x, y, x + width, y + height, finalColor)
         context.drawBorder(x, y, width, height, CinnamonTheme.borderColor)
+        
+        // Label
+        context.drawText(textRenderer, Text.literal("Preview"), x, y - 12, CinnamonTheme.primaryTextColor, false)
+    }
+
+    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+        super.render(context, mouseX, mouseY, delta)
+        renderContent(context, mouseX, mouseY, delta)
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         val mX = mouseX.toInt()
         val mY = mouseY.toInt()
 
+        // Button handling
         val buttonWidth = 80
         val buttonSpacing = 24
         val totalButtonWidth = buttonWidth * 2 + buttonSpacing
@@ -214,43 +265,42 @@ class ColorPickerScreen(
             }
         }
 
-        val wheelSize = 180
-        val wheelX = pickerX + (pickerWidth - wheelSize) / 2
-        val wheelY = pickerY + 35
-        val centerX = wheelX + wheelSize / 2
-        val centerY = wheelY + wheelSize / 2
-        val radius = wheelSize / 2 - 1
-
-        if (mX in wheelX until (wheelX + wheelSize) && mY in wheelY until (wheelY + wheelSize)) {
-            val dx = mX - centerX
-            val dy = mY - centerY
-            val dist = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
-            if (dist <= radius) {
-                hue = (atan2(dy.toDouble(), dx.toDouble()) * 180 / PI).toFloat()
-                if (hue < 0) hue += 360
-                saturation = minOf(1f, dist / radius)
-                return true
-            }
-        }
-
+        // Slider handling
+        val sliderWidth = pickerWidth - 40
         val sliderHeight = 20
-        val brightnessSliderY = wheelY + wheelSize + 16
-        if (mX in (pickerX + 20) until (pickerX + pickerWidth - 20) &&
-            mY in brightnessSliderY until (brightnessSliderY + sliderHeight)) {
-            brightness = ((mX - pickerX - 20).toFloat() / (pickerWidth - 40)).coerceIn(0f, 1f)
+        val sliderX = pickerX + 20
+        var currentY = pickerY + 35
+
+        // Hue slider
+        if (mX in sliderX until (sliderX + sliderWidth) && mY in currentY until (currentY + sliderHeight)) {
+            hue = ((mX - sliderX).toFloat() / sliderWidth * 360f).coerceIn(0f, 360f)
             return true
         }
+        currentY += sliderHeight + 16
 
+        // Saturation slider
+        if (mX in sliderX until (sliderX + sliderWidth) && mY in currentY until (currentY + sliderHeight)) {
+            saturation = ((mX - sliderX).toFloat() / sliderWidth).coerceIn(0f, 1f)
+            return true
+        }
+        currentY += sliderHeight + 16
 
-        val alphaSliderY = brightnessSliderY + sliderHeight + 12
-        if (mX in (pickerX + 20) until (pickerX + pickerWidth - 20) &&
-            mY in alphaSliderY until (alphaSliderY + sliderHeight)) {
-            alpha = ((mX - pickerX - 20).toFloat() / (pickerWidth - 40)).coerceIn(0f, 1f)
+        // Brightness slider
+        if (mX in sliderX until (sliderX + sliderWidth) && mY in currentY until (currentY + sliderHeight)) {
+            brightness = ((mX - sliderX).toFloat() / sliderWidth).coerceIn(0f, 1f)
+            return true
+        }
+        currentY += sliderHeight + 16
+
+        // Alpha slider
+        if (mX in sliderX until (sliderX + sliderWidth) && mY in currentY until (currentY + sliderHeight)) {
+            alpha = ((mX - sliderX).toFloat() / sliderWidth).coerceIn(0f, 1f)
             return true
         }
 
         return true
     }
+
     private fun hsvToRgb(h: Float, s: Float, v: Float): Int {
         val c = v * s
         val x = c * (1 - abs(((h / 60) % 2) - 1))
@@ -268,6 +318,7 @@ class ColorPickerScreen(
         val blue = ((b + m) * 255).toInt().coerceIn(0, 255)
         return (255 shl 24) or (red shl 16) or (green shl 8) or blue
     }
+
     private fun rgbToHsv(color: Int): FloatArray {
         val r = ((color shr 16) and 0xFF) / 255f
         val g = ((color shr 8) and 0xFF) / 255f
