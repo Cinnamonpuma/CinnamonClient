@@ -25,11 +25,12 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private val buttonHeight = 20
     private val buttonMargin = 2
 
-    var buttonColor: Int = 0xFF222222.toInt()
-    var buttonTextColor: Int = 0xFFFFFFFF.toInt()
-    var buttonTextShadowEnabled: Boolean = true
-    var buttonHoverColor: Int = 0xFF00D0FF.toInt()
-    var buttonOutlineColor: Int = CinnamonTheme.buttonOutlineColor
+    // Use new theme defaults
+    var buttonColor: Int = 20987968 // Corresponds to coreButtonBackground (0x01404040)
+    var buttonTextColor: Int = 0xFFFFFFFF.toInt() // White
+    var buttonTextShadowEnabled: Boolean = false // Default from theme
+    var buttonHoverColor: Int = -6315615 // Corresponds to buttonOutlineHoverColor (0xFF9FA1A1)
+    var buttonOutlineColor: Int = 2126605840.toInt() // Corresponds to buttonOutlineColor (0x7EC14610)
 
     private fun createStyledText(text: String): Text =
         Text.literal(text).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))

@@ -31,15 +31,15 @@ enum class Theme(val colors: ThemeColors) {
 
 object CinnamonTheme {
 
-    var coreBackgroundPrimary = 0 
-    var coreAccentPrimary = 0 
-    var coreTextPrimary = 0 
-    var coreBorder = 0 
-    var coreButtonBackground = 0 
+    var coreBackgroundPrimary = 0
+    var coreAccentPrimary = 0
+    var coreTextPrimary = 0
+    var coreBorder = 0
+    var coreButtonBackground = 0
 
-    var coreStatusSuccess = 0xFF4caf50.toInt()     
-    var coreStatusWarning = 0xFFff9800.toInt()       
-    var coreStatusError = 0xFFf44336.toInt()           
+    var coreStatusSuccess = 0xFF4caf50.toInt()
+    var coreStatusWarning = 0xFFff9800.toInt()
+    var coreStatusError = 0xFFf44336.toInt()
     var enableTextShadow: Boolean = true
     var useMinecraftFont: Boolean = false
 
@@ -62,16 +62,16 @@ object CinnamonTheme {
 
 
     var buttonOutlineColor: Int = 0xFF808080.toInt()
-    var buttonOutlineHoverColor: Int = 0xFFA0A0A0.toInt() 
+    var buttonOutlineHoverColor: Int = 0xFFA0A0A0.toInt()
 
     val guiBackground: Int get() = coreBackgroundPrimary
-    val backgroundTop: Int get() = coreBackgroundPrimary 
+    val backgroundTop: Int get() = coreBackgroundPrimary
     val backgroundBottom: Int get() = adjustBrightness(coreBackgroundPrimary, -0.05f)
-    
+
     val headerBackground: Int get() = coreBackgroundPrimary
     val footerBackground: Int get() = coreBackgroundPrimary
     val contentBackground: Int get() = coreBackgroundPrimary
-    val sidebarBackground: Int get() = coreBackgroundPrimary 
+    val sidebarBackground: Int get() = coreBackgroundPrimary
 
     val cardBackground: Int get() = coreBackgroundPrimary
 
@@ -99,11 +99,13 @@ object CinnamonTheme {
     val moduleBackgroundDisabled: Int get() = adjustBrightness(coreButtonBackground, -0.2f)
 
     init {
-        applyTheme(Theme.DARK)
+        // Initialize with new defaults directly or load from config
+        // ThemeConfigManager.loadTheme() will call resetToDefaults if no config exists
+        resetToDefaults()
     }
 
     fun applyTheme(theme: Theme) {
-        currentTheme = theme
+        currentTheme = theme // Keep enum if used elsewhere, though direct values are now primary for defaults
 
         coreBackgroundPrimary = theme.colors.coreBackgroundPrimary
         coreAccentPrimary = theme.colors.coreAccentPrimary
@@ -111,29 +113,42 @@ object CinnamonTheme {
         coreBorder = theme.colors.coreBorder
         coreButtonBackground = theme.colors.coreButtonBackgroundDef
 
-        buttonOutlineColor = coreAccentPrimary 
+        // Update outline colors based on the applied theme's accent if that's the desired logic
+        // For now, resetToDefaults will set the new specific default outline colors
+        buttonOutlineColor = coreAccentPrimary
         buttonOutlineHoverColor = adjustBrightness(coreAccentPrimary, -0.1f)
 
         updateDependentColors()
     }
-    
+
     fun resetToDefaults() {
-        applyTheme(Theme.DARK)
+        // Apply the new default theme values directly
+        coreBackgroundPrimary = 67314467    // 0x04030223
+        coreAccentPrimary = 2126605840.toInt()     // 0x7EC14610
+        coreTextPrimary = 0xFFFFFFFF.toInt()     // White
+        coreBorder = 2126605840.toInt()            // 0x7EC14610
+        coreButtonBackground = 20987968     // 0x01404040
 
-        coreStatusSuccess = 0xFF4caf50.toInt()
-        coreStatusWarning = 0xFFff9800.toInt()
-        coreStatusError = 0xFFf44336.toInt()
+        coreStatusSuccess = 743223120      // 0x2C4C3B50
+        coreStatusWarning = 452958208      // 0x1AFFD800
+        coreStatusError = 468992565        // 0x1BF44335
 
-        patternColor = 0x10ffffff.toInt()
-        overlayColor = 0x80000000.toInt()
-        glassHighlight = 0x20ffffff.toInt()
-        glassShadow = 0x40000000.toInt()
-        enableTextShadow = true
-        useMinecraftFont = false
-        buttonOutlineColor = currentTheme.colors.coreAccentPrimary
-        buttonOutlineHoverColor = adjustBrightness(currentTheme.colors.coreAccentPrimary, -0.1f)
+        buttonOutlineColor = 2126605840.toInt()   // 0x7EC14610
+        buttonOutlineHoverColor = -6315615 // 0xFF9FA1A1
+
+        enableTextShadow = false
+        useMinecraftFont = true
+
+        // Reset other properties not in the user's JSON to sensible defaults or keep existing logic
+        patternColor = 0x10ffffff.toInt() // Keep as is or choose a new default
+        overlayColor = 0x80000000.toInt() // Keep as is or choose a new default
+        glassHighlight = 0x20ffffff.toInt() // Keep as is or choose a new default
+        glassShadow = 0x40000000.toInt() // Keep as is or choose a new default
+
+        // Important: Call updateDependentColors after setting the base defaults
+        updateDependentColors()
     }
-    
+
     fun updateDependentColors() {
         cardBackgroundHover = adjustBrightness(coreBackgroundPrimary, 0.05f)
         accentColorHover = adjustBrightness(coreAccentPrimary, -0.1f)
@@ -145,25 +160,25 @@ object CinnamonTheme {
         buttonBackgroundPressed = adjustBrightness(coreButtonBackground, -0.1f)
         moduleEnabledColor = coreStatusSuccess
     }
-    
+
     private fun adjustBrightness(color: Int, factor: Float): Int {
         val alpha = (color shr 24) and 0xFF
         val red = ((color shr 16) and 0xFF).toFloat()
         val green = ((color shr 8) and 0xFF).toFloat()
         val blue = (color and 0xFF).toFloat()
-        
+
         val newRed = (red + (if (factor > 0) (255 - red) * factor else red * factor)).coerceIn(0f, 255f).toInt()
         val newGreen = (green + (if (factor > 0) (255 - green) * factor else green * factor)).coerceIn(0f, 255f).toInt()
         val newBlue = (blue + (if (factor > 0) (255 - blue) * factor else blue * factor)).coerceIn(0f, 255f).toInt()
-        
+
         return (alpha shl 24) or (newRed shl 16) or (newGreen shl 8) or newBlue
     }
-    
+
 
     const val ANIMATION_DURATION_SHORT = 150L
     const val ANIMATION_DURATION_MEDIUM = 250L
     const val ANIMATION_DURATION_LONG = 400L
-    
+
     const val BUTTON_HEIGHT = 32
     const val BUTTON_HEIGHT_SMALL = 24
     const val BUTTON_HEIGHT_LARGE = 40
