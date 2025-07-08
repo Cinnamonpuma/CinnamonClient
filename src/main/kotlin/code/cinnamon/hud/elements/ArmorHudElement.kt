@@ -4,10 +4,10 @@ import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
-import net.minecraft.entity.EquipmentSlot
 import net.minecraft.item.ItemStack
 import net.minecraft.text.Style
 import net.minecraft.text.Text
+import net.minecraft.entity.EquipmentSlot
 
 class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
@@ -16,6 +16,11 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
 
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!isEnabled || mc.player == null) return
+
+        context.matrices.push()
+        context.matrices.scale(scale, scale, 1.0f)
+        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
+
 
         val armorSlotsInDisplayOrder = listOf(
             EquipmentSlot.HEAD,
@@ -43,7 +48,9 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
                 this.backgroundColor
             )
 
+
             context.drawItem(itemStack, 0, currentY)
+
 
             val durability = itemStack.maxDamage - itemStack.damage
             val maxDurability = itemStack.maxDamage
@@ -54,15 +61,20 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
             }
 
             val textX = 16 + padding
+
             val textY = currentY + (itemHeight - textHeight) / 2 + 2
+
 
             if (this.textShadowEnabled) {
                 context.drawText(mc.textRenderer, durabilityText, textX + 1, textY + 1, 0x40000000, false)
             }
             context.drawText(mc.textRenderer, durabilityText, textX, textY, this.textColor, false)
 
+
             currentY += elementHeight + padding
         }
+
+        context.matrices.pop()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {
@@ -72,12 +84,14 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
         if (color == 0) return
 
+
         val r = java.lang.Math.min(radius, java.lang.Math.min(width / 2, height / 2))
 
         if (r <= 0) {
             context.fill(x, y, x + width, y + height, color)
             return
         }
+
 
         context.fill(x + r, y, x + width - r, y + height, color)
         context.fill(x, y + r, x + r, y + height - r, color)
@@ -139,12 +153,17 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
             if (stack.isEmpty) null else stack
         }
 
+
         if (equippedArmorItems.isEmpty()) return 0
 
         val itemHeight = 16
-        val singleElementHeight = itemHeight + padding
-        val contentStackHeight = (singleElementHeight * equippedArmorItems.size) + padding * 2
-        return contentStackHeight
+        val textHeight = mc.textRenderer.fontHeight
+
+        val singleElementHeight = itemHeight + textHeight + padding / 2
+
+
+        val contentStackHeight = (itemHeight * equippedArmorItems.size) + (padding * (equippedArmorItems.size - 1).coerceAtLeast(0))
+        return contentStackHeight + padding * 2
     }
 
     override fun getName(): String = "Armor"

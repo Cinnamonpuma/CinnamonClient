@@ -12,7 +12,7 @@ import kotlin.math.*
 
 class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     var keypressedTextColor: Int = 0xFFFFFF
-    var keypressedBackgroundColor: Int = 0xFFFFFF 
+    var keypressedBackgroundColor: Int = 0xFFFFFF
 
     private val mc = MinecraftClient.getInstance()
     private val keySize = 32
@@ -29,18 +29,17 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
 
         updateKeyStates()
 
-        val scaledX = (getX() / scale).toInt()
-        val scaledY = (getY() / scale).toInt()
-        // val width = getWidth() // Not directly used in the same way as other elements for a single background
-        // val height = getHeight() // Not directly used in the same way
-        // val padding = 6 // Not applicable here due to composite nature
+        context.matrices.push()
+        context.matrices.scale(scale, scale, 1.0f)
+        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
 
-        // Adjust coordinates passed to drawKey
-        val wRelativeX = keySize + spacing
-        drawKey(context, "W", scaledX + wRelativeX, scaledY + 0, wPressed)
-        drawKey(context, "A", scaledX + 0, scaledY + keySize + spacing, aPressed)
-        drawKey(context, "S", scaledX + keySize + spacing, scaledY + keySize + spacing, sPressed)
-        drawKey(context, "D", scaledX + (keySize + spacing) * 2, scaledY + keySize + spacing, dPressed)
+        val wX = keySize + spacing
+        drawKey(context, "W", wX, 0, wPressed)
+        drawKey(context, "A", 0, keySize + spacing, aPressed)
+        drawKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
+        drawKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
+
+        context.matrices.pop()
     }
 
     private fun updateKeyStates() {
@@ -99,8 +98,8 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.fill(x, y + r, x + r, y + height - r, color)
         context.fill(x + width - r, y + r, x + width, y + height - r, color)
 
-        drawRoundedCorner(context, x, y, r, color, 0) 
-        drawRoundedCorner(context, x + width - r, y, r, color, 1) 
+        drawRoundedCorner(context, x, y, r, color, 0)
+        drawRoundedCorner(context, x + width - r, y, r, color, 1)
         drawRoundedCorner(context, x, y + height - r, r, color, 2)
         drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3)
     }

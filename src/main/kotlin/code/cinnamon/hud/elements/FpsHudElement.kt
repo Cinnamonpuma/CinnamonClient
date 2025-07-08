@@ -5,7 +5,6 @@ import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.text.Style
 import net.minecraft.text.Text
 import kotlin.math.*
@@ -27,25 +26,25 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
         }
         fpsChangeAnimation = maxOf(0f, fpsChangeAnimation - tickDelta * 0.1f)
 
-        // Calculate scaled position and dimensions
-        val scaledX = (getX() / scale).toInt()
-        val scaledY = (getY() / scale).toInt()
+        context.matrices.push()
+        context.matrices.scale(scale, scale, 1.0f)
+        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
+
         val width = getWidth()
         val height = getHeight()
         val padding = 6
 
-        // Draw background
-        drawRoundedBackground(context, scaledX - padding, scaledY - padding, width + padding * 2, height + padding * 2, backgroundColor)
+        drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2, this.backgroundColor)
 
         val fpsText = Text.literal("$currentFps Fps").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
-        // Draw text shadow if enabled
-        if (textShadowEnabled) {
-            context.drawText(mc.textRenderer, fpsText, scaledX + 1, scaledY + 1, 0x40000000, false)
+        if (this.textShadowEnabled) {
+            context.drawText(mc.textRenderer, fpsText, 1, 1, 0x40000000, false)
         }
 
-        // Draw main text
-        context.drawText(mc.textRenderer, fpsText, scaledX, scaledY, textColor, false)
+        context.drawText(mc.textRenderer, fpsText, 0, 0, this.textColor, false)
+
+        context.matrices.pop()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {
@@ -63,6 +62,7 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
         }
 
         context.fill(x + r, y, x + width - r, y + height, color)
+
         context.fill(x, y + r, x + r, y + height - r, color)
         context.fill(x + width - r, y + r, x + width, y + height - r, color)
 

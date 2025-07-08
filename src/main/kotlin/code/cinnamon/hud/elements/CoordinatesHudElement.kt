@@ -9,12 +9,12 @@ import net.minecraft.text.Style
 import net.minecraft.text.Text
 import kotlin.math.floor
 import kotlin.math.min
-import kotlin.math.max 
+import kotlin.math.max
 
 class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
     private val cornerRadius = 6
-    private val lineSpacing = 2 
+    private val lineSpacing = 2
 
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
@@ -26,32 +26,31 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
-        val scaledX = (getX() / scale).toInt()
-        val scaledY = (getY() / scale).toInt()
-        // val width = getWidth() // Available via this.getWidth()
-        // val height = getHeight() // Available via this.getHeight()
-        val padding = 2 // This element uses a specific padding for its background
+        context.matrices.push()
+        context.matrices.scale(scale, scale, 1.0f)
+        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
+
+        val padding = 2
 
         if (backgroundColor != 0) {
-            // Add scaledX and scaledY to the background drawing coordinates
-            drawRoundedBackground(context, scaledX - padding, scaledY - padding, getWidth() + padding * 2, getHeight() + padding * 2, this.backgroundColor)
+            drawRoundedBackground(context, -padding, -padding, getWidth() + padding * 2, getHeight() + padding * 2, this.backgroundColor)
         }
 
-        val relativeTextYOffset = 0
+        val textYOffset = 0
 
-        // Add scaledX and scaledY to all text drawing coordinates
         if (this.textShadowEnabled) {
-            context.drawText(mc.textRenderer, xText, scaledX + 1, scaledY + relativeTextYOffset + 1, 0x40000000, false)
-            context.drawText(mc.textRenderer, yText, scaledX + 1, scaledY + relativeTextYOffset + mc.textRenderer.fontHeight + lineSpacing + 1, 0x40000000, false)
-            context.drawText(mc.textRenderer, zText, scaledX + 1, scaledY + relativeTextYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2 + 1, 0x40000000, false)
+            context.drawText(mc.textRenderer, xText, 1, textYOffset + 1, 0x40000000, false)
+            context.drawText(mc.textRenderer, yText, 1, textYOffset + mc.textRenderer.fontHeight + lineSpacing + 1, 0x40000000, false)
+            context.drawText(mc.textRenderer, zText, 1, textYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2 + 1, 0x40000000, false)
         }
-        context.drawText(mc.textRenderer, xText, scaledX, scaledY + relativeTextYOffset, this.textColor, false)
-        context.drawText(mc.textRenderer, yText, scaledX, scaledY + relativeTextYOffset + mc.textRenderer.fontHeight + lineSpacing, this.textColor, false)
-        context.drawText(mc.textRenderer, zText, scaledX, scaledY + relativeTextYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2, this.textColor, false)
+        context.drawText(mc.textRenderer, xText, 0, textYOffset, this.textColor, false)
+        context.drawText(mc.textRenderer, yText, 0, textYOffset + mc.textRenderer.fontHeight + lineSpacing, this.textColor, false)
+        context.drawText(mc.textRenderer, zText, 0, textYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2, this.textColor, false)
+
+        context.matrices.pop()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {
-        // Pass scaled coordinates directly to drawRoundedRect
         drawRoundedRect(context, x, y, width, height, cornerRadius, backgroundColor)
     }
 
@@ -65,12 +64,12 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.fill(x + r, y, x + width - r, y + height, color)
         context.fill(x, y + r, x + r, y + height - r, color)
         context.fill(x + width - r, y + r, x + width, y + height - r, color)
-        drawRoundedCorner(context, x, y, r, color, 0) 
-        drawRoundedCorner(context, x + width - r, y, r, color, 1) 
-        drawRoundedCorner(context, x, y + height - r, r, color, 2) 
+        drawRoundedCorner(context, x, y, r, color, 0)
+        drawRoundedCorner(context, x + width - r, y, r, color, 1)
+        drawRoundedCorner(context, x, y + height - r, r, color, 2)
         drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3)
     }
-    
+
     private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, corner: Int) {
         for (dy in 0 until radius) {
             for (dx in 0 until radius) {
@@ -97,12 +96,12 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         val xText = Text.literal(String.format("X: %.1f", pos.x)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
-        
+
         return maxOf(mc.textRenderer.getWidth(xText), mc.textRenderer.getWidth(yText), mc.textRenderer.getWidth(zText))
     }
 
     override fun getHeight(): Int {
-        return (mc.textRenderer.fontHeight * 3) + (lineSpacing * 2) 
+        return (mc.textRenderer.fontHeight * 3) + (lineSpacing * 2)
     }
 
     override fun getName(): String = "Coordinates"

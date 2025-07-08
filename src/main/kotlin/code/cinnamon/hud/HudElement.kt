@@ -19,7 +19,7 @@ abstract class HudElement(
 
     var isEnabled: Boolean = true
 
-    var textColor: Int = 0xFFFFFF 
+    var textColor: Int = 0xFFFFFF
     var backgroundColor: Int = 0x00000000.toInt()
     var textShadowEnabled: Boolean = true
 
@@ -34,7 +34,7 @@ abstract class HudElement(
 
     open fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
         return mouseX >= _x && mouseX <= _x + getWidth() * scale &&
-               mouseY >= _y && mouseY <= _y + getHeight() * scale
+                mouseY >= _y && mouseY <= _y + getHeight() * scale
     }
 
     fun startDragging(mouseX: Double, mouseY: Double) {
