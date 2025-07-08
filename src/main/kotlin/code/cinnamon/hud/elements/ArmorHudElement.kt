@@ -4,24 +4,18 @@ import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudElement
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.entity.EquipmentSlot
 import net.minecraft.item.ItemStack
 import net.minecraft.text.Style
 import net.minecraft.text.Text
-import net.minecraft.entity.EquipmentSlot 
 
 class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
-    private val cornerRadius = 2 
-    private val padding = 1 
+    private val cornerRadius = 2
+    private val padding = 1
 
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!isEnabled || mc.player == null) return
-
-        val scaledX = (getX() / scale).toInt()
-        val scaledY = (getY() / scale).toInt()
-        // val width = getWidth() // getWidth() is already available via this.getWidth() or super.getWidth()
-        // val height = getHeight() // getHeight() is already available via this.getHeight() or super.getHeight()
-        // val padding = 6 // padding is already a class member
 
         val armorSlotsInDisplayOrder = listOf(
             EquipmentSlot.HEAD,
@@ -30,7 +24,7 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
             EquipmentSlot.FEET
         )
 
-        var currentRelativeY = 0
+        var currentY = 0
 
         for (slot in armorSlotsInDisplayOrder) {
             val itemStack = mc.player!!.getEquippedStack(slot)
@@ -40,17 +34,16 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
             val textHeight = mc.textRenderer.fontHeight
             val elementHeight = itemHeight
 
-            // Adjust drawing coordinates by adding scaledX and scaledY
             drawRoundedBackground(
                 context,
-                scaledX - padding,
-                scaledY + currentRelativeY - padding,
+                -padding,
+                currentY - padding,
                 getWidth() + padding * 2,
                 elementHeight + padding * 2,
                 this.backgroundColor
             )
 
-            context.drawItem(itemStack, scaledX, scaledY + currentRelativeY)
+            context.drawItem(itemStack, 0, currentY)
 
             val durability = itemStack.maxDamage - itemStack.damage
             val maxDurability = itemStack.maxDamage
@@ -60,29 +53,24 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
                 Text.literal("").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
             }
 
-            val relativeTextX = 16 + padding
-            val textX = scaledX + relativeTextX
-            
-            val relativeTextY = currentRelativeY + (itemHeight - textHeight) / 2 + 2
-            val textY = scaledY + relativeTextY
+            val textX = 16 + padding
+            val textY = currentY + (itemHeight - textHeight) / 2 + 2
 
             if (this.textShadowEnabled) {
                 context.drawText(mc.textRenderer, durabilityText, textX + 1, textY + 1, 0x40000000, false)
             }
             context.drawText(mc.textRenderer, durabilityText, textX, textY, this.textColor, false)
-            
-            currentRelativeY += elementHeight + padding
+
+            currentY += elementHeight + padding
         }
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {
-        // Pass scaled coordinates directly to drawRoundedRect
         drawRoundedRect(context, x, y, width, height, cornerRadius, backgroundColor)
     }
 
     private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, radius: Int, color: Int) {
-        if (color == 0) return 
-
+        if (color == 0) return
 
         val r = java.lang.Math.min(radius, java.lang.Math.min(width / 2, height / 2))
 
@@ -91,15 +79,14 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
             return
         }
 
+        context.fill(x + r, y, x + width - r, y + height, color)
+        context.fill(x, y + r, x + r, y + height - r, color)
+        context.fill(x + width - r, y + r, x + width, y + height - r, color)
 
-        context.fill(x + r, y, x + width - r, y + height, color) 
-        context.fill(x, y + r, x + r, y + height - r, color)     
-        context.fill(x + width - r, y + r, x + width, y + height - r, color) 
-
-        drawRoundedCorner(context, x, y, r, color, 0) 
-        drawRoundedCorner(context, x + width - r, y, r, color, 1) 
-        drawRoundedCorner(context, x, y + height - r, r, color, 2) 
-        drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3) 
+        drawRoundedCorner(context, x, y, r, color, 0)
+        drawRoundedCorner(context, x + width - r, y, r, color, 1)
+        drawRoundedCorner(context, x, y + height - r, r, color, 2)
+        drawRoundedCorner(context, x + width - r, y + height - r, r, color, 3)
     }
 
     private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, corner: Int) {
@@ -111,25 +98,25 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
                     val pixelY: Int
 
                     when (corner) {
-                        0 -> { 
+                        0 -> {
                             pixelX = x + (radius - 1 - dx)
                             pixelY = y + (radius - 1 - dy)
                         }
-                        1 -> { 
+                        1 -> {
                             pixelX = x + dx
                             pixelY = y + (radius - 1 - dy)
                         }
-                        2 -> { 
+                        2 -> {
                             pixelX = x + (radius - 1 - dx)
                             pixelY = y + dy
                         }
-                        3 -> { 
+                        3 -> {
                             pixelX = x + dx
                             pixelY = y + dy
                         }
-                        else -> continue 
+                        else -> continue
                     }
-                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color) 
+                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)
                 }
             }
         }
@@ -139,8 +126,8 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
         val iconWidth = 16
         val exampleDurabilityText = Text.literal("000/000").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val textWidth = mc.textRenderer.getWidth(exampleDurabilityText)
-        val contentWidth = iconWidth + padding + textWidth 
-        return contentWidth + padding * 2 
+        val contentWidth = iconWidth + padding + textWidth
+        return contentWidth + padding * 2
     }
 
     override fun getHeight(): Int {
@@ -152,17 +139,12 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
             if (stack.isEmpty) null else stack
         }
 
-
         if (equippedArmorItems.isEmpty()) return 0
 
         val itemHeight = 16
-        val textHeight = mc.textRenderer.fontHeight
-
-        val singleElementHeight = itemHeight + textHeight + padding / 2
-        
-
-    val contentStackHeight = (itemHeight * equippedArmorItems.size) + (padding * (equippedArmorItems.size - 1).coerceAtLeast(0))
-    return contentStackHeight + padding * 2 
+        val singleElementHeight = itemHeight + padding
+        val contentStackHeight = (singleElementHeight * equippedArmorItems.size) + padding * 2
+        return contentStackHeight
     }
 
     override fun getName(): String = "Armor"
