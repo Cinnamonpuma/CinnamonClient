@@ -26,9 +26,9 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
-        context.matrices.push()
-        context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.matrices.translate((getX() / scale).toFloat(), (getY() / scale).toFloat())
 
         val padding = 2
 
@@ -47,7 +47,7 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.drawText(mc.textRenderer, yText, 0, textYOffset + mc.textRenderer.fontHeight + lineSpacing, this.textColor, false)
         context.drawText(mc.textRenderer, zText, 0, textYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2, this.textColor, false)
 
-        context.matrices.pop()
+        context.matrices.popMatrix()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {

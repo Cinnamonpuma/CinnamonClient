@@ -29,9 +29,9 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
 
         updateKeyStates()
 
-        context.matrices.push()
-        context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.matrices.translate((getX() / scale).toFloat(), (getY() / scale).toFloat())
 
         val wX = keySize + spacing
         drawKey(context, "W", wX, 0, wPressed)
@@ -39,7 +39,7 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         drawKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
         drawKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
 
-        context.matrices.pop()
+        context.matrices.popMatrix()
     }
 
     private fun updateKeyStates() {

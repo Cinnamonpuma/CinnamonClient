@@ -17,9 +17,9 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
     override fun render(context: DrawContext, tickDelta: Float) {
         if (!isEnabled || mc.player == null) return
 
-        context.matrices.push()
-        context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.matrices.translate((getX() / scale).toFloat(), (getY() / scale).toFloat())
 
 
         val armorSlotsInDisplayOrder = listOf(
@@ -74,7 +74,7 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
             currentY += elementHeight + padding
         }
 
-        context.matrices.pop()
+        context.matrices.popMatrix()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {

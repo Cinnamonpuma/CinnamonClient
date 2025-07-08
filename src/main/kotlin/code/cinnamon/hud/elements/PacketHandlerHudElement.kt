@@ -190,11 +190,13 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         )
 
         val matrices = context.matrices
-        matrices.push()
+        matrices.pushMatrix()
 
-        matrices.translate(x.toFloat(), y.toFloat(), 0f)
+        // The translate call here is to set the origin for the button's internal scaled drawing
+        matrices.translate(x.toFloat(), y.toFloat())
 
-        matrices.scale(currentScale, currentScale, 1.0f)
+        // The scale call is to scale the text rendering within the button
+        matrices.scale(currentScale, currentScale)
 
         val tr = client.textRenderer
         val unscaledButtonWidth = (width / currentScale)
@@ -206,7 +208,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         val textYInButtonUnscaled = ((unscaledButtonHeight - unscaledFontHeight) / 2).toInt()
 
         context.drawText(tr, text, textXInButtonUnscaled, textYInButtonUnscaled, buttonTextColor, buttonTextShadowEnabled)
-        matrices.pop()
+        matrices.popMatrix()
     }
 
     override fun getWidth(): Int =

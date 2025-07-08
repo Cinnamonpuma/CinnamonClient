@@ -26,9 +26,9 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
         }
         fpsChangeAnimation = maxOf(0f, fpsChangeAnimation - tickDelta * 0.1f)
 
-        context.matrices.push()
-        context.matrices.scale(scale, scale, 1.0f)
-        context.matrices.translate((getX() / scale).toDouble(), (getY() / scale).toDouble(), 0.0)
+        context.matrices.pushMatrix()
+        context.matrices.scale(scale, scale)
+        context.matrices.translate((getX() / scale).toFloat(), (getY() / scale).toFloat())
 
         val width = getWidth()
         val height = getHeight()
@@ -44,7 +44,7 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
 
         context.drawText(mc.textRenderer, fpsText, 0, 0, this.textColor, false)
 
-        context.matrices.pop()
+        context.matrices.popMatrix()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {
