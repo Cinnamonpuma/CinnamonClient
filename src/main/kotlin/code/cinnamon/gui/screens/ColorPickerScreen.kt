@@ -47,7 +47,11 @@ class ColorPickerScreen(
     // We don't want the standard footer from CinnamonScreen for this custom dialog UI.
     override fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {}
 
-    override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    override fun renderContent(context: DrawContext, rawMouseX: Int, rawMouseY: Int, delta: Float) {
+        // Scale the incoming raw mouse coordinates first
+        val scaledMouseX = scaleMouseX(rawMouseX.toDouble()).toInt()
+        val scaledMouseY = scaleMouseY(rawMouseY.toDouble()).toInt()
+
         // The CinnamonScreen.render() method has already set up the scaled matrix.
         // It has also called renderBlurredBackground().
         // It has also drawn the main GUI box based on this.guiX, this.guiY, this.guiWidth, this.guiHeight.
@@ -105,8 +109,9 @@ class ColorPickerScreen(
         val buttonsStartX = this.guiX + (this.guiWidth - totalButtonWidth) / 2
 
         val applyButtonX = buttonsStartX
-        val applyHovered = mouseX >= applyButtonX && mouseX < applyButtonX + buttonDrawWidth &&
-                mouseY >= buttonsY && mouseY < buttonsY + buttonDrawHeight
+        // Use scaledMouseX and scaledMouseY for hover check
+        val applyHovered = scaledMouseX >= applyButtonX && scaledMouseX < applyButtonX + buttonDrawWidth &&
+                scaledMouseY >= buttonsY && scaledMouseY < buttonsY + buttonDrawHeight
         context.fill(
             applyButtonX, buttonsY, applyButtonX + buttonDrawWidth, buttonsY + buttonDrawHeight,
             if (applyHovered) CinnamonTheme.accentColorHover else CinnamonTheme.accentColor
@@ -122,8 +127,9 @@ class ColorPickerScreen(
         )
 
         val cancelButtonX = applyButtonX + buttonDrawWidth + buttonSpacing
-        val cancelHovered = mouseX >= cancelButtonX && mouseX < cancelButtonX + buttonDrawWidth &&
-                mouseY >= buttonsY && mouseY < buttonsY + buttonDrawHeight
+        // Use scaledMouseX and scaledMouseY for hover check
+        val cancelHovered = scaledMouseX >= cancelButtonX && scaledMouseX < cancelButtonX + buttonDrawWidth &&
+                scaledMouseY >= buttonsY && scaledMouseY < buttonsY + buttonDrawHeight
         context.fill(
             cancelButtonX, buttonsY, cancelButtonX + buttonDrawWidth, buttonsY + buttonDrawHeight,
             if (cancelHovered) CinnamonTheme.buttonBackgroundHover else CinnamonTheme.buttonBackground
@@ -259,10 +265,11 @@ class ColorPickerScreen(
 
     // Removed the override fun render(...) as CinnamonScreen.render() handles the main render loop and calls renderContent.
 
-    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        // mouseX and mouseY are already scaled by CinnamonScreen.
-        val mX = mouseX.toInt()
-        val mY = mouseY.toInt()
+    override fun mouseClicked(rawMouseX: Double, rawMouseY: Double, button: Int): Boolean {
+        // Scale the incoming raw mouse coordinates first.
+        // The previous comment here was incorrect; mouseX and mouseY from Screen class are raw.
+        val mX = scaleMouseX(rawMouseX).toInt()
+        val mY = scaleMouseY(rawMouseY).toInt()
 
         // Button handling - coordinates must be relative to the overall scaled screen, like in renderContent
         val buttonDrawWidth = 80
@@ -328,7 +335,8 @@ class ColorPickerScreen(
         // The current CinnamonScreen.mouseClicked already closes the screen if the click is outside guiX/guiY/guiWidth/guiHeight.
         // So, this behavior is inherited. We just need to ensure our interactions return true if handled.
 
-        return super.mouseClicked(mouseX, mouseY, button) // Let CinnamonScreen handle if not interacting with picker elements.
+        // Pass raw (original) mouse coordinates to super
+        return super.mouseClicked(rawMouseX, rawMouseY, button)
     }
 
     private fun hsvToRgb(h: Float, s: Float, v: Float): Int {

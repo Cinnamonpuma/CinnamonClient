@@ -16,15 +16,15 @@ public abstract class HudMixin {
         return HudManager.INSTANCE.getPacketHandlerHudElement();
     }
 
-
-    @Inject(method = "renderContent", at = @At("TAIL"))
+    // Inject into renderContent method since that's where HUD rendering happens
+    @Inject(method = "renderContent(Lnet/minecraft/client/gui/DrawContext;IIF)V", at = @At("TAIL"))
     private void onRenderContent(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (SharedVariables.enabled && MinecraftClient.getInstance().player != null && getHudElement().isEnabled()) {
             getHudElement().renderElement(context, delta);
         }
     }
 
-    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "mouseClicked(DDI)Z", at = @At("HEAD"), cancellable = true)
     private void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         if (!HudManager.INSTANCE.isEditMode() && SharedVariables.enabled && MinecraftClient.getInstance().player != null
                 && getHudElement().isEnabled()
@@ -33,7 +33,7 @@ public abstract class HudMixin {
         }
     }
 
-    @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "mouseReleased(DDI)Z", at = @At("HEAD"), cancellable = true)
     private void onMouseReleased(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         if (!HudManager.INSTANCE.isEditMode() && SharedVariables.enabled && MinecraftClient.getInstance().player != null
                 && getHudElement().isEnabled()
@@ -42,7 +42,7 @@ public abstract class HudMixin {
         }
     }
 
-    @Inject(method = "mouseDragged", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "mouseDragged(DDIDD)Z", at = @At("HEAD"), cancellable = true)
     private void onMouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
         if (!HudManager.INSTANCE.isEditMode() && SharedVariables.enabled && MinecraftClient.getInstance().player != null
                 && getHudElement().isEnabled()
@@ -51,7 +51,7 @@ public abstract class HudMixin {
         }
     }
 
-    @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "mouseScrolled(DDDD)Z", at = @At("HEAD"), cancellable = true)
     private void onMouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, CallbackInfoReturnable<Boolean> cir) {
         if (!HudManager.INSTANCE.isEditMode() && SharedVariables.enabled && MinecraftClient.getInstance().player != null
                 && getHudElement().isEnabled()

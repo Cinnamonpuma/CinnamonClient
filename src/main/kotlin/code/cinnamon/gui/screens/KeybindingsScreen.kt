@@ -62,7 +62,10 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         ))
     }
 
-    override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    override fun renderContent(context: DrawContext, rawMouseX: Int, rawMouseY: Int, delta: Float) {
+        val scaledMouseX = scaleMouseX(rawMouseX.toDouble()).toInt()
+        val scaledMouseY = scaleMouseY(rawMouseY.toDouble()).toInt()
+
         val contentX = getContentX()
         val contentY = getContentY()
         val contentWidth = getContentWidth()
@@ -111,14 +114,14 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val listY = contentY + headerHeight + (if (isListening) 35 else 10)
         val listHeight = getKeybindingListHeight() - (if (isListening) 45 else 10)
 
-        renderKeybindingList(context, contentX + 10, listY, contentWidth - 20, listHeight, mouseX, mouseY)
+        renderKeybindingList(context, contentX + 10, listY, contentWidth - 20, listHeight, scaledMouseX, scaledMouseY)
 
         if (maxScrollOffset > 0) {
             renderScrollbar(context, contentX + contentWidth - 8, listY, 6, listHeight)
         }
     }
 
-    private fun renderKeybindingList(context: DrawContext, x: Int, y: Int, width: Int, height: Int, mouseX: Int, mouseY: Int) {
+    private fun renderKeybindingList(context: DrawContext, x: Int, y: Int, width: Int, height: Int, scaledMouseX: Int, scaledMouseY: Int) {
         val entries = getKeybindingEntries()
 
 
@@ -128,15 +131,15 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             val entryY = y - scrollOffset + index * (keybindingHeight + keybindingSpacing)
 
             if (entryY + keybindingHeight >= y && entryY <= y + height) {
-                renderKeybindingEntry(context, x, entryY, width, keybindingHeight, entry, mouseX, mouseY)
+                renderKeybindingEntry(context, x, entryY, width, keybindingHeight, entry, scaledMouseX, scaledMouseY)
             }
         }
 
         context.disableScissor()
     }
 
-    private fun renderKeybindingEntry(context: DrawContext, x: Int, y: Int, width: Int, height: Int, entry: KeybindingEntry, mouseX: Int, mouseY: Int) {
-        val isHovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height
+    private fun renderKeybindingEntry(context: DrawContext, x: Int, y: Int, width: Int, height: Int, entry: KeybindingEntry, scaledMouseX: Int, scaledMouseY: Int) {
+        val isHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= y && scaledMouseY < y + height
         val isSelected = selectedKeybinding == entry.name
         val isListeningToThis = isListening && isSelected
 
@@ -186,7 +189,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
 
         val keyButtonBg = when {
             isListeningToThis -> CinnamonTheme.primaryButtonBackgroundPressed
-            isHovered && mouseX >= keyButtonX && mouseX < keyButtonX + keyButtonWidth -> CinnamonTheme.buttonBackgroundHover
+            isHovered && scaledMouseX >= keyButtonX && scaledMouseX < keyButtonX + keyButtonWidth -> CinnamonTheme.buttonBackgroundHover // Use scaledMouseX for key button hover
             else -> CinnamonTheme.buttonBackground
         }
 
@@ -299,42 +302,52 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         isListening = false
     }
 
-    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+    override fun mouseClicked(rawMouseX: Double, rawMouseY: Double, button: Int): Boolean {
         if (isListening) { // If was listening, any click stops it.
             isListening = false
             selectedKeybinding = null
-            // Potentially consume the click or let super handle if it was on a CinnamonButton
-            // For now, let's assume a click while listening always cancels listening and does nothing else.
+            // A click while listening always cancels listening and does nothing else for this screen.
+            // It might be on a CinnamonButton, so allow super.mouseClicked to check that.
+            // However, the problem statement implies clicks aren't registering for list items.
+            // Let's return true to consume the click if we were listening, to prevent other actions.
             return true
         }
 
-        // Let CinnamonButtons handle their clicks first
-        if (super.mouseClicked(mouseX, mouseY, button)) {
+        // Let CinnamonButtons handle their clicks first. Pass raw coordinates as super expects them.
+        // CinnamonScreen.mouseClicked will scale them for CinnamonButton checks.
+        if (super.mouseClicked(rawMouseX, rawMouseY, button)) {
             return true
         }
 
-        val contentX = getContentX()
-        val contentY = getContentY()
-        val contentWidth = getContentWidth()
+        // Scale mouse coordinates for custom hit detection below
+        val scaledMouseX = scaleMouseX(rawMouseX)
+        val scaledMouseY = scaleMouseY(rawMouseY)
 
-        // Mirror calculations from renderContent for listY and listHeight
-        val renderTimeHeaderHeight = 50 // From renderContent
-        val listTopY = contentY + renderTimeHeaderHeight + (if (isListening) 35 else 10) // Should always use isListening = false here, as we checked above
-        val listActualHeight = getKeybindingListHeight() - (if (isListening) 45 else 10) // Same, isListening should be false for this click pass
+        val contentX = getContentX() // Scaled coordinate
+        val contentY = getContentY() // Scaled coordinate
+        val contentWidth = getContentWidth() // Scaled dimension
+
+        // Mirror calculations from renderContent for listY and listHeight (these are in scaled space)
+        val renderTimeHeaderHeight = 50 // Scaled dimension
+        // For click detection, 'isListening' is false at this point, so use that state for layout.
+        val listTopY = contentY + renderTimeHeaderHeight + 10 // listTopY is a scaled Y coordinate
+        val listActualHeight = getKeybindingListHeight() - 10 // listActualHeight is a scaled dimension
 
         // Define the clickable list area (slightly inset like in renderKeybindingList call)
-        val listAreaXStart = contentX + 10
-        val listAreaXEnd = contentX + contentWidth - 10 // renderKeybindingList uses contentWidth - 20 for width, so x + width is contentX + 10 + contentWidth - 20 = contentX + contentWidth -10
+        val listAreaXStart = contentX + 10 // Scaled X
+        val listAreaXEnd = contentX + contentWidth - 10 // Scaled X
 
-        if (mouseX >= listAreaXStart && mouseX < listAreaXEnd &&
-            mouseY >= listTopY && mouseY < listTopY + listActualHeight) {
+        // Compare scaled mouse coordinates with scaled list area bounds
+        if (scaledMouseX >= listAreaXStart && scaledMouseX < listAreaXEnd &&
+            scaledMouseY >= listTopY && scaledMouseY < listTopY + listActualHeight) {
 
             val entries = getKeybindingEntries()
             entries.forEachIndexed { index, entry ->
-                // Calculate entryY exactly as in renderKeybindingList
+                // Calculate entryY exactly as in renderKeybindingList (scaled Y)
                 val entryY = listTopY - scrollOffset + index * (keybindingHeight + keybindingSpacing)
 
-                if (mouseY >= entryY && mouseY < entryY + keybindingHeight) {
+                // Compare scaled mouse Y with scaled entry Y bounds
+                if (scaledMouseY >= entryY && scaledMouseY < entryY + keybindingHeight) {
                     // Click is within this entry
                     selectedKeybinding = entry.name
                     isListening = true // Start listening for the next key press
@@ -344,10 +357,13 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         }
 
         // If no list item was clicked, and no CinnamonButton was clicked.
-        return false // Explicitly false if we didn't handle it. Let Screen default if necessary.
+        return false // Explicitly false if we didn't handle it.
     }
 
-    override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+    override fun mouseScrolled(rawMouseX: Double, rawMouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+        val scaledMouseX = scaleMouseX(rawMouseX)
+        val scaledMouseY = scaleMouseY(rawMouseY)
+
         val contentX = getContentX()
         val contentY = getContentY()
         val contentWidth = getContentWidth()
@@ -361,18 +377,20 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val listTopY = contentY + renderTimeHeaderHeight + (if (isListening) 35 else 10)
         val listActualHeight = getKeybindingListHeight() - (if (isListening) 45 else 10)
 
-        val listAreaXStart = contentX + 10
-        val listAreaXEnd = contentX + contentWidth - 10
+        val listAreaXStart = contentX + 10 // Scaled X
+        val listAreaXEnd = contentX + contentWidth - 10 // Scaled X
 
-        if (mouseX >= listAreaXStart && mouseX < listAreaXEnd &&
-            mouseY >= listTopY && mouseY < listTopY + listActualHeight) {
+        // Compare scaled mouse coordinates with scaled list area bounds
+        if (scaledMouseX >= listAreaXStart && scaledMouseX < listAreaXEnd &&
+            scaledMouseY >= listTopY && scaledMouseY < listTopY + listActualHeight) {
 
             val scrollAmount = (verticalAmount * 20).toInt() // Standard scroll multiplier
             scrollOffset = max(0, min(maxScrollOffset, scrollOffset - scrollAmount))
-            return true
+            return true // Event handled
         }
 
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
+        // Pass raw (original) mouse coordinates to super
+        return super.mouseScrolled(rawMouseX, rawMouseY, horizontalAmount, verticalAmount)
     }
 
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {

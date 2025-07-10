@@ -81,14 +81,14 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         return (height * currentScale / TARGET_SCALE_FACTOR).toInt()
     }
 
-    private fun getScaleRatio(): Float {
+    protected fun getScaleRatio(): Float {
         val currentScale = client!!.window.scaleFactor.toFloat()
         return TARGET_SCALE_FACTOR / currentScale
     }
 
     // Convert screen coordinates to our scaled coordinate system
-    private fun scaleMouseX(mouseX: Double): Double = mouseX / getScaleRatio()
-    private fun scaleMouseY(mouseY: Double): Double = mouseY / getScaleRatio()
+    protected fun scaleMouseX(mouseX: Double): Double = mouseX / getScaleRatio()
+    protected fun scaleMouseY(mouseY: Double): Double = mouseY / getScaleRatio()
 
     abstract fun initializeComponents()
     protected abstract fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float)
@@ -314,10 +314,11 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
-        val scaledMouseX = scaleMouseX(mouseX)
-        val scaledMouseY = scaleMouseY(mouseY)
-
-        return super.mouseScrolled(scaledMouseX, scaledMouseY, horizontalAmount, verticalAmount)
+        // Child screens that need to react to scrolling within specific scaled areas
+        // should override this, scale mouseX/mouseY themselves for their hit-tests,
+        // and then call super.mouseScrolled with the original rawX/rawY if the event isn't consumed.
+        // Minecraft's base Screen class expects raw coordinates.
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 
     protected fun addButton(button: CinnamonButton) {
