@@ -93,7 +93,7 @@ CinnamonClient leverages cutting-edge technologies for optimal performance and m
 
 ### Installation Steps
 1. Download the latest version from [Releases](https://github.com/Cinnamonpuma/CinnamonClient/releases)
-2. Install [Fabric Loader](https://fabricmc.net/use/) for Minecraft 1.21.5
+2. Install [Fabric Loader](https://fabricmc.net/use/) for Minecraft 1.21.6 or 1.21.7
 3. Place the CinnamonClient `.jar` file in your `mods` folder
 4. Launch Minecraft with the Fabric profile
 5. Access the mod through the in-game menu
