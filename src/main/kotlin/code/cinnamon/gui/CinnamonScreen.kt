@@ -49,17 +49,35 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
 
     private fun calculateGuiDimensions() {
-        // Always calculate dimensions based on what the screen would be at GUI scale 2
-        val currentScale = client!!.window.scaleFactor.toFloat()
-        val baseWidth = (width * currentScale / TARGET_SCALE_FACTOR).toInt()
-        val baseHeight = (height * currentScale / TARGET_SCALE_FACTOR).toInt()
+        // Calculate dimensions based on effective screen size at target scale
+        val scaledWidth = getEffectiveWidth()
+        val scaledHeight = getEffectiveHeight()
 
-        guiWidth = max(MIN_GUI_WIDTH, min(MAX_GUI_WIDTH, (baseWidth * 0.7f).toInt()))
-        guiHeight = max(MIN_GUI_HEIGHT, min(MAX_GUI_HEIGHT, (baseHeight * 0.8f).toInt()))
+        guiWidth = max(MIN_GUI_WIDTH, min(MAX_GUI_WIDTH, (scaledWidth * 0.7f).toInt()))
+        guiHeight = max(MIN_GUI_HEIGHT, min(MAX_GUI_HEIGHT, (scaledHeight * 0.8f).toInt()))
 
-        guiX = (baseWidth - guiWidth) / 2
-        guiY = (baseHeight - guiHeight) / 2
+        guiX = (scaledWidth - guiWidth) / 2
+        guiY = (scaledHeight - guiHeight) / 2
     }
+
+    private fun getEffectiveWidth(): Int {
+        val currentScale = client!!.window.scaleFactor.toFloat()
+        return (width * currentScale / TARGET_SCALE_FACTOR).toInt()
+    }
+
+    private fun getEffectiveHeight(): Int {
+        val currentScale = client!!.window.scaleFactor.toFloat()
+        return (height * currentScale / TARGET_SCALE_FACTOR).toInt()
+    }
+
+    private fun getScaleRatio(): Float {
+        val currentScale = client!!.window.scaleFactor.toFloat()
+        return TARGET_SCALE_FACTOR / currentScale
+    }
+
+    // Convert screen coordinates to our scaled coordinate system
+    private fun scaleMouseX(mouseX: Double): Double = mouseX / getScaleRatio()
+    private fun scaleMouseY(mouseY: Double): Double = mouseY / getScaleRatio()
 
     abstract fun initializeComponents()
     protected abstract fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float)
@@ -67,24 +85,20 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         super.render(context, mouseX, mouseY, delta)
 
-        // Get the current GUI scale
-        val currentScale = client!!.window.scaleFactor.toFloat()
-        val scaleRatio = TARGET_SCALE_FACTOR / currentScale
+        val scaleRatio = getScaleRatio()
+        val scaledWidth = getEffectiveWidth()
+        val scaledHeight = getEffectiveHeight()
 
         context.matrices.pushMatrix()
         context.matrices.scale(scaleRatio, scaleRatio, context.matrices)
-
-        // Scale the screen dimensions to fill the entire screen
-        val scaledWidth = (width / scaleRatio).toInt()
-        val scaledHeight = (height / scaleRatio).toInt()
 
         renderBlurredBackground(context, scaledWidth, scaledHeight)
         renderShadow(context)
         renderGuiBox(context, mouseX, mouseY, delta)
 
         // Convert mouse coordinates to our scaled coordinate system
-        val scaledMouseX = (mouseX / scaleRatio).toInt()
-        val scaledMouseY = (mouseY / scaleRatio).toInt()
+        val scaledMouseX = scaleMouseX(mouseX.toDouble()).toInt()
+        val scaledMouseY = scaleMouseY(mouseY.toDouble()).toInt()
 
         buttons.forEach { button ->
             button.render(context, scaledMouseX, scaledMouseY, delta)
@@ -118,10 +132,8 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
 
     protected open fun renderHeader(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        val currentScale = client!!.window.scaleFactor.toFloat()
-        val scaleRatio = TARGET_SCALE_FACTOR / currentScale
-        val scaledMouseX = (mouseX / scaleRatio).toInt()
-        val scaledMouseY = (mouseY / scaleRatio).toInt()
+        val scaledMouseX = scaleMouseX(mouseX.toDouble())
+        val scaledMouseY = scaleMouseY(mouseY.toDouble())
 
         val headerY = guiY
 
@@ -251,11 +263,8 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        val currentScale = client!!.window.scaleFactor.toFloat()
-        val scaleRatio = TARGET_SCALE_FACTOR / currentScale
-
-        val scaledMouseX = mouseX / scaleRatio
-        val scaledMouseY = mouseY / scaleRatio
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
 
         val closeButtonSize = 16
         val closeButtonX = guiX + guiWidth - closeButtonSize - 8
@@ -284,16 +293,20 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
 
     override fun mouseMoved(mouseX: Double, mouseY: Double) {
-        val currentScale = client!!.window.scaleFactor.toFloat()
-        val scaleRatio = TARGET_SCALE_FACTOR / currentScale
-
-        val scaledMouseX = mouseX / scaleRatio
-        val scaledMouseY = mouseY / scaleRatio
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
 
         buttons.forEach { btn ->
             btn.mouseMoved(scaledMouseX, scaledMouseY)
         }
         super.mouseMoved(mouseX, mouseY)
+    }
+
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
+
+        return super.mouseScrolled(scaledMouseX, scaledMouseY, horizontalAmount, verticalAmount)
     }
 
     protected fun addButton(button: CinnamonButton) {
