@@ -11,40 +11,38 @@ import kotlin.math.*
 
 class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
-    private var lastFps = 0
-    private var fpsChangeAnimation = 0f
+    // private var lastFps = 0 // Animation state can be re-added if desired
+    // private var fpsChangeAnimation = 0f
     private val cornerRadius = 6
+    private val internalPadding = 6 // Padding for the background around the text
 
-    override fun render(context: DrawContext, tickDelta: Float) {
+    override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
 
         val currentFps = mc.currentFps
+        // Animation logic can be re-inserted here if needed.
 
-        if (currentFps != lastFps) {
-            fpsChangeAnimation = 0.3f
-            lastFps = currentFps
+        // HudManager now handles matrix transforms. Drawing is relative to (0,0).
+        // getWidth() and getHeight() define the text content area.
+
+        if (backgroundColor != 0) {
+            drawRoundedBackground(
+                context,
+                -internalPadding, // Draw background relative to (0,0), extending by padding
+                -internalPadding,
+                getWidth() + internalPadding * 2,
+                getHeight() + internalPadding * 2,
+                this.backgroundColor
+            )
         }
-        fpsChangeAnimation = maxOf(0f, fpsChangeAnimation - tickDelta * 0.1f)
-
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.matrices.translate((getX() / scale).toFloat(), (getY() / scale).toFloat())
-
-        val width = getWidth()
-        val height = getHeight()
-        val padding = 6
-
-        drawRoundedBackground(context, -padding, -padding, width + padding * 2, height + padding * 2, this.backgroundColor)
 
         val fpsText = Text.literal("$currentFps Fps").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
+        // Text is drawn at (0,0) relative to the element's top-left (which is the start of the text content area).
         if (this.textShadowEnabled) {
-            context.drawText(mc.textRenderer, fpsText, 1, 1, 0x40000000, false)
+            context.drawText(mc.textRenderer, fpsText, 1, 1, 0x40000000, false) // Shadow offset by 1
         }
-
         context.drawText(mc.textRenderer, fpsText, 0, 0, this.textColor, false)
-
-        context.matrices.popMatrix()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {

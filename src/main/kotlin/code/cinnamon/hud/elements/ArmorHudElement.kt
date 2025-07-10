@@ -12,15 +12,14 @@ import net.minecraft.entity.EquipmentSlot
 class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
     private val cornerRadius = 2
-    private val padding = 1
+    private val padding = 1 // Padding around item icon and text within each row
 
-    override fun render(context: DrawContext, tickDelta: Float) {
+    override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled || mc.player == null) return
 
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.matrices.translate((getX() / scale).toFloat(), (getY() / scale).toFloat())
-
+        // HudManager now handles the matrix translation to getX()/getY() (scaled)
+        // and scaling by this element's `scale` property.
+        // All drawing here is relative to (0,0) for this element, using its base unscaled dimensions.
 
         val armorSlotsInDisplayOrder = listOf(
             EquipmentSlot.HEAD,
@@ -29,52 +28,56 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
             EquipmentSlot.FEET
         )
 
-        var currentY = 0
+        var currentRelativeY = 0 // Start drawing from Y=0 relative to the element's top-left
 
         for (slot in armorSlotsInDisplayOrder) {
             val itemStack = mc.player!!.getEquippedStack(slot)
             if (itemStack.isEmpty) continue
 
-            val itemHeight = 16
-            val textHeight = mc.textRenderer.fontHeight
-            val elementHeight = itemHeight
+            val itemRenderHeight = 16 // Base height for rendering one item icon
+            val textFontHeight = mc.textRenderer.fontHeight
 
+            // Calculate the height for this specific armor item's display row
+            // It should be enough to hold the 16px item and potentially text.
+            // Let's make each row consistently tall enough for an item.
+            val singleItemRowHeight = itemRenderHeight
+
+            // Background for this specific armor item entry
+            // getWidth() returns the total base width of the ArmorHudElement.
+            // The background is drawn for each item row.
             drawRoundedBackground(
                 context,
-                -padding,
-                currentY - padding,
-                getWidth() + padding * 2,
-                elementHeight + padding * 2,
+                0, // X position relative to element's (0,0)
+                currentRelativeY, // Y position relative to element's (0,0)
+                getWidth(), // Use the element's base width for the background of the row
+                singleItemRowHeight, // Height for this specific item's background
                 this.backgroundColor
             )
 
+            // Draw item icon, vertically centered within the singleItemRowHeight
+            context.drawItem(itemStack, padding, currentRelativeY + (singleItemRowHeight - 16) / 2)
 
-            context.drawItem(itemStack, 0, currentY)
-
-
+            // Durability text
             val durability = itemStack.maxDamage - itemStack.damage
             val maxDurability = itemStack.maxDamage
             val durabilityText = if (maxDurability > 0) {
                 Text.literal("$durability/$maxDurability").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
             } else {
-                Text.literal("").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+                Text.literal("").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())) // Empty text if no durability
             }
 
-            val textX = 16 + padding
+            val textX = padding + 16 + padding // Position text after icon (16px) and padding
 
-            val textY = currentY + (itemHeight - textHeight) / 2 + 2
-
+            // Vertically center text within the singleItemRowHeight
+            val textDrawY = currentRelativeY + (singleItemRowHeight - textFontHeight) / 2
 
             if (this.textShadowEnabled) {
-                context.drawText(mc.textRenderer, durabilityText, textX + 1, textY + 1, 0x40000000, false)
+                context.drawText(mc.textRenderer, durabilityText, textX + 1, textDrawY + 1, 0x40000000, false)
             }
-            context.drawText(mc.textRenderer, durabilityText, textX, textY, this.textColor, false)
+            context.drawText(mc.textRenderer, durabilityText, textX, textDrawY, this.textColor, false)
 
-
-            currentY += elementHeight + padding
+            currentRelativeY += singleItemRowHeight + padding // Move to next item position, add padding between items
         }
-
-        context.matrices.popMatrix()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {

@@ -15,8 +15,8 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     var keypressedBackgroundColor: Int = 0xFFFFFF
 
     private val mc = MinecraftClient.getInstance()
-    private val keySize = 32
-    private val spacing = 4
+    private val keySize = 32 // Base size of a key
+    private val spacing = 4  // Base spacing between keys
     private val cornerRadius = 4
 
     private var wPressed = false
@@ -24,22 +24,20 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     private var sPressed = false
     private var dPressed = false
 
-    override fun render(context: DrawContext, tickDelta: Float) {
+    override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
 
         updateKeyStates()
 
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.matrices.translate((getX() / scale).toFloat(), (getY() / scale).toFloat())
+        // HudManager now handles matrix transforms (translation to getX/getY and scaling by element.scale).
+        // All drawing here is relative to (0,0) for this element.
 
         val wX = keySize + spacing
+        // Draw keys at their positions relative to the element's (0,0)
         drawKey(context, "W", wX, 0, wPressed)
         drawKey(context, "A", 0, keySize + spacing, aPressed)
         drawKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
         drawKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
-
-        context.matrices.popMatrix()
     }
 
     private fun updateKeyStates() {

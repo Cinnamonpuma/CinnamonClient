@@ -15,8 +15,9 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
     private val cornerRadius = 6
     private val lineSpacing = 2
+    private val internalPadding = 2 // Defines padding for the background around the text content
 
-    override fun render(context: DrawContext, tickDelta: Float) {
+    override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
 
         val player = mc.player ?: return
@@ -26,28 +27,34 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
-        context.matrices.pushMatrix()
-        context.matrices.scale(scale, scale)
-        context.matrices.translate((getX() / scale).toFloat(), (getY() / scale).toFloat())
-
-        val padding = 2
+        // HudManager has already set up the matrix transform (translation to getX/getY and scale by element.scale)
+        // All drawing is relative to (0,0) of this element's scaled bounding box.
+        // getWidth() and getHeight() define the core text content area.
 
         if (backgroundColor != 0) {
-            drawRoundedBackground(context, -padding, -padding, getWidth() + padding * 2, getHeight() + padding * 2, this.backgroundColor)
+            // Draw background including internalPadding.
+            // The background extends 'internalPadding' pixels outside the getWidth()/getHeight() content area on all sides.
+            drawRoundedBackground(
+                context,
+                -internalPadding,
+                -internalPadding,
+                getWidth() + internalPadding * 2,
+                getHeight() + internalPadding * 2,
+                this.backgroundColor
+            )
         }
 
-        val textYOffset = 0
+        // Text is drawn starting from (0,0) relative to the element's top-left, which corresponds to the text content area.
+        val textYOffset = 0 // Y offset for the first line of text, relative to element's (0,0)
 
         if (this.textShadowEnabled) {
-            context.drawText(mc.textRenderer, xText, 1, textYOffset + 1, 0x40000000, false)
+            context.drawText(mc.textRenderer, xText, 1, textYOffset + 1, 0x40000000, false) // Shadow offset by 1
             context.drawText(mc.textRenderer, yText, 1, textYOffset + mc.textRenderer.fontHeight + lineSpacing + 1, 0x40000000, false)
             context.drawText(mc.textRenderer, zText, 1, textYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2 + 1, 0x40000000, false)
         }
         context.drawText(mc.textRenderer, xText, 0, textYOffset, this.textColor, false)
         context.drawText(mc.textRenderer, yText, 0, textYOffset + mc.textRenderer.fontHeight + lineSpacing, this.textColor, false)
         context.drawText(mc.textRenderer, zText, 0, textYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2, this.textColor, false)
-
-        context.matrices.popMatrix()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {

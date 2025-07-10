@@ -34,7 +34,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         }
 
         if (shouldRender && getHudElement().isEnabled()) {
-            getHudElement().render(context, delta);
+            getHudElement().renderElement(context, delta);
         }
     }
 

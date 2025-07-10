@@ -48,19 +48,30 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         initializeComponents()
     }
 
+    // Allow subclasses to define their desired width
+    protected open fun getDesiredGuiWidth(effectiveScaledWidth: Int): Int {
+        return max(MIN_GUI_WIDTH, min(MAX_GUI_WIDTH, (effectiveScaledWidth * 0.7f).toInt()))
+    }
+
+    // Allow subclasses to define their desired height
+    protected open fun getDesiredGuiHeight(effectiveScaledHeight: Int): Int {
+        return max(MIN_GUI_HEIGHT, min(MAX_GUI_HEIGHT, (effectiveScaledHeight * 0.8f).toInt()))
+    }
+
     private fun calculateGuiDimensions() {
         // Calculate dimensions based on effective screen size at target scale
         val scaledWidth = getEffectiveWidth()
         val scaledHeight = getEffectiveHeight()
 
-        guiWidth = max(MIN_GUI_WIDTH, min(MAX_GUI_WIDTH, (scaledWidth * 0.7f).toInt()))
-        guiHeight = max(MIN_GUI_HEIGHT, min(MAX_GUI_HEIGHT, (scaledHeight * 0.8f).toInt()))
+        // Use the new methods to get desired dimensions
+        guiWidth = getDesiredGuiWidth(scaledWidth)
+        guiHeight = getDesiredGuiHeight(scaledHeight)
 
         guiX = (scaledWidth - guiWidth) / 2
         guiY = (scaledHeight - guiHeight) / 2
     }
 
-    private fun getEffectiveWidth(): Int {
+    internal fun getEffectiveWidth(): Int { // Made internal for potential use by HudElement clamping
         val currentScale = client!!.window.scaleFactor.toFloat()
         return (width * currentScale / TARGET_SCALE_FACTOR).toInt()
     }

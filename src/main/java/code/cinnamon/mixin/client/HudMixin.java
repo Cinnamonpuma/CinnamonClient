@@ -16,10 +16,11 @@ public abstract class HudMixin {
         return HudManager.INSTANCE.getPacketHandlerHudElement();
     }
 
-    @Inject(method = "render", at = @At("TAIL"))
-    private void onRenderScreen(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+
+    @Inject(method = "renderContent", at = @At("TAIL"))
+    private void onRenderContent(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (SharedVariables.enabled && MinecraftClient.getInstance().player != null && getHudElement().isEnabled()) {
-            getHudElement().render(context, delta);
+            getHudElement().renderElement(context, delta);
         }
     }
 

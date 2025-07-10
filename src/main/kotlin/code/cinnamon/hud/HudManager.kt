@@ -61,7 +61,7 @@ object HudManager {
     }
 
     fun render(context: DrawContext, tickDelta: Float) {
-        hudElements.filter { it.isEnabled }.forEach { it.render(context, tickDelta) }
+        hudElements.filter { it.isEnabled }.forEach { it.renderElement(context, tickDelta) }
 
         val mc = MinecraftClient.getInstance()
         val currentScreen = mc.currentScreen
