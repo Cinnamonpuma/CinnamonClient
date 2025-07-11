@@ -3,19 +3,21 @@ package code.cinnamon
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW
 import org.slf4j.LoggerFactory
 import code.cinnamon.gui.CinnamonGuiManager
+import net.minecraft.client.gui.DrawContext
+import net.minecraft.util.Identifier
 import code.cinnamon.modules.ModuleManager
 import code.cinnamon.keybindings.KeybindingManager
 import code.cinnamon.gui.theme.ThemeConfigManager
 import code.cinnamon.hud.HudManager
-import code.cinnamon.hud.HudScreen
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.Screen
+import net.minecraft.client.render.RenderTickCounter
 
 object Cinnamon : ModInitializer {
     private val logger = LoggerFactory.getLogger("cinnamon")
@@ -26,9 +28,9 @@ object Cinnamon : ModInitializer {
 
         ThemeConfigManager.loadTheme()
         ModuleManager.initialize()
-        code.cinnamon.modules.ModuleConfigManager.loadModules() 
+        code.cinnamon.modules.ModuleConfigManager.loadModules()
         KeybindingManager.initialize()
-        
+
         HudManager.init()
         logger.info("HUD system initialized")
 
@@ -62,11 +64,29 @@ object Cinnamon : ModInitializer {
             }
         }
 
+        // Use HudElementRegistry instead of the deprecated HudRenderCallback
+        HudElementRegistry.addLast(Identifier.of("cinnamon", "main_hud_renderer")) { drawContext: DrawContext, renderTickCounter: RenderTickCounter ->
+            val mc = MinecraftClient.getInstance()
+            if (mc != null && mc.window != null) {
+                val currentGuiScale = mc.window.scaleFactor.toFloat()
+                val safeCurrentGuiScale = if (currentGuiScale > 0f) currentGuiScale else code.cinnamon.gui.CinnamonScreen.TARGET_SCALE_FACTOR
 
-        HudRenderCallback.EVENT.register { drawContext, renderTickCounter ->
-            val partialTick = renderTickCounter.getTickProgress(false)
-            HudManager.render(drawContext, partialTick)
+                val scaleRatio = code.cinnamon.gui.CinnamonScreen.TARGET_SCALE_FACTOR / safeCurrentGuiScale
+
+                drawContext.matrices.pushMatrix() // Corrected method
+                drawContext.matrices.scale(scaleRatio, scaleRatio, drawContext.matrices)
+
+                val partialTick = renderTickCounter.getTickProgress(false)
+                HudManager.render(drawContext, partialTick)
+
+                drawContext.matrices.popMatrix() // Corrected method
+            } else {
+                // Fallback: Render without scaling if client/window not ready
+                val partialTick = renderTickCounter.getTickProgress(false)
+                HudManager.render(drawContext, partialTick)
+            }
         }
+        logger.info("Cinnamon HUD renderer registered with HudElementRegistry.")
 
         logger.info("Cinnamon mod initialized successfully!")
     }
