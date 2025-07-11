@@ -148,15 +148,15 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         return Text.literal("Font: $fontName").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
     }
 
-    override fun renderContent(context: DrawContext, rawMouseX: Int, rawMouseY: Int, delta: Float) {
-        val scaledMouseX = scaleMouseX(rawMouseX.toDouble()).toInt()
-        val scaledMouseY = scaleMouseY(rawMouseY.toDouble()).toInt()
+    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
+        // Parameters are already scaled as per CinnamonScreen's contract for renderContent
+        // Use scaledMouseX, scaledMouseY directly
 
         val contentY = getContentY() // This is a scaled Y coordinate
         renderColorList(context, scaledMouseX, scaledMouseY, contentY)
     }
 
-    private fun renderColorList(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, contentYPos: Int) {
+    private fun renderColorList(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, contentYPos: Int) { // Already correct
         val dims = getListDimensions() // dims are in scaled coordinates
 
         context.drawBorder(dims.x, dims.y, dims.width, dims.height, CinnamonTheme.borderColor)
@@ -207,16 +207,16 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         )
     }
 
-    override fun mouseClicked(rawMouseX: Double, rawMouseY: Double, button: Int): Boolean {
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         // First, let CinnamonButtons handle their clicks. Pass raw coordinates.
         // CinnamonScreen.mouseClicked will scale them for CinnamonButton checks.
-        if (super.mouseClicked(rawMouseX, rawMouseY, button)) {
+        if (super.mouseClicked(mouseX, mouseY, button)) {
             return true
         }
 
         // Scale mouse coordinates for custom hit detection below
-        val scaledMouseX = scaleMouseX(rawMouseX)
-        val scaledMouseY = scaleMouseY(rawMouseY)
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
 
         val dims = getListDimensions() // Scaled dimensions of the list area
 
@@ -263,10 +263,10 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         )
     }
 
-    override fun mouseScrolled(rawMouseX: Double, rawMouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
         // Scale mouse coordinates for the area check
-        val scaledMouseX = scaleMouseX(rawMouseX) // Though not used in current logic, good practice if X mattered
-        val scaledMouseY = scaleMouseY(rawMouseY)
+        val scaledMouseX = scaleMouseX(mouseX) // Though not used in current logic, good practice if X mattered
+        val scaledMouseY = scaleMouseY(mouseY)
 
         val dims = getListDimensions() // Scaled dimensions
 
@@ -278,7 +278,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             return true // Event handled
         }
         // Pass raw (original) mouse coordinates to super
-        return super.mouseScrolled(rawMouseX, rawMouseY, horizontalAmount, verticalAmount)
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 
     private fun resetToDefaults() {
@@ -294,8 +294,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         CinnamonGuiManager.openMainMenu()
     }
 
-    override fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        super.renderFooter(context, mouseX, mouseY, delta)
+    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
+        super.renderFooter(context, scaledMouseX, scaledMouseY, delta) // Pass along scaled
         val statusText = Text.literal("Theme Editor").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         context.drawText(
             textRenderer,

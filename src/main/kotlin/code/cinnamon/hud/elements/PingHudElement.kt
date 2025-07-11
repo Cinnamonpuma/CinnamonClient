@@ -19,10 +19,14 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
     override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
 
+        context.matrices.pushMatrix()
+        context.matrices.translate(getX(), getY(), context.matrices) // Use Floats
+        context.matrices.scale(this.scale, this.scale, context.matrices) // scale is already Float
+
         val currentPing = getPing()
         // Animation logic can be re-inserted here if needed
 
-        // HudManager now handles matrix transforms. Drawing is relative to (0,0).
+        // Drawing is relative to (0,0).
         // getWidth() and getHeight() define the text content area.
 
         if (backgroundColor != 0) {
@@ -43,6 +47,7 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
             context.drawText(mc.textRenderer, pingText, 1, 1, 0x40000000, false) // Shadow offset by 1
         }
         context.drawText(mc.textRenderer, pingText, 0, 0, this.textColor, false)
+        context.matrices.popMatrix()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {

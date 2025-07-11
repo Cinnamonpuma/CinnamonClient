@@ -100,9 +100,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
     }
 
-    override fun renderContent(context: DrawContext, rawMouseX: Int, rawMouseY: Int, delta: Float) {
-        val scaledMouseX = scaleMouseX(rawMouseX.toDouble()).toInt()
-        val scaledMouseY = scaleMouseY(rawMouseY.toDouble()).toInt()
+    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
+        // Parameters are already scaled as per CinnamonScreen's contract for renderContent
+        // Use scaledMouseX, scaledMouseY directly where needed
 
         val contentX = getContentX()
         val contentY = getContentY()
@@ -876,9 +876,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         return "None"
     }
 
-    override fun mouseClicked(rawMouseX: Double, rawMouseY: Double, button: Int): Boolean {
-        val scaledMouseX = scaleMouseX(rawMouseX)
-        val scaledMouseY = scaleMouseY(rawMouseY)
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
 
         val contentX = getContentX()
         val contentY = getContentY()
@@ -997,7 +997,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
         }
         // Pass raw (original) mouse coordinates to super
-        return super.mouseClicked(rawMouseX, rawMouseY, button)
+        return super.mouseClicked(mouseX, mouseY, button)
     }
 
     private fun handleAutoClickerSettings(scaledMouseX: Double, scaledMouseY: Double, settingsX: Int, settingsY: Int, settingsWidth: Int, module: AutoclickerModule): Boolean {
@@ -1069,9 +1069,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         HudManager.saveHudConfig()
     }
 
-    override fun mouseScrolled(rawMouseX: Double, rawMouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
-        val scaledMouseX = scaleMouseX(rawMouseX)
-        val scaledMouseY = scaleMouseY(rawMouseY)
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
 
         val contentX = getContentX()
         val contentWidth = getContentWidth()
@@ -1091,6 +1091,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
         }
         // Pass raw (original) mouse coordinates to super
-        return super.mouseScrolled(rawMouseX, rawMouseY, horizontalAmount, verticalAmount)
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 }

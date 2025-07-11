@@ -27,9 +27,12 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
     override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
 
+        context.matrices.pushMatrix()
+        context.matrices.translate(getX(), getY(), context.matrices) // Use Floats
+        context.matrices.scale(this.scale, this.scale, context.matrices) // scale is already Float
+
         updateKeyStates()
 
-        // HudManager now handles matrix transforms (translation to getX/getY and scaling by element.scale).
         // All drawing here is relative to (0,0) for this element.
 
         val wX = keySize + spacing
@@ -38,6 +41,7 @@ class KeystrokesHudElement(x: Float, y: Float) : HudElement(x, y) {
         drawKey(context, "A", 0, keySize + spacing, aPressed)
         drawKey(context, "S", keySize + spacing, keySize + spacing, sPressed)
         drawKey(context, "D", (keySize + spacing) * 2, keySize + spacing, dPressed)
+        context.matrices.popMatrix()
     }
 
     private fun updateKeyStates() {

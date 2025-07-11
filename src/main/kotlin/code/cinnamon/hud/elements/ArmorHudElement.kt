@@ -17,9 +17,14 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
     override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled || mc.player == null) return
 
-        // HudManager now handles the matrix translation to getX()/getY() (scaled)
-        // and scaling by this element's `scale` property.
-        // All drawing here is relative to (0,0) for this element, using its base unscaled dimensions.
+        context.matrices.pushMatrix()
+        // Translate to the element's scaled position (_x, _y from HudElement are already scaled)
+        context.matrices.translate(getX(), getY(), context.matrices) // Use Floats
+        // Apply the element's individual scale
+        context.matrices.scale(this.scale, this.scale, context.matrices) // scale is already Float
+
+        // All drawing from here is relative to (0,0) for this element, using its base unscaled dimensions.
+        // The context is now scaled globally by CinnamonScreen and locally by this element.
 
         val armorSlotsInDisplayOrder = listOf(
             EquipmentSlot.HEAD,
@@ -78,6 +83,7 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
 
             currentRelativeY += singleItemRowHeight + padding // Move to next item position, add padding between items
         }
+        context.matrices.popMatrix()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {

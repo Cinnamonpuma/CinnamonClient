@@ -129,8 +129,12 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!shouldRender() || !isEnabled) return
 
-        // HudManager has applied translation to getX/getY and scaling by element.scale.
-        // All drawing is relative to (0,0) using base dimensions.
+        context.matrices.pushMatrix()
+        context.matrices.translate(getX(), getY(), context.matrices) // Use Floats
+        context.matrices.scale(this.scale, this.scale, context.matrices) // scale is already Float
+
+        // All drawing from here is relative to (0,0) for this element, using its base unscaled dimensions.
+        // The context is now scaled globally by CinnamonScreen and locally by this element.
 
         // Mouse coordinates for hover check, relative to this element's (0,0) and NOT scaled by element.scale yet.
         // This requires mouseX, mouseY to be transformed by HudManager if they are screen coords.
@@ -173,6 +177,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
             // Draw border around the base getWidth()/getHeight()
             context.drawBorder(0, 0, getWidth(), getHeight(), 0xFFFF0000.toInt())
         }
+        context.matrices.popMatrix()
     }
 
     private fun drawCustomButton(
@@ -273,7 +278,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun setFocused(focused: Boolean) {}
     override fun isFocused(): Boolean = false
 
-    public override fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
-        return super<HudElement>.isMouseOver(mouseX, mouseY)
+    public override fun isMouseOver(scaledMouseX: Double, scaledMouseY: Double): Boolean { // Match super
+        return super<HudElement>.isMouseOver(scaledMouseX, scaledMouseY)
     }
 }

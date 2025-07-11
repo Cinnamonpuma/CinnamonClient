@@ -27,7 +27,10 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         val yText = Text.literal(String.format("Y: %.1f", pos.y)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
-        // HudManager has already set up the matrix transform (translation to getX/getY and scale by element.scale)
+        context.matrices.pushMatrix()
+        context.matrices.translate(getX(), getY(), context.matrices) // Use Floats
+        context.matrices.scale(this.scale, this.scale, context.matrices) // scale is already Float
+
         // All drawing is relative to (0,0) of this element's scaled bounding box.
         // getWidth() and getHeight() define the core text content area.
 
@@ -55,6 +58,7 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.drawText(mc.textRenderer, xText, 0, textYOffset, this.textColor, false)
         context.drawText(mc.textRenderer, yText, 0, textYOffset + mc.textRenderer.fontHeight + lineSpacing, this.textColor, false)
         context.drawText(mc.textRenderer, zText, 0, textYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2, this.textColor, false)
+        context.matrices.popMatrix()
     }
 
     private fun drawRoundedBackground(context: DrawContext, x: Int, y: Int, width: Int, height: Int, backgroundColor: Int) {

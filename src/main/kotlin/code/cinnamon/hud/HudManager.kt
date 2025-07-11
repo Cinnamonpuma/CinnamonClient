@@ -56,7 +56,7 @@ object HudManager {
         registerHudElement(CoordinatesHudElement(20f, 60f))
         registerHudElement(KeystrokesHudElement(10f, 80f))
         registerHudElement(packetHandlerHudElement)
-        registerHudElement(ArmorHudElement(10f, 120f)) 
+        registerHudElement(ArmorHudElement(10f, 120f))
         loadHudConfig()
     }
 
@@ -98,10 +98,10 @@ object HudManager {
         return false
     }
 
-    fun onMouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
+    fun onMouseDragged(scaledMouseX: Double, scaledMouseY: Double, button: Int, scaledDeltaX: Double, scaledDeltaY: Double, screenScaledWidth: Int, screenScaledHeight: Int): Boolean {
         if (!isEditMode()) return false
         selectedElement?.let {
-            it.updateDragging(mouseX, mouseY)
+            it.updateDragging(scaledMouseX, scaledMouseY, screenScaledWidth, screenScaledHeight)
             hasUnsavedChanges = true
         }
         return selectedElement != null

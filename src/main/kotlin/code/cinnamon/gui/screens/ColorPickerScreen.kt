@@ -42,15 +42,14 @@ class ColorPickerScreen(
     }
 
     // We don't want the standard header from CinnamonScreen for this custom dialog UI.
-    override fun renderHeader(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {}
+    override fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {} // Match super
 
     // We don't want the standard footer from CinnamonScreen for this custom dialog UI.
-    override fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {}
+    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {} // Match super
 
-    override fun renderContent(context: DrawContext, rawMouseX: Int, rawMouseY: Int, delta: Float) {
-        // Scale the incoming raw mouse coordinates first
-        val scaledMouseX = scaleMouseX(rawMouseX.toDouble()).toInt()
-        val scaledMouseY = scaleMouseY(rawMouseY.toDouble()).toInt()
+    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
+        // Parameters are already scaled as per CinnamonScreen's contract for renderContent
+        // No need to re-scale them here. Use scaledMouseX, scaledMouseY directly.
 
         // The CinnamonScreen.render() method has already set up the scaled matrix.
         // It has also called renderBlurredBackground().
@@ -265,11 +264,11 @@ class ColorPickerScreen(
 
     // Removed the override fun render(...) as CinnamonScreen.render() handles the main render loop and calls renderContent.
 
-    override fun mouseClicked(rawMouseX: Double, rawMouseY: Double, button: Int): Boolean {
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         // Scale the incoming raw mouse coordinates first.
         // The previous comment here was incorrect; mouseX and mouseY from Screen class are raw.
-        val mX = scaleMouseX(rawMouseX).toInt()
-        val mY = scaleMouseY(rawMouseY).toInt()
+        val mX = scaleMouseX(mouseX).toInt()
+        val mY = scaleMouseY(mouseY).toInt()
 
         // Button handling - coordinates must be relative to the overall scaled screen, like in renderContent
         val buttonDrawWidth = 80
@@ -336,7 +335,7 @@ class ColorPickerScreen(
         // So, this behavior is inherited. We just need to ensure our interactions return true if handled.
 
         // Pass raw (original) mouse coordinates to super
-        return super.mouseClicked(rawMouseX, rawMouseY, button)
+        return super.mouseClicked(mouseX, mouseY, button)
     }
 
     private fun hsvToRgb(h: Float, s: Float, v: Float): Int {

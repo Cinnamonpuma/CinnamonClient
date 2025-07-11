@@ -91,7 +91,9 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     protected fun scaleMouseY(mouseY: Double): Double = mouseY / getScaleRatio()
 
     abstract fun initializeComponents()
-    protected abstract fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float)
+    protected abstract fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) // Changed params
+
+    protected open val shouldRenderDefaultGuiBox: Boolean = true // New flag
 
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         super.render(context, mouseX, mouseY, delta)
@@ -105,11 +107,12 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
 
         renderBlurredBackground(context, scaledWidth, scaledHeight)
         renderShadow(context)
-        renderGuiBox(context, mouseX, mouseY, delta)
 
         // Convert mouse coordinates to our scaled coordinate system
         val scaledMouseX = scaleMouseX(mouseX.toDouble()).toInt()
         val scaledMouseY = scaleMouseY(mouseY.toDouble()).toInt()
+
+        renderGuiBox(context, scaledMouseX, scaledMouseY, delta) // Pass scaled coordinates
 
         buttons.forEach { button ->
             button.render(context, scaledMouseX, scaledMouseY, delta)
@@ -132,20 +135,22 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         context.fillGradient(guiX + guiWidth, guiY + guiHeight, guiX + guiWidth + SHADOW_SIZE, guiY + guiHeight + SHADOW_SIZE, shadowColor, fadeColor)
     }
 
-    private fun renderGuiBox(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        drawRoundedRect(context, guiX, guiY, guiWidth, guiHeight, theme.coreBackgroundPrimary)
+    private fun renderGuiBox(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Now accepts scaled
+        if (shouldRenderDefaultGuiBox) {
+            drawRoundedRect(context, guiX, guiY, guiWidth, guiHeight, theme.coreBackgroundPrimary)
+        }
 
-        renderHeader(context, mouseX, mouseY, delta)
-        renderFooter(context, mouseX, mouseY, delta)
-        renderContent(context, mouseX, mouseY, delta)
+        renderHeader(context, scaledMouseX, scaledMouseY, delta) // Pass scaled
+        renderFooter(context, scaledMouseX, scaledMouseY, delta) // Pass scaled
+        renderContent(context, scaledMouseX, scaledMouseY, delta) // Pass scaled
 
-        drawRoundedBorder(context, guiX, guiY, guiWidth, guiHeight, theme.borderColor)
+        if (shouldRenderDefaultGuiBox) {
+            drawRoundedBorder(context, guiX, guiY, guiWidth, guiHeight, theme.borderColor)
+        }
     }
 
-    protected open fun renderHeader(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        val scaledMouseX = scaleMouseX(mouseX.toDouble())
-        val scaledMouseY = scaleMouseY(mouseY.toDouble())
-
+    protected open fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+        // Use scaledMouseX and scaledMouseY directly
         val headerY = guiY
 
         val logoPadding = PADDING / 2
@@ -187,6 +192,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         val closeButtonX = guiX + guiWidth - closeButtonSize - 8
         val closeButtonY = headerY + (HEADER_HEIGHT - closeButtonSize) / 2
 
+        // Use the passed scaledMouseX and scaledMouseY directly
         val isCloseHovered = scaledMouseX >= closeButtonX && scaledMouseX < closeButtonX + closeButtonSize &&
                 scaledMouseY >= closeButtonY && scaledMouseY < closeButtonY + closeButtonSize
 
@@ -203,7 +209,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         context.drawHorizontalLine(closeButtonX + 3, closeButtonX + 13, closeButtonY + 12, closeButtonColor)
     }
 
-    protected open fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    protected open fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Accepts scaled
         val footerY = guiY + guiHeight - FOOTER_HEIGHT
         context.fill(
             guiX + CORNER_RADIUS, footerY,

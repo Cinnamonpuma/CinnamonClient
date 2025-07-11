@@ -62,9 +62,9 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         ))
     }
 
-    override fun renderContent(context: DrawContext, rawMouseX: Int, rawMouseY: Int, delta: Float) {
-        val scaledMouseX = scaleMouseX(rawMouseX.toDouble()).toInt()
-        val scaledMouseY = scaleMouseY(rawMouseY.toDouble()).toInt()
+    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
+        // Parameters are already scaled as per CinnamonScreen's contract for renderContent
+        // Use scaledMouseX, scaledMouseY directly where needed (e.g., passing to renderKeybindingList)
 
         val contentX = getContentX()
         val contentY = getContentY()
@@ -302,7 +302,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         isListening = false
     }
 
-    override fun mouseClicked(rawMouseX: Double, rawMouseY: Double, button: Int): Boolean {
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (isListening) { // If was listening, any click stops it.
             isListening = false
             selectedKeybinding = null
@@ -315,13 +315,13 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
 
         // Let CinnamonButtons handle their clicks first. Pass raw coordinates as super expects them.
         // CinnamonScreen.mouseClicked will scale them for CinnamonButton checks.
-        if (super.mouseClicked(rawMouseX, rawMouseY, button)) {
+        if (super.mouseClicked(mouseX, mouseY, button)) {
             return true
         }
 
         // Scale mouse coordinates for custom hit detection below
-        val scaledMouseX = scaleMouseX(rawMouseX)
-        val scaledMouseY = scaleMouseY(rawMouseY)
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
 
         val contentX = getContentX() // Scaled coordinate
         val contentY = getContentY() // Scaled coordinate
@@ -360,9 +360,9 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         return false // Explicitly false if we didn't handle it.
     }
 
-    override fun mouseScrolled(rawMouseX: Double, rawMouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
-        val scaledMouseX = scaleMouseX(rawMouseX)
-        val scaledMouseY = scaleMouseY(rawMouseY)
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
 
         val contentX = getContentX()
         val contentY = getContentY()
@@ -390,7 +390,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         }
 
         // Pass raw (original) mouse coordinates to super
-        return super.mouseScrolled(rawMouseX, rawMouseY, horizontalAmount, verticalAmount)
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {

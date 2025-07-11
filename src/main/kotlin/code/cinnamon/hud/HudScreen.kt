@@ -1,87 +1,88 @@
 package code.cinnamon.hud
 
-import code.cinnamon.gui.CinnamonScreen
-import code.cinnamon.hud.HudManager
-import net.minecraft.client.gui.DrawContext
-// import net.minecraft.client.gui.screen.Screen // No longer needed
-import net.minecraft.text.Style
-import net.minecraft.text.Text
+import code.cinnamon.gui.CinnamonScreen // Import CinnamonScreen
 import code.cinnamon.gui.CinnamonGuiManager
 import code.cinnamon.gui.theme.CinnamonTheme
+import net.minecraft.client.gui.DrawContext
+import net.minecraft.text.Style
+import net.minecraft.text.Text
+// Screen import no longer needed if extending CinnamonScreen directly and it handles Screen import
 
-class HudScreen : CinnamonScreen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
+class HudScreen : CinnamonScreen(Text.literal("HUD Editor").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))) {
 
-    // CinnamonScreen's init will handle basic setup.
-    // We want HudScreen to be mostly transparent, letting HudManager render elements.
     override fun init() {
-        super.init() // This calls calculateGuiDimensions, initializeComponents
+        super.init() // This calls CinnamonScreen.init()
         HudManager.setEditMode(true)
     }
 
-    // We don't need the default CinnamonScreen GUI box, header, or footer for the HUD editor.
-    // The HUD editor should be a transparent overlay.
-    override fun renderHeader(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {}
-    override fun renderFooter(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {}
-
-    // Override renderGuiBox to prevent drawing the default rounded rectangle background,
-    // making the screen transparent for HUD editing.
-    // We will still call renderContent where HUD elements and instructions are drawn.
-    private fun renderGuiBox(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        // Do not draw the default GUI box from CinnamonScreen.
-        // Instead, directly call renderContent for our custom rendering.
-        // mouseX and mouseY here are already scaled by CinnamonScreen.render
-        renderContent(context, mouseX, mouseY, delta)
+    // Force CinnamonScreen's GUI box to cover the entire effective screen
+    // This prevents "click outside to close" behavior for a full-screen overlay.
+    override fun getDesiredGuiWidth(effectiveScaledWidth: Int): Int {
+        return effectiveScaledWidth
     }
 
+    override fun getDesiredGuiHeight(effectiveScaledHeight: Int): Int {
+        return effectiveScaledHeight
+    }
 
-    // render() is inherited from CinnamonScreen. It will:
-    // 1. Call super.render() (from vanilla Screen - usually does nothing or a dim background)
-    // 2. Set up matrix scaling based on TARGET_SCALE_FACTOR.
-    // 3. Call this.renderBlurredBackground() (provides a dim overlay for the editor).
-    // 4. Call this.renderShadow() (we might not want this, could override to be empty if needed for HUD screen).
-    // 5. Call the overridden renderGuiBox above, which then calls renderContent.
-    // 6. Render CinnamonButtons (if any were added via initializeComponents).
-    // 7. Pop matrix.
+    // Make the HudScreen background mostly transparent or just a dim overlay.
+    override fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match superclass
+        // No header for HUD editor
+    }
 
-    // We'll put the HUD rendering and instruction text into renderContent.
-    // mouseX and mouseY passed here are already scaled by CinnamonScreen.
-    override fun renderContent(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match superclass
+        // No footer for HUD editor
+    }
+
+    override fun renderBackground(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+        // CinnamonScreen's render method calls renderBlurredBackground which provides a dim overlay.
+        // We don't want CinnamonScreen's main rounded rect GUI box.
+        // The getDesiredGuiWidth/Height overrides making the logical box full-screen, combined
+        // with renderBlurredBackground, should achieve the desired effect without drawing
+        // the default themed box on top.
+        // If renderBlurredBackground is too opaque or unwanted, it could be conditionally skipped
+        // in CinnamonScreen or overridden here if CinnamonScreen provides a hook.
+        // For now, assume renderBlurredBackground is acceptable.
+    }
+
+    override val shouldRenderDefaultGuiBox: Boolean = false // Opt out of default GUI box
+
+    // renderContent is called by CinnamonScreen.render (via its private renderGuiBox)
+    // It now correctly receives scaledMouseX, scaledMouseY from CinnamonScreen's updated renderGuiBox.
+    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         // HudManager.render will draw all HUD elements.
-        // It needs to be aware that it's now rendering within a scaled context.
-        // For now, let it render as is; further changes to HudManager and HudElement will handle this.
-        HudManager.render(context, delta)
+        // It needs to receive the scaled DrawContext.
+        HudManager.render(context, delta) // HudManager will need to use this scaled context correctly.
 
         // Instruction text. This will also be scaled by CinnamonScreen's matrix.
-        // We need to position it relative to the scaled screen dimensions.
         val instructionText = Text.literal("Drag elements to move them - Scroll on elements to scale them")
-            .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())) // Use theme font
+            .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
-        val effectiveScaledWidth = getEffectiveWidth() // Use CinnamonScreen's helper for scaled width
-        // val effectiveScaledHeight = getEffectiveHeight() // Use CinnamonScreen's helper for scaled height
-
+        // Centering based on the effective scaled width, which is CinnamonScreen.guiWidth now.
         context.drawCenteredTextWithShadow(
             textRenderer,
             instructionText,
-            effectiveScaledWidth / 2, // Center on the scaled screen width
-            15, // Y position in scaled coordinates
-            CinnamonTheme.primaryTextColor // Use theme color
+            this.guiWidth / 2, // guiWidth is now the full effectiveScaledWidth
+            15,                // Y position in scaled coordinates
+            CinnamonTheme.primaryTextColor
         )
     }
 
     override fun initializeComponents() {
-        // If we need any CinnamonButtons for the HudScreen (e.g., a "Done" button), add them here.
-        // Their positions would use guiX, guiY, getContentX(), etc., from CinnamonScreen.
-        // For now, no extra buttons seem to be defined in the original HudScreen.
+        // No CinnamonButtons needed for the HUD editor itself.
     }
 
-
-    // Mouse methods now receive mouseX, mouseY that are ALREADY SCALED by CinnamonScreen.
-    // These are passed directly to HudManager, which will need to expect scaled coordinates.
+    // Mouse methods receive raw screen coordinates from Minecraft.
+    // We must scale them before passing to HudManager.
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        // If CinnamonButtons were added, their click handling is done by CinnamonScreen.mouseClicked -> super.mouseClicked
-        // We only need to call HudManager if no buttons were clicked or if we want HudManager to take precedence.
-        if (super.mouseClicked(mouseX, mouseY, button)) return true // Handles CinnamonButtons first
-        return HudManager.onMouseClicked(mouseX, mouseY, button) // Then pass to HudManager
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
+
+        // Give HudManager priority for clicks in edit mode.
+        if (HudManager.onMouseClicked(scaledMouseX, scaledMouseY, button)) {
+            return true
+        }
+        return super.mouseClicked(mouseX, mouseY, button)
     }
 
     override fun mouseDragged(
@@ -91,42 +92,47 @@ class HudScreen : CinnamonScreen(Text.literal("HUD Editor").setStyle(Style.EMPTY
         deltaX: Double,
         deltaY: Double
     ): Boolean {
-        // deltaX and deltaY are also in the scaled coordinate system.
-        if (super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) return true
-        return HudManager.onMouseDragged(mouseX, mouseY, button, deltaX, deltaY)
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
+        val scaledDeltaX = deltaX / getScaleRatio()
+        val scaledDeltaY = deltaY / getScaleRatio()
+
+        // Pass this.guiWidth and this.guiHeight (which are the full effective scaled screen dimensions)
+        // to HudManager for clamping purposes within HudElement.updateDragging.
+        if (HudManager.onMouseDragged(scaledMouseX, scaledMouseY, button, scaledDeltaX, scaledDeltaY, this.guiWidth, this.guiHeight)) {
+            return true
+        }
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)
     }
 
     override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (super.mouseReleased(mouseX, mouseY, button)) return true
-        return HudManager.onMouseReleased(mouseX, mouseY, button)
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
+        if (HudManager.onMouseReleased(scaledMouseX, scaledMouseY, button)) {
+            return true
+        }
+        return super.mouseReleased(mouseX, mouseY, button)
     }
 
     override fun mouseScrolled(
         mouseX: Double,
         mouseY: Double,
-        horizontalAmount: Double, // This is new in 1.20.5+
-        verticalAmount: Double   // This is new in 1.20.5+
+        horizontalAmount: Double,
+        verticalAmount: Double
     ): Boolean {
-        // In older versions, mouseScrolled had (mouseX, mouseY, amount)
-        // Assuming verticalAmount is the primary scroll amount we need.
-        if (super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) return true
-        return HudManager.onMouseScrolled(mouseX, mouseY, verticalAmount) // Pass verticalAmount as 'delta'
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
+        if (HudManager.onMouseScrolled(scaledMouseX, scaledMouseY, verticalAmount)) {
+            return true
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
-
-    // mouseMoved is fine, superclass handles it for buttons. HudManager doesn't use it directly.
-    // override fun mouseMoved(mouseX: Double, mouseY: Double) {
-    //     super.mouseMoved(mouseX, mouseY)
-    // }
 
     override fun close() {
         HudManager.onEditMenuClosed()
         HudManager.setEditMode(false)
-        // Assuming CinnamonGuiManager.openMainMenu() works as intended.
-        CinnamonGuiManager.openMainMenu()
-        // super.close() // CinnamonScreen doesn't have a close, vanilla Screen does.
-        // CinnamonScreen.onClose is called by MinecraftClient.setScreen(null)
+        super.close()
     }
 
-    // shouldCloseOnEsc is inherited from CinnamonScreen (which defaults to true).
-    // override fun shouldCloseOnEsc(): Boolean = true
+    override fun shouldCloseOnEsc(): Boolean = true
 }
