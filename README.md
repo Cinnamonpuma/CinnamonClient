@@ -7,7 +7,7 @@
   </tr>
 </table>
 
-**A modular and performance-focused Minecraft 1.21.5 client mod for Fabric. Built entirely in Kotlin for clarity, extensibility, and real-time control.**
+**A modular and performance-focused Minecraft 1.21.6+ client mod for Fabric. Built entirely in Kotlin for clarity, extensibility, and real-time control.**
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.6-green.svg)](https://minecraft.net/)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.7-green.svg)](https://minecraft.net/)
