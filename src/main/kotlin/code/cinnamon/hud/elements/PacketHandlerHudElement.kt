@@ -18,14 +18,13 @@ import net.minecraft.util.Identifier
 class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(initialX, initialY), Element {
 
     companion object {
-        private const val BUTTON_CORNER_RADIUS_BASE = 4f // Base radius
+        private const val BUTTON_CORNER_RADIUS_BASE = 4f
     }
 
     private val client: MinecraftClient = MinecraftClient.getInstance()
-    private val baseButtonHeight = 20 // Base height of a button
-    private val baseButtonMargin = 2  // Base margin around/between buttons
+    private val baseButtonHeight = 20
+    private val baseButtonMargin = 2
 
-    // Use new theme defaults
     var buttonColor: Int = 20987968
     var buttonTextColor: Int = 0xFFFFFFFF.toInt()
     var buttonTextShadowEnabled: Boolean = false
@@ -35,12 +34,12 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private fun createStyledText(text: String): Text =
         Text.literal(text).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
-    private data class HudButtonInternal( // Renamed to avoid conflict if HudButton is used elsewhere
+    private data class HudButtonInternal(
         var text: () -> String,
         val action: () -> Unit
     )
 
-    private val internalButtons = listOf( // Renamed
+    private val internalButtons = listOf(
         HudButtonInternal({ "Close without packet" }) { client.setScreen(null) },
         HudButtonInternal({ "De-sync" }) {
             client.player?.let { player ->
@@ -94,11 +93,11 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         config.buttonOutlineColor?.let { this.buttonOutlineColor = it }
         this.setX(config.x)
         this.setY(config.y)
-        this.scale = config.scale // Element's overall scale
+        this.scale = config.scale
         this.isEnabled = config.isEnabled
-        this.textColor = config.textColor // Not used by this element directly, but part of HudElement
-        this.backgroundColor = config.backgroundColor // Not used by this element directly
-        this.textShadowEnabled = config.textShadowEnabled // Not used by this element directly
+        this.textColor = config.textColor
+        this.backgroundColor = config.backgroundColor
+        this.textShadowEnabled = config.textShadowEnabled
     }
 
     fun toConfig(): HudElementConfig {
@@ -106,7 +105,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
             name = getName(),
             x = getX(),
             y = getY(),
-            scale = scale, // Element's overall scale
+            scale = scale,
             isEnabled = isEnabled,
             textColor = textColor,
             backgroundColor = backgroundColor,
@@ -121,7 +120,6 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private fun shouldRender(): Boolean {
         val screen = client.currentScreen
-        // Render if Cinnamon is enabled AND (edit mode is active OR current screen is not GameMenuScreen)
         return code.cinnamon.SharedVariables.enabled &&
                 (HudManager.isEditMode() || (screen != null && screen !is net.minecraft.client.gui.screen.GameMenuScreen))
     }
@@ -131,43 +129,35 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
         context.matrices.pushMatrix()
         context.matrices.translate(getX(), getY(), context.matrices)
-        context.matrices.scale(this.scale, this.scale, context.matrices) // Apply element's own scale
+        context.matrices.scale(this.scale, this.scale, context.matrices)
 
-        // Calculate mouse position in local unscaled coordinates for hover detection
-        var localUnscaledMouseX_forHover: Double = -1.0 // Default to off-element
+        var localUnscaledMouseX_forHover: Double = -1.0
         var localUnscaledMouseY_forHover: Double = -1.0
 
         if (this.scale != 0.0f) {
-            val mcGuiScale = client.window.scaleFactor
-            // Screen mouse coordinates in Minecraft's virtual pixels (already affected by mcGuiScale)
-            val screenMouseX = client.mouse.x / mcGuiScale
-            val screenMouseY = client.mouse.y / mcGuiScale
+            val scaledMouseX = getCurrentMouseX()
+            val scaledMouseY = getCurrentMouseY()
 
-            // Mouse position relative to this element's scaled top-left
-            val relativeScaledMouseX_forHover = screenMouseX - getX()
-            val relativeScaledMouseY_forHover = screenMouseY - getY()
+            val relativeScaledMouseX_forHover = scaledMouseX - getX()
+            val relativeScaledMouseY_forHover = scaledMouseY - getY()
 
-            // Convert to local unscaled coordinates
             localUnscaledMouseX_forHover = relativeScaledMouseX_forHover / this.scale
             localUnscaledMouseY_forHover = relativeScaledMouseY_forHover / this.scale
         }
 
-        // All drawing from here is relative to (0,0) for this element, using its base unscaled dimensions.
         val unscaledButtonMargin = baseButtonMargin.toFloat()
         val unscaledButtonHeight = baseButtonHeight.toFloat()
-        // getWidth() provides the base, unscaled width of the element.
-        // unscaledContentWidth is the base width available for buttons inside margins.
         val unscaledContentWidth = getWidth().toFloat() - 2 * unscaledButtonMargin
 
         var currentUnscaledButtonTopY = unscaledButtonMargin
 
         for (btn in internalButtons) {
             val btnText = createStyledText(btn.text())
-            val btnX = unscaledButtonMargin // Button's X position in unscaled local coords
-            val btnY = currentUnscaledButtonTopY // Button's Y position in unscaled local coords
+            val btnX = unscaledButtonMargin
+            val btnY = currentUnscaledButtonTopY
 
             var isMouseOverButton = false
-            if (this.scale != 0.0f) { // Only check hover if scale is valid
+            if (this.scale != 0.0f) {
                 isMouseOverButton = localUnscaledMouseX_forHover >= btnX &&
                         localUnscaledMouseX_forHover < btnX + unscaledContentWidth &&
                         localUnscaledMouseY_forHover >= btnY &&
@@ -180,8 +170,6 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         }
 
         if (HudManager.isEditMode()) {
-            // Draw border around the base getWidth()/getHeight()
-            // These are unscaled dimensions, will be scaled by the matrix.
             context.drawBorder(0, 0, getWidth(), getHeight(), 0xFFFF0000.toInt())
         }
         context.matrices.popMatrix()
@@ -189,28 +177,25 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private fun drawCustomButton(
         context: DrawContext,
-        x: Float, y: Float, width: Float, height: Float, // Base (unscaled) dimensions/positions
+        x: Float, y: Float, width: Float, height: Float,
         text: Text, hovered: Boolean
     ) {
-        // All drawing of the button itself is using base dimensions.
-        // The element's overall 'scale' (from this.scale) is already applied to the context.matrixStack.
         GraphicsUtils.drawFilledRoundedRect(
             context, x, y, width, height,
-            BUTTON_CORNER_RADIUS_BASE, // Use base radius, it will be scaled by matrix
+            BUTTON_CORNER_RADIUS_BASE,
             buttonColor
         )
 
         val currentOutlineColor = if (hovered) this.buttonHoverColor else this.buttonOutlineColor
         GraphicsUtils.drawRoundedRectBorder(
             context, x, y, width, height,
-            BUTTON_CORNER_RADIUS_BASE, // Use base radius, it will be scaled by matrix
+            BUTTON_CORNER_RADIUS_BASE,
             currentOutlineColor
         )
 
-        // Text is drawn using unscaled coordinates. The matrix will scale it.
         val tr = client.textRenderer
-        val textWidth = tr.getWidth(text) // This should give unscaled text width
-        val fontHeight = tr.fontHeight // This is unscaled font height
+        val textWidth = tr.getWidth(text)
+        val fontHeight = tr.fontHeight
 
         val textX = x + (width - textWidth) / 2f
         val textY = y + (height - fontHeight) / 2f
@@ -226,30 +211,20 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     override fun getName(): String = "PacketHandler"
 
-    // mouseX, mouseY are in CinnamonScreen's scaled coordinate system (i.e., after Minecraft's global GUI scale).
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!shouldRender() || HudManager.isEditMode() || !isEnabled) return false
 
-        // Element's own scale factor. Avoid division by zero.
         val currentElementScale = this.scale
         if (currentElementScale == 0.0f) return false
 
-        // Convert mouseX, mouseY (which are in CinnamonScreen-scaled system, relative to screen top-left)
-        // to coordinates relative to this element's scaled top-left corner.
         val relativeScaledMouseX = mouseX - getX()
         val relativeScaledMouseY = mouseY - getY()
 
-        // Transform to this element's local, unscaled coordinate system.
         val localUnscaledMouseX = relativeScaledMouseX / currentElementScale
         val localUnscaledMouseY = relativeScaledMouseY / currentElementScale
 
-        // Now, localUnscaledMouseX/Y are relative to the element's unscaled top-left (0,0).
-        // All button dimensions and positions will be in this local unscaled space.
-
         val unscaledButtonMargin = baseButtonMargin.toFloat()
         val unscaledButtonHeight = baseButtonHeight.toFloat()
-        // getWidth() returns the base, unscaled width of the element.
-        // unscaledContentWidth is the base width available for buttons inside margins.
         val unscaledContentWidth = getWidth().toFloat() - 2 * unscaledButtonMargin
 
         var currentUnscaledButtonTopY = unscaledButtonMargin
@@ -291,7 +266,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     override fun setFocused(focused: Boolean) {}
     override fun isFocused(): Boolean = false
 
-    public override fun isMouseOver(scaledMouseX: Double, scaledMouseY: Double): Boolean { // Match super
+    public override fun isMouseOver(scaledMouseX: Double, scaledMouseY: Double): Boolean {
         return super<HudElement>.isMouseOver(scaledMouseX, scaledMouseY)
     }
 }

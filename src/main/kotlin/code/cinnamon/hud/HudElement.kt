@@ -28,6 +28,9 @@ abstract class HudElement(
     private var dragOffsetX: Float = 0f
     private var dragOffsetY: Float = 0f
 
+    private var currentMouseX: Double = 0.0
+    private var currentMouseY: Double = 0.0
+
     abstract fun renderElement(context: DrawContext, tickDelta: Float)
 
     abstract fun getWidth(): Int
@@ -68,4 +71,18 @@ abstract class HudElement(
     fun getY(): Float = _y
     fun setX(newX: Float) { _x = newX }
     fun setY(newY: Float) { _y = newY }
+
+
+    fun setCurrentMousePosition(mouseX: Double, mouseY: Double) {
+        currentMouseX = mouseX
+        currentMouseY = mouseY
+    }
+
+    fun getCurrentMouseX(): Double = currentMouseX
+    fun getCurrentMouseY(): Double = currentMouseY
+
+
+    fun isCurrentlyHovered(): Boolean {
+        return isMouseOver(currentMouseX, currentMouseY)
+    }
 }
