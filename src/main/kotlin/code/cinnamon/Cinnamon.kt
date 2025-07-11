@@ -8,6 +8,7 @@ import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW
 import org.slf4j.LoggerFactory
 import code.cinnamon.gui.CinnamonGuiManager
+import code.cinnamon.gui.AnimatedScreenTransition
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.util.Identifier
 import code.cinnamon.modules.ModuleManager
@@ -44,6 +45,13 @@ object Cinnamon : ModInitializer {
         )
 
         ClientTickEvents.END_CLIENT_TICK.register { client ->
+            // Update screen transition animation
+            // It's important to get the delta time for smooth animations.
+            // ClientTickEvents doesn't directly provide delta, so we'll use a simple 1/20 for now (assuming 20 TPS)
+            // For more accuracy, a proper delta time calculation would be needed, possibly from RenderTickCounter if available here,
+            // or by tracking time between ticks.
+            AnimatedScreenTransition.update(1f / 20f) // Assuming 20 ticks per second
+
             if (openGuiKeybinding.wasPressed()) {
                 CinnamonGuiManager.openMainMenu()
             }
@@ -59,7 +67,12 @@ object Cinnamon : ModInitializer {
             if (KeybindingManager.wasPressed("cinnamon.open_saved_gui")) {
                 val storedScreen = code.cinnamon.SharedVariables.storedScreen
                 if (storedScreen is Screen) {
-                    MinecraftClient.getInstance().setScreen(storedScreen)
+                    // Ensure this also uses the transition manager if it's a CinnamonScreen
+                    if (storedScreen is code.cinnamon.gui.CinnamonScreen) {
+                        CinnamonGuiManager.openScreen(storedScreen)
+                    } else {
+                        MinecraftClient.getInstance().setScreen(storedScreen)
+                    }
                 }
             }
         }

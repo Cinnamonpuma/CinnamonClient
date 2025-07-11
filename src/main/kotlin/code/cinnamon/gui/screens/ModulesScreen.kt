@@ -30,6 +30,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     private val categoryButtons = mutableListOf<CinnamonButton>()
     private var scrollOffset = 0
     internal val expandedStates = mutableMapOf<String, Boolean>()
+    private val toggleAnimationProgress = mutableMapOf<String, Float>() // Module/HUD name to animation progress (0.0 to 1.0)
     private val baseModuleHeight = 60
     private val settingsModuleHeight = 200
     private val settingsHudElementHeight = 148 + 14
@@ -124,9 +125,16 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
         context.enableScissor(x, y, x + width, y + height)
         items.forEach { item ->
+            val itemName = when (item) {
+                is Module -> item.name
+                is HudElement -> item.getName()
+                else -> ""
+            }
+            updateToggleAnimation(itemName, item is Module && (item as Module).isEnabled || item is HudElement && (item as HudElement).isEnabled, delta)
+
             val itemHeight = when (item) {
-                is Module -> if (expandedStates[item.name] == true) settingsModuleHeight else baseModuleHeight
-                is HudElement -> if (expandedStates[item.getName()] == true) settingsHudElementHeight else baseModuleHeight
+                is Module -> if (expandedStates[itemName] == true) settingsModuleHeight else baseModuleHeight
+                is HudElement -> if (expandedStates[itemName] == true) settingsHudElementHeight else baseModuleHeight
                 else -> 0
             }
             if (currentY + itemHeight >= y && currentY <= y + height) {
@@ -140,6 +148,22 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
         context.disableScissor()
     }
+
+    private fun updateToggleAnimation(itemName: String, isEnabled: Boolean, delta: Float) {
+        val currentProgress = toggleAnimationProgress.getOrPut(itemName) { if (isEnabled) 1f else 0f }
+        val targetProgress = if (isEnabled) 1f else 0f
+        val animationSpeed = 8f // Adjust for faster/slower animation
+
+        if (currentProgress != targetProgress) {
+            val newProgress = if (targetProgress > currentProgress) {
+                min(currentProgress + animationSpeed * delta, targetProgress)
+            } else {
+                max(currentProgress - animationSpeed * delta, targetProgress)
+            }
+            toggleAnimationProgress[itemName] = newProgress
+        }
+    }
+
 
     private fun renderHudElementCard(context: DrawContext, x: Int, y: Int, width: Int, height: Int, element: HudElement, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         val isHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= y && scaledMouseY < y + height
@@ -172,7 +196,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val expandButtonX = x + width - expandButtonWidth - 12
         val toggleX = expandButtonX - toggleWidth - 8
 
-        renderToggleSwitch(context, toggleX, toggleY, toggleWidth, toggleHeight, element.isEnabled, scaledMouseX, scaledMouseY)
+        val animationProgress = toggleAnimationProgress[element.getName()] ?: (if (element.isEnabled) 1f else 0f)
+        renderToggleSwitch(context, toggleX, toggleY, toggleWidth, toggleHeight, element.isEnabled, scaledMouseX, scaledMouseY, animationProgress)
 
         context.drawText(
             textRenderer,
@@ -624,7 +649,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             y + baseModuleHeight - 30
         }
 
-        renderToggleSwitch(context, x + width - 50, bottomSectionY + 6, 30, 16, module.isEnabled, scaledMouseX, scaledMouseY)
+        val animationProgress = toggleAnimationProgress[module.name] ?: (if (module.isEnabled) 1f else 0f)
+        renderToggleSwitch(context, x + width - 50, bottomSectionY + 6, 30, 16, module.isEnabled, scaledMouseX, scaledMouseY, animationProgress)
         val statusColor = if (module.isEnabled) CinnamonTheme.successColor else CinnamonTheme.moduleDisabledColor
         context.fill(x + 12, bottomSectionY + 18, x + 20, bottomSectionY + 26, statusColor)
 
@@ -800,19 +826,53 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         )
     }
 
-    private fun renderToggleSwitch(context: DrawContext, x: Int, y: Int, width: Int, height: Int, enabled: Boolean, scaledMouseX: Int, scaledMouseY: Int) {
+    private fun renderToggleSwitch(
+        context: DrawContext,
+        x: Int, y: Int, width: Int, height: Int,
+        enabled: Boolean,
+        scaledMouseX: Int, scaledMouseY: Int,
+        animationProgress: Float // 0.0f (off) to 1.0f (on)
+    ) {
         val isHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= y && scaledMouseY < y + height
-        val switchBg = if (enabled) {
-            if (isHovered) CinnamonTheme.accentColorHover else CinnamonTheme.accentColor
-        } else {
-            if (isHovered) CinnamonTheme.buttonBackgroundHover else CinnamonTheme.buttonBackground
-        }
+
+        // Interpolate background color
+        val fromBgColor = if (isHovered) CinnamonTheme.buttonBackgroundHover else CinnamonTheme.buttonBackground
+        val toBgColor = if (isHovered) CinnamonTheme.accentColorHover else CinnamonTheme.accentColor
+        val switchBg = interpolateColor(fromBgColor, toBgColor, animationProgress)
+
         drawRoundedRect(context, x, y, width, height, switchBg)
+
         val knobSize = height - 4
-        val knobX = if (enabled) x + width - knobSize - 2 else x + 2
+        val startX = x + 2
+        val endX = x + width - knobSize - 2
+        val knobX = startX + ((endX - startX) * animationProgress).toInt()
         val knobY = y + 2
+
+        // Interpolate knob color (optional, could be static)
+        // For now, keeping knob color static as per original design
         drawRoundedRect(context, knobX, knobY, knobSize, knobSize, CinnamonTheme.titleColor)
     }
+
+    // Helper function to interpolate between two colors
+    private fun interpolateColor(colorFrom: Int, colorTo: Int, progress: Float): Int {
+        val R1 = (colorFrom shr 16 and 0xFF).toFloat()
+        val G1 = (colorFrom shr 8 and 0xFF).toFloat()
+        val B1 = (colorFrom and 0xFF).toFloat()
+        val A1 = (colorFrom shr 24 and 0xFF).toFloat()
+
+        val R2 = (colorTo shr 16 and 0xFF).toFloat()
+        val G2 = (colorTo shr 8 and 0xFF).toFloat()
+        val B2 = (colorTo and 0xFF).toFloat()
+        val A2 = (colorTo shr 24 and 0xFF).toFloat()
+
+        val R = (R1 + (R2 - R1) * progress).toInt()
+        val G = (G1 + (G2 - G1) * progress).toInt()
+        val B = (B1 + (B2 - B1) * progress).toInt()
+        val A = (A1 + (A2 - A1) * progress).toInt()
+
+        return (A shl 24) or (R shl 16) or (G shl 8) or B
+    }
+
 
     private fun renderScrollbar(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
         context.fill(x, y, x + width, y + height, CinnamonTheme.borderColor)

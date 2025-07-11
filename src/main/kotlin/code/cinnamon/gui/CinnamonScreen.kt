@@ -8,7 +8,9 @@ import net.minecraft.text.Text
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.gui.theme.CinnamonTheme
 import net.minecraft.util.Identifier
+import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.gl.RenderPipelines
+import code.cinnamon.gui.AnimatedScreenTransition
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -95,54 +97,66 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         val scaleRatio = getScaleRatio()
         val scaledWidth = getEffectiveWidth()
         val scaledHeight = getEffectiveHeight()
+        val alpha = AnimatedScreenTransition.getAlpha()
 
         context.matrices.pushMatrix()
         context.matrices.scale(scaleRatio, scaleRatio, context.matrices)
 
-        renderBlurredBackground(context, scaledWidth, scaledHeight)
-        renderShadow(context)
+        renderBlurredBackground(context, scaledWidth, scaledHeight, alpha)
+        renderShadow(context, alpha)
 
         val scaledMouseX = scaleMouseX(mouseX.toDouble()).toInt()
         val scaledMouseY = scaleMouseY(mouseY.toDouble()).toInt()
 
-        renderGuiBox(context, scaledMouseX, scaledMouseY, delta)
+        renderGuiBox(context, scaledMouseX, scaledMouseY, delta, alpha)
 
         buttons.forEach { button ->
+            // TODO: Consider if buttons should also fade, might need to pass alpha to button.render
             button.render(context, scaledMouseX, scaledMouseY, delta)
         }
 
         context.matrices.popMatrix()
     }
 
-    private fun renderBlurredBackground(context: DrawContext, scaledWidth: Int, scaledHeight: Int) {
-        context.fill(0, 0, scaledWidth, scaledHeight, 0x80000000.toInt())
-        context.fillGradient(0, 0, scaledWidth, scaledHeight, 0x40000000, 0x60000000)
+    private fun renderBlurredBackground(context: DrawContext, scaledWidth: Int, scaledHeight: Int, alpha: Float) {
+        val baseAlpha = 0x80
+        val gradientStartAlpha = 0x40
+        val gradientEndAlpha = 0x60
+
+        val finalBaseAlpha = (baseAlpha * alpha).toInt()
+        val finalGradientStartAlpha = (gradientStartAlpha * alpha).toInt()
+        val finalGradientEndAlpha = (gradientEndAlpha * alpha).toInt()
+
+        context.fill(0, 0, scaledWidth, scaledHeight, (finalBaseAlpha shl 24) or 0x000000)
+        context.fillGradient(0, 0, scaledWidth, scaledHeight, (finalGradientStartAlpha shl 24) or 0x000000, (finalGradientEndAlpha shl 24) or 0x000000)
     }
 
-    private fun renderShadow(context: DrawContext) {
-        val shadowColor = 0x40000000
-        val fadeColor = 0x00000000
+    private fun renderShadow(context: DrawContext, alpha: Float) {
+        val baseShadowAlpha = 0x40
+        val finalShadowAlpha = (baseShadowAlpha * alpha).toInt()
+        val shadowColor = (finalShadowAlpha shl 24) or 0x000000
+        val fadeColor = 0x00000000 // Transparent, no alpha needed here as it's the target
 
         context.fillGradient(guiX, guiY + guiHeight, guiX + guiWidth, guiY + guiHeight + SHADOW_SIZE, shadowColor, fadeColor)
         context.fillGradient(guiX + guiWidth, guiY, guiX + guiWidth + SHADOW_SIZE, guiY + guiHeight, shadowColor, fadeColor)
         context.fillGradient(guiX + guiWidth, guiY + guiHeight, guiX + guiWidth + SHADOW_SIZE, guiY + guiHeight + SHADOW_SIZE, shadowColor, fadeColor)
     }
 
-    private fun renderGuiBox(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+    private fun renderGuiBox(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float, alpha: Float) {
         if (shouldRenderDefaultGuiBox) {
-            drawRoundedRect(context, guiX, guiY, guiWidth, guiHeight, theme.coreBackgroundPrimary)
+            drawRoundedRect(context, guiX, guiY, guiWidth, guiHeight, theme.coreBackgroundPrimary, alpha = alpha)
         }
 
-        renderHeader(context, scaledMouseX, scaledMouseY, delta)
-        renderFooter(context, scaledMouseX, scaledMouseY, delta)
-        renderContent(context, scaledMouseX, scaledMouseY, delta)
+        renderHeader(context, scaledMouseX, scaledMouseY, delta, alpha)
+        renderFooter(context, scaledMouseX, scaledMouseY, delta, alpha)
+        renderContent(context, scaledMouseX, scaledMouseY, delta) // Content usually has its own alpha logic or is fine
 
         if (shouldRenderDefaultGuiBox) {
-            drawRoundedBorder(context, guiX, guiY, guiWidth, guiHeight, theme.borderColor)
+            drawRoundedBorder(context, guiX, guiY, guiWidth, guiHeight, theme.borderColor, alpha = alpha)
         }
     }
 
-    protected open fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+    protected open fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float, alpha: Float) {
         val headerY = guiY
 
         val logoPadding = PADDING / 2
@@ -152,32 +166,38 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         val logoX = guiX + PADDING
         val logoY = guiY + (HEADER_HEIGHT - desiredLogoHeight) / 2
 
+        // Apply alpha to logo
+        val logoColorWithAlpha = ((alpha * 255).toInt() shl 24) or 0x00FFFFFF // White with variable alpha
         context.drawTexture(
             RenderPipelines.GUI_TEXTURED,
             LOGO_TEXTURE,
-            logoX, logoY,
-            0f, 0f,
-            desiredLogoWidth, desiredLogoHeight,
-            desiredLogoWidth, desiredLogoHeight
+            logoX, logoY, // screen x, y
+            0f, 0f,   // u, v
+            desiredLogoWidth, desiredLogoHeight, // width, height to draw on screen
+            desiredLogoWidth, desiredLogoHeight,  // texture sheet width, texture sheet height
+            logoColorWithAlpha // ARGB color tint
         )
 
         val titleText = this.title.copy().setStyle(Style.EMPTY.withFont(theme.getCurrentFont()))
         val titleTextWidth = textRenderer.getWidth(titleText)
         val titleX = guiX + (guiWidth - titleTextWidth) / 2
 
+        val titleColorWithAlpha = applyAlphaToColor(theme.titleColor, alpha)
+
         context.drawText(
             textRenderer,
             titleText,
             titleX,
             headerY + (HEADER_HEIGHT - textRenderer.fontHeight) / 2,
-            theme.titleColor,
+            titleColorWithAlpha,
             theme.enableTextShadow
         )
 
+        val borderColorWithAlpha = applyAlphaToColor(theme.borderColor, alpha)
         context.fill(
             guiX + CORNER_RADIUS, headerY + HEADER_HEIGHT - 1,
             guiX + guiWidth - CORNER_RADIUS, headerY + HEADER_HEIGHT,
-            theme.borderColor
+            borderColorWithAlpha
         )
 
         val closeButtonSize = 16
@@ -187,84 +207,96 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         val isCloseHovered = scaledMouseX >= closeButtonX && scaledMouseX < closeButtonX + closeButtonSize &&
                 scaledMouseY >= closeButtonY && scaledMouseY < closeButtonY + closeButtonSize
 
-        val closeButtonColor = if (isCloseHovered) theme.errorColor else theme.secondaryTextColor
+        val baseCloseButtonColor = if (isCloseHovered) theme.errorColor else theme.secondaryTextColor
+        val closeButtonColorWithAlpha = applyAlphaToColor(baseCloseButtonColor, alpha)
 
-        context.drawHorizontalLine(closeButtonX + 3, closeButtonX + 13, closeButtonY + 3, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 4, closeButtonX + 12, closeButtonY + 4, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 5, closeButtonX + 11, closeButtonY + 5, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 6, closeButtonX + 10, closeButtonY + 6, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 7, closeButtonX + 9, closeButtonY + 7, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 6, closeButtonX + 10, closeButtonY + 9, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 5, closeButtonX + 11, closeButtonY + 10, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 4, closeButtonX + 12, closeButtonY + 11, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 3, closeButtonX + 13, closeButtonY + 12, closeButtonColor)
+        context.drawHorizontalLine(closeButtonX + 3, closeButtonX + 13, closeButtonY + 3, closeButtonColorWithAlpha)
+        context.drawHorizontalLine(closeButtonX + 4, closeButtonX + 12, closeButtonY + 4, closeButtonColorWithAlpha)
+        context.drawHorizontalLine(closeButtonX + 5, closeButtonX + 11, closeButtonY + 5, closeButtonColorWithAlpha)
+        context.drawHorizontalLine(closeButtonX + 6, closeButtonX + 10, closeButtonY + 6, closeButtonColorWithAlpha)
+        context.drawHorizontalLine(closeButtonX + 7, closeButtonX + 9, closeButtonY + 7, closeButtonColorWithAlpha)
+        context.drawHorizontalLine(closeButtonX + 6, closeButtonX + 10, closeButtonY + 9, closeButtonColorWithAlpha)
+        context.drawHorizontalLine(closeButtonX + 5, closeButtonX + 11, closeButtonY + 10, closeButtonColorWithAlpha)
+        context.drawHorizontalLine(closeButtonX + 4, closeButtonX + 12, closeButtonY + 11, closeButtonColorWithAlpha)
+        context.drawHorizontalLine(closeButtonX + 3, closeButtonX + 13, closeButtonY + 12, closeButtonColorWithAlpha)
     }
 
-    protected open fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+    protected open fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float, alpha: Float) {
         val footerY = guiY + guiHeight - FOOTER_HEIGHT
+        val borderColorWithAlpha = applyAlphaToColor(theme.borderColor, alpha)
         context.fill(
             guiX + CORNER_RADIUS, footerY,
             guiX + guiWidth - CORNER_RADIUS, footerY + 1,
-            theme.borderColor
+            borderColorWithAlpha
         )
     }
 
-    private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int, topRounded: Boolean = true, bottomRounded: Boolean = true) {
+    fun applyAlphaToColor(color: Int, alphaFactor: Float): Int {
+        val originalAlpha = (color shr 24 and 0xFF).toFloat()
+        val newAlpha = (originalAlpha * alphaFactor).toInt().coerceIn(0, 255)
+        return (newAlpha shl 24) or (color and 0x00FFFFFF)
+    }
+
+    private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int, topRounded: Boolean = true, bottomRounded: Boolean = true, alpha: Float = 1.0f) {
         val radius = CORNER_RADIUS
+        val colorWithAlpha = applyAlphaToColor(color, alpha)
         val centerY = if (topRounded) y + radius else y
         val centerHeight = height - (if (topRounded) radius else 0) - (if (bottomRounded) radius else 0)
 
-        context.fill(x, centerY, x + width, centerY + centerHeight, color)
+        context.fill(x, centerY, x + width, centerY + centerHeight, colorWithAlpha)
 
-        if (topRounded) context.fill(x + radius, y, x + width - radius, y + radius, color)
-        else context.fill(x, y, x + width, y + radius, color)
+        if (topRounded) context.fill(x + radius, y, x + width - radius, y + radius, colorWithAlpha)
+        else context.fill(x, y, x + width, y + radius, colorWithAlpha)
 
-        if (bottomRounded) context.fill(x + radius, y + height - radius, x + width - radius, y + height, color)
-        else context.fill(x, y + height - radius, x + width, y + height, color)
+        if (bottomRounded) context.fill(x + radius, y + height - radius, x + width - radius, y + height, colorWithAlpha)
+        else context.fill(x, y + height - radius, x + width, y + height, colorWithAlpha)
 
         if (topRounded) {
-            drawRoundedCorner(context, x, y, radius, color, true, true)
-            drawRoundedCorner(context, x + width - radius, y, radius, color, false, true)
+            drawRoundedCorner(context, x, y, radius, colorWithAlpha, true, true, alpha)
+            drawRoundedCorner(context, x + width - radius, y, radius, colorWithAlpha, false, true, alpha)
         }
 
         if (bottomRounded) {
-            drawRoundedCorner(context, x, y + height - radius, radius, color, true, false)
-            drawRoundedCorner(context, x + width - radius, y + height - radius, radius, color, false, false)
+            drawRoundedCorner(context, x, y + height - radius, radius, colorWithAlpha, true, false, alpha)
+            drawRoundedCorner(context, x + width - radius, y + height - radius, radius, colorWithAlpha, false, false, alpha)
         }
     }
 
-    private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, left: Boolean, top: Boolean) {
+    private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, left: Boolean, top: Boolean, alpha: Float = 1.0f) {
+        val colorWithAlpha = applyAlphaToColor(color, alpha)
         for (i in 0 until radius) {
             for (j in 0 until radius) {
                 if (sqrt((i * i + j * j).toDouble()) <= radius - 0.5) {
                     val pixelX = if (left) x + radius - 1 - i else x + i
                     val pixelY = if (top) y + radius - 1 - j else y + j
-                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)
+                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, colorWithAlpha)
                 }
             }
         }
     }
 
-    private fun drawRoundedBorder(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
-        context.fill(x + CORNER_RADIUS, y, x + width - CORNER_RADIUS, y + 1, color)
-        context.fill(x + CORNER_RADIUS, y + height - 1, x + width - CORNER_RADIUS, y + height, color)
-        context.fill(x, y + CORNER_RADIUS, x + 1, y + height - CORNER_RADIUS, color)
-        context.fill(x + width - 1, y + CORNER_RADIUS, x + width, y + height - CORNER_RADIUS, color)
+    private fun drawRoundedBorder(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int, alpha: Float = 1.0f) {
+        val colorWithAlpha = applyAlphaToColor(color, alpha)
+        context.fill(x + CORNER_RADIUS, y, x + width - CORNER_RADIUS, y + 1, colorWithAlpha)
+        context.fill(x + CORNER_RADIUS, y + height - 1, x + width - CORNER_RADIUS, y + height, colorWithAlpha)
+        context.fill(x, y + CORNER_RADIUS, x + 1, y + height - CORNER_RADIUS, colorWithAlpha)
+        context.fill(x + width - 1, y + CORNER_RADIUS, x + width, y + height - CORNER_RADIUS, colorWithAlpha)
 
-        drawCornerBorder(context, x, y, CORNER_RADIUS, color, true, true)
-        drawCornerBorder(context, x + width - CORNER_RADIUS, y, CORNER_RADIUS, color, false, true)
-        drawCornerBorder(context, x, y + height - CORNER_RADIUS, CORNER_RADIUS, color, true, false)
-        drawCornerBorder(context, x + width - CORNER_RADIUS, y + height - CORNER_RADIUS, CORNER_RADIUS, color, false, false)
+        drawCornerBorder(context, x, y, CORNER_RADIUS, colorWithAlpha, true, true, alpha)
+        drawCornerBorder(context, x + width - CORNER_RADIUS, y, CORNER_RADIUS, colorWithAlpha, false, true, alpha)
+        drawCornerBorder(context, x, y + height - CORNER_RADIUS, CORNER_RADIUS, colorWithAlpha, true, false, alpha)
+        drawCornerBorder(context, x + width - CORNER_RADIUS, y + height - CORNER_RADIUS, CORNER_RADIUS, colorWithAlpha, false, false, alpha)
     }
 
-    private fun drawCornerBorder(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, left: Boolean, top: Boolean) {
+    private fun drawCornerBorder(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, left: Boolean, top: Boolean, alpha: Float = 1.0f) {
+        val colorWithAlpha = applyAlphaToColor(color, alpha)
         for (i in 0 until radius) {
             for (j in 0 until radius) {
                 val distance = sqrt((i * i + j * j).toDouble())
                 if (distance >= radius - 1.5 && distance <= radius - 0.5) {
                     val pixelX = if (left) x + radius - 1 - i else x + i
                     val pixelY = if (top) y + radius - 1 - j else y + j
-                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)
+                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, colorWithAlpha)
                 }
             }
         }

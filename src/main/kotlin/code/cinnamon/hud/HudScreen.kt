@@ -22,10 +22,10 @@ class HudScreen : CinnamonScreen(Text.literal("HUD Editor").setStyle(Style.EMPTY
         return effectiveScaledHeight
     }
 
-    override fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+    override fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float, alpha: Float) {
     }
 
-    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float, alpha: Float) {
     }
 
     override fun renderBackground(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {

@@ -2,7 +2,6 @@ package code.cinnamon.gui
 
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.Screen
-import net.minecraft.text.Text
 import code.cinnamon.gui.screens.MainMenuScreen
 import code.cinnamon.gui.screens.ModulesScreen
 import code.cinnamon.gui.screens.KeybindingsScreen
@@ -12,34 +11,36 @@ import code.cinnamon.gui.screens.ThemeManagerScreen
 
 object CinnamonGuiManager {
     private val client = MinecraftClient.getInstance()
-    
+
     fun openMainMenu() {
-        client.setScreen(MainMenuScreen())
+        AnimatedScreenTransition.setCurrentScreen(MainMenuScreen())
     }
     fun openScreen(screen: Screen) {
-        client.setScreen(screen)
+        AnimatedScreenTransition.setCurrentScreen(screen)
     }
     fun openThemeManagerScreen() {
-        client.setScreen(ThemeManagerScreen())
+        AnimatedScreenTransition.setCurrentScreen(ThemeManagerScreen())
     }
-    
+
     fun openModulesScreen() {
-        client.setScreen(ModulesScreen())
+        AnimatedScreenTransition.setCurrentScreen(ModulesScreen())
     }
-    
+
     fun openKeybindingsScreen() {
-        client.setScreen(KeybindingsScreen())
+        AnimatedScreenTransition.setCurrentScreen(KeybindingsScreen())
     }
-    
+
     fun closeCurrentScreen() {
-        client.setScreen(null)
+        AnimatedScreenTransition.setCurrentScreen(null)
     }
-    
+
+    // getCurrentScreen should now reflect the screen being displayed by AnimatedScreenTransition
     fun getCurrentScreen(): Screen? {
-        return client.currentScreen
+        return AnimatedScreenTransition.getDisplayScreen()
     }
-    
+
+    // isGuiOpen should also reflect the state of AnimatedScreenTransition
     fun isGuiOpen(): Boolean {
-        return client.currentScreen != null
+        return AnimatedScreenTransition.getDisplayScreen() != null
     }
 }

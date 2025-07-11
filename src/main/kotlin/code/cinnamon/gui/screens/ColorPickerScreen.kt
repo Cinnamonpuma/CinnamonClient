@@ -36,9 +36,9 @@ class ColorPickerScreen(
     override fun initializeComponents() {
     }
 
-    override fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {}
+    override fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float, alpha: Float) {}
 
-    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {}
+    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float, alpha: Float) {}
 
     override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         val titleText = Text.literal("Select Color").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
