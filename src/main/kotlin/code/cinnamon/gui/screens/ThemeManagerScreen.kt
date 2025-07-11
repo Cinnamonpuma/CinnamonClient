@@ -276,15 +276,15 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         CinnamonGuiManager.openMainMenu()
     }
 
-    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float, alpha: Float) {
-        super.renderFooter(context, scaledMouseX, scaledMouseY, delta, alpha)
+    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+        super.renderFooter(context, scaledMouseX, scaledMouseY, delta)
         val statusText = Text.literal("Theme Editor").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         context.drawText(
             textRenderer,
             statusText,
             guiX + PADDING,
             getFooterY() + (FOOTER_HEIGHT - textRenderer.fontHeight) / 2,
-            applyAlphaToColor(CinnamonTheme.infoColor, alpha),
+            CinnamonTheme.infoColor,
             CinnamonTheme.enableTextShadow
         )
         val colorCountText = Text.literal("${ColorType.values().size} Colors Available").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
@@ -294,7 +294,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             colorCountText,
             guiX + guiWidth - colorCountWidth - PADDING,
             getFooterY() + (FOOTER_HEIGHT - textRenderer.fontHeight) / 2,
-            applyAlphaToColor(CinnamonTheme.secondaryTextColor, alpha),
+            CinnamonTheme.secondaryTextColor,
             CinnamonTheme.enableTextShadow
         )
     }

@@ -80,11 +80,9 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
         val contentY = getContentY()
     }
 
-    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float, alpha: Float) {
-        super.renderFooter(context, scaledMouseX, scaledMouseY, delta, alpha)
+    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+        super.renderFooter(context, scaledMouseX, scaledMouseY, delta)
 
-        // The text within the footer should also respect the screen's alpha during transitions.
-        // We'll apply the alpha to the text colors.
         val versionText = Text.literal("v1.5 - Minecraft 1.21.7").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val versionWidth = textRenderer.getWidth(versionText)
         context.drawText(
@@ -92,7 +90,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             versionText,
             guiX + guiWidth - versionWidth - PADDING,
             getFooterY() + (FOOTER_HEIGHT - textRenderer.fontHeight) / 2,
-            applyAlphaToColor(CinnamonTheme.secondaryTextColor, alpha),
+            CinnamonTheme.secondaryTextColor,
             CinnamonTheme.enableTextShadow
         )
         val statusText = Text.literal("Ready").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
@@ -101,7 +99,7 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
             statusText,
             guiX + PADDING,
             getFooterY() + (FOOTER_HEIGHT - textRenderer.fontHeight) / 2,
-            applyAlphaToColor(CinnamonTheme.successColor, alpha),
+            CinnamonTheme.successColor,
             CinnamonTheme.enableTextShadow
         )
     }
