@@ -62,9 +62,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         ))
     }
 
-    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
-        // Parameters are already scaled as per CinnamonScreen's contract for renderContent
-        // Use scaledMouseX, scaledMouseY directly where needed (e.g., passing to renderKeybindingList)
+    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
 
         val contentX = getContentX()
         val contentY = getContentY()
@@ -189,7 +187,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
 
         val keyButtonBg = when {
             isListeningToThis -> CinnamonTheme.primaryButtonBackgroundPressed
-            isHovered && scaledMouseX >= keyButtonX && scaledMouseX < keyButtonX + keyButtonWidth -> CinnamonTheme.buttonBackgroundHover // Use scaledMouseX for key button hover
+            isHovered && scaledMouseX >= keyButtonX && scaledMouseX < keyButtonX + keyButtonWidth -> CinnamonTheme.buttonBackgroundHover
             else -> CinnamonTheme.buttonBackground
         }
 
@@ -303,61 +301,50 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (isListening) { // If was listening, any click stops it.
+        if (isListening) {
             isListening = false
             selectedKeybinding = null
-            // A click while listening always cancels listening and does nothing else for this screen.
-            // It might be on a CinnamonButton, so allow super.mouseClicked to check that.
-            // However, the problem statement implies clicks aren't registering for list items.
-            // Let's return true to consume the click if we were listening, to prevent other actions.
+
             return true
         }
 
-        // Let CinnamonButtons handle their clicks first. Pass raw coordinates as super expects them.
-        // CinnamonScreen.mouseClicked will scale them for CinnamonButton checks.
         if (super.mouseClicked(mouseX, mouseY, button)) {
             return true
         }
 
-        // Scale mouse coordinates for custom hit detection below
+
         val scaledMouseX = scaleMouseX(mouseX)
         val scaledMouseY = scaleMouseY(mouseY)
 
-        val contentX = getContentX() // Scaled coordinate
-        val contentY = getContentY() // Scaled coordinate
-        val contentWidth = getContentWidth() // Scaled dimension
+        val contentX = getContentX()
+        val contentY = getContentY()
+        val contentWidth = getContentWidth()
 
-        // Mirror calculations from renderContent for listY and listHeight (these are in scaled space)
-        val renderTimeHeaderHeight = 50 // Scaled dimension
-        // For click detection, 'isListening' is false at this point, so use that state for layout.
-        val listTopY = contentY + renderTimeHeaderHeight + 10 // listTopY is a scaled Y coordinate
-        val listActualHeight = getKeybindingListHeight() - 10 // listActualHeight is a scaled dimension
+        val renderTimeHeaderHeight = 50
+        val listTopY = contentY + renderTimeHeaderHeight + 10
+        val listActualHeight = getKeybindingListHeight() - 10
 
-        // Define the clickable list area (slightly inset like in renderKeybindingList call)
-        val listAreaXStart = contentX + 10 // Scaled X
-        val listAreaXEnd = contentX + contentWidth - 10 // Scaled X
 
-        // Compare scaled mouse coordinates with scaled list area bounds
+        val listAreaXStart = contentX + 10
+        val listAreaXEnd = contentX + contentWidth - 10
+
         if (scaledMouseX >= listAreaXStart && scaledMouseX < listAreaXEnd &&
             scaledMouseY >= listTopY && scaledMouseY < listTopY + listActualHeight) {
 
             val entries = getKeybindingEntries()
             entries.forEachIndexed { index, entry ->
-                // Calculate entryY exactly as in renderKeybindingList (scaled Y)
                 val entryY = listTopY - scrollOffset + index * (keybindingHeight + keybindingSpacing)
 
-                // Compare scaled mouse Y with scaled entry Y bounds
                 if (scaledMouseY >= entryY && scaledMouseY < entryY + keybindingHeight) {
-                    // Click is within this entry
+
                     selectedKeybinding = entry.name
-                    isListening = true // Start listening for the next key press
+                    isListening = true
                     return true
                 }
             }
         }
 
-        // If no list item was clicked, and no CinnamonButton was clicked.
-        return false // Explicitly false if we didn't handle it.
+        return false
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
@@ -368,28 +355,23 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val contentY = getContentY()
         val contentWidth = getContentWidth()
 
-        // Scroll area should match the visual list area defined in renderContent
+
         val renderTimeHeaderHeight = 50
-        // Note: isListening state might change scrollable area visual size slightly,
-        // but for hit-testing scroll, using the non-listening dimensions might be more stable
-        // or ensure it always matches the largest possible scroll area.
-        // Let's use the same logic as renderContent for consistency.
+
         val listTopY = contentY + renderTimeHeaderHeight + (if (isListening) 35 else 10)
         val listActualHeight = getKeybindingListHeight() - (if (isListening) 45 else 10)
 
-        val listAreaXStart = contentX + 10 // Scaled X
-        val listAreaXEnd = contentX + contentWidth - 10 // Scaled X
+        val listAreaXStart = contentX + 10
+        val listAreaXEnd = contentX + contentWidth - 10
 
-        // Compare scaled mouse coordinates with scaled list area bounds
         if (scaledMouseX >= listAreaXStart && scaledMouseX < listAreaXEnd &&
             scaledMouseY >= listTopY && scaledMouseY < listTopY + listActualHeight) {
 
-            val scrollAmount = (verticalAmount * 20).toInt() // Standard scroll multiplier
+            val scrollAmount = (verticalAmount * 20).toInt()
             scrollOffset = max(0, min(maxScrollOffset, scrollOffset - scrollAmount))
-            return true // Event handled
+            return true
         }
 
-        // Pass raw (original) mouse coordinates to super
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 

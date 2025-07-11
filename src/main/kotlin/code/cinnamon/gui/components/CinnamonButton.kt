@@ -46,7 +46,7 @@ class CinnamonButton(
 
     fun isEnabled(): Boolean = isEnabled
 
-    // Implement Element interface required methods:
+
     override fun setFocused(focused: Boolean) { /* no-op */ }
     override fun isFocused(): Boolean = false
 
@@ -57,7 +57,6 @@ class CinnamonButton(
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         updateAnimation(delta)
 
-        // Update hover state based on current mouse position
         isHovered = isMouseOver(mouseX.toDouble(), mouseY.toDouble())
 
         context.matrices.pushMatrix()

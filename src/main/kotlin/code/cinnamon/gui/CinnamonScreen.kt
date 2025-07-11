@@ -37,7 +37,6 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         const val MIN_GUI_HEIGHT = 300
         const val MAX_GUI_HEIGHT = 600
 
-        // Target GUI scale factor - this is what we want to simulate
         const val TARGET_SCALE_FACTOR = 2f
     }
 
@@ -48,22 +47,18 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         initializeComponents()
     }
 
-    // Allow subclasses to define their desired width
     protected open fun getDesiredGuiWidth(effectiveScaledWidth: Int): Int {
         return max(MIN_GUI_WIDTH, min(MAX_GUI_WIDTH, (effectiveScaledWidth * 0.7f).toInt()))
     }
 
-    // Allow subclasses to define their desired height
     protected open fun getDesiredGuiHeight(effectiveScaledHeight: Int): Int {
         return max(MIN_GUI_HEIGHT, min(MAX_GUI_HEIGHT, (effectiveScaledHeight * 0.8f).toInt()))
     }
 
     private fun calculateGuiDimensions() {
-        // Calculate dimensions based on effective screen size at target scale
         val scaledWidth = getEffectiveWidth()
         val scaledHeight = getEffectiveHeight()
 
-        // Use the new methods to get desired dimensions
         guiWidth = getDesiredGuiWidth(scaledWidth)
         guiHeight = getDesiredGuiHeight(scaledHeight)
 
@@ -71,7 +66,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         guiY = (scaledHeight - guiHeight) / 2
     }
 
-    internal fun getEffectiveWidth(): Int { // Made internal for potential use by HudElement clamping
+    internal fun getEffectiveWidth(): Int {
         val currentScale = client!!.window.scaleFactor.toFloat()
         return (width * currentScale / TARGET_SCALE_FACTOR).toInt()
     }
@@ -86,14 +81,13 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         return TARGET_SCALE_FACTOR / currentScale
     }
 
-    // Convert screen coordinates to our scaled coordinate system
     protected fun scaleMouseX(mouseX: Double): Double = mouseX / getScaleRatio()
     protected fun scaleMouseY(mouseY: Double): Double = mouseY / getScaleRatio()
 
     abstract fun initializeComponents()
-    protected abstract fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) // Changed params
+    protected abstract fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float)
 
-    protected open val shouldRenderDefaultGuiBox: Boolean = true // New flag
+    protected open val shouldRenderDefaultGuiBox: Boolean = true
 
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         super.render(context, mouseX, mouseY, delta)
@@ -108,11 +102,10 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         renderBlurredBackground(context, scaledWidth, scaledHeight)
         renderShadow(context)
 
-        // Convert mouse coordinates to our scaled coordinate system
         val scaledMouseX = scaleMouseX(mouseX.toDouble()).toInt()
         val scaledMouseY = scaleMouseY(mouseY.toDouble()).toInt()
 
-        renderGuiBox(context, scaledMouseX, scaledMouseY, delta) // Pass scaled coordinates
+        renderGuiBox(context, scaledMouseX, scaledMouseY, delta)
 
         buttons.forEach { button ->
             button.render(context, scaledMouseX, scaledMouseY, delta)
@@ -135,14 +128,14 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         context.fillGradient(guiX + guiWidth, guiY + guiHeight, guiX + guiWidth + SHADOW_SIZE, guiY + guiHeight + SHADOW_SIZE, shadowColor, fadeColor)
     }
 
-    private fun renderGuiBox(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Now accepts scaled
+    private fun renderGuiBox(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         if (shouldRenderDefaultGuiBox) {
             drawRoundedRect(context, guiX, guiY, guiWidth, guiHeight, theme.coreBackgroundPrimary)
         }
 
-        renderHeader(context, scaledMouseX, scaledMouseY, delta) // Pass scaled
-        renderFooter(context, scaledMouseX, scaledMouseY, delta) // Pass scaled
-        renderContent(context, scaledMouseX, scaledMouseY, delta) // Pass scaled
+        renderHeader(context, scaledMouseX, scaledMouseY, delta)
+        renderFooter(context, scaledMouseX, scaledMouseY, delta)
+        renderContent(context, scaledMouseX, scaledMouseY, delta)
 
         if (shouldRenderDefaultGuiBox) {
             drawRoundedBorder(context, guiX, guiY, guiWidth, guiHeight, theme.borderColor)
@@ -150,7 +143,6 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
 
     protected open fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
-        // Use scaledMouseX and scaledMouseY directly
         val headerY = guiY
 
         val logoPadding = PADDING / 2
@@ -192,7 +184,6 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         val closeButtonX = guiX + guiWidth - closeButtonSize - 8
         val closeButtonY = headerY + (HEADER_HEIGHT - closeButtonSize) / 2
 
-        // Use the passed scaledMouseX and scaledMouseY directly
         val isCloseHovered = scaledMouseX >= closeButtonX && scaledMouseX < closeButtonX + closeButtonSize &&
                 scaledMouseY >= closeButtonY && scaledMouseY < closeButtonY + closeButtonSize
 
@@ -209,7 +200,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         context.drawHorizontalLine(closeButtonX + 3, closeButtonX + 13, closeButtonY + 12, closeButtonColor)
     }
 
-    protected open fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Accepts scaled
+    protected open fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         val footerY = guiY + guiHeight - FOOTER_HEIGHT
         context.fill(
             guiX + CORNER_RADIUS, footerY,
@@ -320,10 +311,6 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
-        // Child screens that need to react to scrolling within specific scaled areas
-        // should override this, scale mouseX/mouseY themselves for their hit-tests,
-        // and then call super.mouseScrolled with the original rawX/rawY if the event isn't consumed.
-        // Minecraft's base Screen class expects raw coordinates.
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 

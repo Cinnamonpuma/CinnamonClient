@@ -100,9 +100,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
     }
 
-    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
-        // Parameters are already scaled as per CinnamonScreen's contract for renderContent
-        // Use scaledMouseX, scaledMouseY directly where needed
+    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+
 
         val contentX = getContentX()
         val contentY = getContentY()
@@ -514,7 +513,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
 
         val effectiveSettingsContentHeight = settingsAreaHeight - 10
-        // val availableGridHeight = (settingsY + effectiveSettingsContentHeight) - gridCurrentY - 5 // Not directly used for click logic
+
 
         val itemsPerRow = max(1, (settingsWidth + horizontalSpacing) / (itemBoxWidth + horizontalSpacing))
 
@@ -561,7 +560,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         if (checked) {
             context.drawText(
                 textRenderer,
-                Text.literal("✓").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
+                Text.literal("x").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
                 x + 1,
                 y + 1,
                 CinnamonTheme.titleColor,
@@ -737,7 +736,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                     if (isSelected) {
                         context.drawText(
                             textRenderer,
-                            Text.literal("✓").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
+                            Text.literal("x").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
                             checkboxX + 1,
                             checkboxY + 1,
                             CinnamonTheme.titleColor,
@@ -884,26 +883,26 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val contentY = getContentY()
         val contentWidth = getContentWidth()
         val contentHeight = getContentHeight()
-        val moduleListY = contentY + 60 // This is a Y coordinate in the scaled space
-        val moduleListHeight = contentHeight - 70 // This is a height in the scaled space
+        val moduleListY = contentY + 60
+        val moduleListHeight = contentHeight - 70
 
-        // Check if the scaled mouse click is within the scaled module list area
+
         if (scaledMouseX >= contentX && scaledMouseX < contentX + contentWidth &&
             scaledMouseY >= moduleListY && scaledMouseY < moduleListY + moduleListHeight) {
 
             val items = getFilteredModules()
-            var currentY = moduleListY - scrollOffset // currentY is in scaled space
-            val cardX = contentX + 10 // cardX is in scaled space
-            val cardWidth = contentWidth - 20 // cardWidth is in scaled space
+            var currentY = moduleListY - scrollOffset
+            val cardX = contentX + 10
+            val cardWidth = contentWidth - 20
 
             items.forEach { item ->
-                val currentItemHeight = when (item) { // currentItemHeight is in scaled space
+                val currentItemHeight = when (item) {
                     is Module -> if (expandedStates[item.name] == true) settingsModuleHeight else baseModuleHeight
                     is HudElement -> if (expandedStates[item.getName()] == true) settingsHudElementHeight else baseModuleHeight
                     else -> 0
                 }
 
-                // Compare scaled mouse Y with scaled card Y bounds
+
                 if (scaledMouseY >= currentY && scaledMouseY < currentY + currentItemHeight) {
                     if (item is Module) {
                         val bottomSectionYModule = if (expandedStates[item.name] == true) {
@@ -914,7 +913,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                         val toggleXModule = cardX + cardWidth - 50
                         val toggleYModule = bottomSectionYModule + 6
 
-                        // Compare scaled mouse with scaled toggle switch bounds
+
                         if (scaledMouseX >= toggleXModule && scaledMouseX < toggleXModule + 30 &&
                             scaledMouseY >= toggleYModule && scaledMouseY < toggleYModule + 16) {
                             ModuleManager.toggleModule(item.name)
@@ -926,7 +925,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                         val expandButtonXModule = cardX + cardWidth - expandButtonWidthModule - 12
                         val expandButtonYModule = currentY + 8
 
-                        // Compare scaled mouse with scaled expand button bounds
+
                         if (scaledMouseX >= expandButtonXModule && scaledMouseX < expandButtonXModule + expandButtonWidthModule &&
                             scaledMouseY >= expandButtonYModule && scaledMouseY < expandButtonYModule + textRenderer.fontHeight) {
                             expandedStates[item.name] = !(expandedStates[item.name] ?: false)
@@ -937,14 +936,14 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                         if (expandedStates[item.name] == true && item is AutoclickerModule) {
                             val settingsContentX = cardX + 12
                             val settingsContentY = currentY + 40 + 5
-                            // Pass scaled mouse coordinates to settings handler
+
                             if (handleAutoClickerSettings(scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, cardWidth - 24, item)) {
                                 return true
                             }
                         } else if (expandedStates[item.name] == true && item is ChatPrefixModule) {
                             val settingsContentX = cardX + 12
                             val settingsContentY = currentY + 40 + 5
-                            // Pass scaled mouse coordinates to settings handler
+
                             if (handleChatPrefixSettingsClick(scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, cardWidth - 24, item)) {
                                 return true
                             }
@@ -962,14 +961,14 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                         val toggleXHud = expandButtonXHud - toggleWidth - 8
                         val toggleYHud = currentY + (headerHeight - toggleHeight) / 2
 
-                        // Compare scaled mouse with scaled toggle switch bounds
+
                         if (scaledMouseX >= toggleXHud && scaledMouseX < toggleXHud + toggleWidth &&
                             scaledMouseY >= toggleYHud && scaledMouseY < toggleYHud + toggleHeight) {
                             item.isEnabled = !item.isEnabled
                             return true
                         }
 
-                        // Compare scaled mouse with scaled expand button bounds
+
                         if (scaledMouseX >= expandButtonXHud && scaledMouseX < expandButtonXHud + expandButtonWidthHud &&
                             scaledMouseY >= expandButtonYHud && scaledMouseY < expandButtonYHud + textRenderer.fontHeight) {
                             expandedStates[item.getName()] = !(expandedStates[item.getName()] ?: false)
@@ -982,21 +981,21 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                             val settingsContentY = currentY + baseModuleHeight
                             val settingsContentWidth = cardWidth - 24
                             val settingsAreaActualHeight = settingsHudElementHeight - baseModuleHeight - 8
-                            // Compare scaled mouse Y with scaled settings area Y bounds
+
                             if (scaledMouseY >= settingsContentY && scaledMouseY < settingsContentY + settingsAreaActualHeight) {
-                                // Pass scaled mouse coordinates to settings handler
+
                                 if (handleHudElementSettingsClick(scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, settingsContentWidth, item)) {
                                     return true
                                 }
                             }
                         }
                     }
-                    return true // Click was handled within an item
+                    return true
                 }
                 currentY += currentItemHeight + moduleSpacing
             }
         }
-        // Pass raw (original) mouse coordinates to super
+
         return super.mouseClicked(mouseX, mouseY, button)
     }
 
@@ -1077,20 +1076,20 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val contentWidth = getContentWidth()
 
         val categoryAreaHeight = 50
-        val moduleListY = getContentY() + categoryAreaHeight + 10 // Scaled Y
-        val moduleListHeight = getContentHeight() - categoryAreaHeight - 20 // Scaled height
+        val moduleListY = getContentY() + categoryAreaHeight + 10
+        val moduleListHeight = getContentHeight() - categoryAreaHeight - 20
 
-        // Compare scaled mouse coordinates with scaled list area
+
         if (scaledMouseX >= contentX && scaledMouseX < contentX + contentWidth &&
             scaledMouseY >= moduleListY && scaledMouseY < moduleListY + moduleListHeight) {
 
             if (maxScrollOffset > 0) {
-                val scrollAmount = (verticalAmount * 20).toInt() // Keep standard scroll speed
+                val scrollAmount = (verticalAmount * 20).toInt()
                 scrollOffset = max(0, min(maxScrollOffset, scrollOffset - scrollAmount))
-                return true // Event handled
+                return true
             }
         }
-        // Pass raw (original) mouse coordinates to super
+
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 }

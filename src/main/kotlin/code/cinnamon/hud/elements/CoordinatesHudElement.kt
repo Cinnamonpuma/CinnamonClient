@@ -15,7 +15,7 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
     private val cornerRadius = 6
     private val lineSpacing = 2
-    private val internalPadding = 2 // Defines padding for the background around the text content
+    private val internalPadding = 2
 
     override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
@@ -28,15 +28,10 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
         val zText = Text.literal(String.format("Z: %.1f", pos.z)).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
         context.matrices.pushMatrix()
-        context.matrices.translate(getX(), getY(), context.matrices) // Use Floats
-        context.matrices.scale(this.scale, this.scale, context.matrices) // scale is already Float
-
-        // All drawing is relative to (0,0) of this element's scaled bounding box.
-        // getWidth() and getHeight() define the core text content area.
+        context.matrices.translate(getX(), getY(), context.matrices)
+        context.matrices.scale(this.scale, this.scale, context.matrices)
 
         if (backgroundColor != 0) {
-            // Draw background including internalPadding.
-            // The background extends 'internalPadding' pixels outside the getWidth()/getHeight() content area on all sides.
             drawRoundedBackground(
                 context,
                 -internalPadding,
@@ -47,11 +42,10 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
             )
         }
 
-        // Text is drawn starting from (0,0) relative to the element's top-left, which corresponds to the text content area.
-        val textYOffset = 0 // Y offset for the first line of text, relative to element's (0,0)
+        val textYOffset = 0
 
         if (this.textShadowEnabled) {
-            context.drawText(mc.textRenderer, xText, 1, textYOffset + 1, 0x40000000, false) // Shadow offset by 1
+            context.drawText(mc.textRenderer, xText, 1, textYOffset + 1, 0x40000000, false)
             context.drawText(mc.textRenderer, yText, 1, textYOffset + mc.textRenderer.fontHeight + lineSpacing + 1, 0x40000000, false)
             context.drawText(mc.textRenderer, zText, 1, textYOffset + (mc.textRenderer.fontHeight + lineSpacing) * 2 + 1, 0x40000000, false)
         }

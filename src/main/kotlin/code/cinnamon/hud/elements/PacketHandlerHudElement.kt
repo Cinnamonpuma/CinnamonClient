@@ -130,51 +130,58 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         if (!shouldRender() || !isEnabled) return
 
         context.matrices.pushMatrix()
-        context.matrices.translate(getX(), getY(), context.matrices) // Use Floats
-        context.matrices.scale(this.scale, this.scale, context.matrices) // scale is already Float
+        context.matrices.translate(getX(), getY(), context.matrices)
+        context.matrices.scale(this.scale, this.scale, context.matrices) // Apply element's own scale
+
+        // Calculate mouse position in local unscaled coordinates for hover detection
+        var localUnscaledMouseX_forHover: Double = -1.0 // Default to off-element
+        var localUnscaledMouseY_forHover: Double = -1.0
+
+        if (this.scale != 0.0f) {
+            val mcGuiScale = client.window.scaleFactor
+            // Screen mouse coordinates in Minecraft's virtual pixels (already affected by mcGuiScale)
+            val screenMouseX = client.mouse.x / mcGuiScale
+            val screenMouseY = client.mouse.y / mcGuiScale
+
+            // Mouse position relative to this element's scaled top-left
+            val relativeScaledMouseX_forHover = screenMouseX - getX()
+            val relativeScaledMouseY_forHover = screenMouseY - getY()
+
+            // Convert to local unscaled coordinates
+            localUnscaledMouseX_forHover = relativeScaledMouseX_forHover / this.scale
+            localUnscaledMouseY_forHover = relativeScaledMouseY_forHover / this.scale
+        }
 
         // All drawing from here is relative to (0,0) for this element, using its base unscaled dimensions.
-        // The context is now scaled globally by CinnamonScreen and locally by this element.
+        val unscaledButtonMargin = baseButtonMargin.toFloat()
+        val unscaledButtonHeight = baseButtonHeight.toFloat()
+        // getWidth() provides the base, unscaled width of the element.
+        // unscaledContentWidth is the base width available for buttons inside margins.
+        val unscaledContentWidth = getWidth().toFloat() - 2 * unscaledButtonMargin
 
-        // Mouse coordinates for hover check, relative to this element's (0,0) and NOT scaled by element.scale yet.
-        // This requires mouseX, mouseY to be transformed by HudManager if they are screen coords.
-        // However, for rendering, mouse coords are only for hover effect.
-        // The actual click is handled in mouseClicked with already scaled coords.
-        val mcScaleFactor = client.window.scaleFactor
-        val screenMouseX = client.mouse.x / mcScaleFactor
-        val screenMouseY = client.mouse.y / mcScaleFactor
+        var currentUnscaledButtonTopY = unscaledButtonMargin
 
-        // Convert screen mouse to this element's local, unscaled coordinate system
-        // This is complex because getX/Y are already scaled by CinnamonScreen's logic.
-        // For simplicity in renderElement, we'll assume mouse coords for hover are tricky to get perfectly
-        // without more context from HudManager about how it passes mouse coords for rendering.
-        // The click logic in mouseClicked is more reliable as it uses CinnamonScreen-scaled coords.
-        // For visual hover, we can approximate or rely on HudScreen providing relative mouse.
-        // Let's assume for now mouseX, mouseY are NOT passed to renderElement for hover.
-
-        var currentRelativeY = baseButtonMargin.toFloat()
         for (btn in internalButtons) {
             val btnText = createStyledText(btn.text())
-            val btnX = baseButtonMargin.toFloat()
-            val btnY = currentRelativeY
-            // getWidth() is base width of the whole element. contentWidth is for button area.
-            val contentWidth = getWidth() - 2 * baseButtonMargin
-            val btnHeight = baseButtonHeight.toFloat()
+            val btnX = unscaledButtonMargin // Button's X position in unscaled local coords
+            val btnY = currentUnscaledButtonTopY // Button's Y position in unscaled local coords
 
-            // Simplified: isMouseOverButton check is complex here due to nested scaling.
-            // Rely on mouseClicked for actual interaction. Hover effect might be slightly off if not careful.
-            // For now, pass false for hovered, or implement a more robust local mouse check.
-            val isMouseOverButton = false // Placeholder: mouseClicked handles actual clicks accurately.
-            // To get proper hover for rendering, HudManager would need to pass
-            // mouse coordinates relative to the unscaled element at (0,0).
+            var isMouseOverButton = false
+            if (this.scale != 0.0f) { // Only check hover if scale is valid
+                isMouseOverButton = localUnscaledMouseX_forHover >= btnX &&
+                        localUnscaledMouseX_forHover < btnX + unscaledContentWidth &&
+                        localUnscaledMouseY_forHover >= btnY &&
+                        localUnscaledMouseY_forHover < btnY + unscaledButtonHeight
+            }
 
-            drawCustomButton(context, btnX, btnY, contentWidth.toFloat(), btnHeight, btnText, isMouseOverButton)
+            drawCustomButton(context, btnX, btnY, unscaledContentWidth, unscaledButtonHeight, btnText, isMouseOverButton)
 
-            currentRelativeY += baseButtonHeight + baseButtonMargin
+            currentUnscaledButtonTopY += unscaledButtonHeight + unscaledButtonMargin
         }
 
         if (HudManager.isEditMode()) {
             // Draw border around the base getWidth()/getHeight()
+            // These are unscaled dimensions, will be scaled by the matrix.
             context.drawBorder(0, 0, getWidth(), getHeight(), 0xFFFF0000.toInt())
         }
         context.matrices.popMatrix()
@@ -182,28 +189,28 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     private fun drawCustomButton(
         context: DrawContext,
-        x: Float, y: Float, width: Float, height: Float, // Base dimensions/positions
+        x: Float, y: Float, width: Float, height: Float, // Base (unscaled) dimensions/positions
         text: Text, hovered: Boolean
     ) {
         // All drawing of the button itself is using base dimensions.
-        // The element's overall 'scale' is applied by HudManager.
+        // The element's overall 'scale' (from this.scale) is already applied to the context.matrixStack.
         GraphicsUtils.drawFilledRoundedRect(
             context, x, y, width, height,
-            BUTTON_CORNER_RADIUS_BASE, // Use base radius
+            BUTTON_CORNER_RADIUS_BASE, // Use base radius, it will be scaled by matrix
             buttonColor
         )
 
         val currentOutlineColor = if (hovered) this.buttonHoverColor else this.buttonOutlineColor
         GraphicsUtils.drawRoundedRectBorder(
             context, x, y, width, height,
-            BUTTON_CORNER_RADIUS_BASE, // Use base radius
+            BUTTON_CORNER_RADIUS_BASE, // Use base radius, it will be scaled by matrix
             currentOutlineColor
         )
 
-        // Text is drawn unscaled. HudManager's scaling of the element will scale the text.
+        // Text is drawn using unscaled coordinates. The matrix will scale it.
         val tr = client.textRenderer
-        val textWidth = tr.getWidth(text)
-        val fontHeight = tr.fontHeight
+        val textWidth = tr.getWidth(text) // This should give unscaled text width
+        val fontHeight = tr.fontHeight // This is unscaled font height
 
         val textX = x + (width - textWidth) / 2f
         val textY = y + (height - fontHeight) / 2f
@@ -219,37 +226,43 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     override fun getName(): String = "PacketHandler"
 
-    // mouseX, mouseY are in CinnamonScreen's scaled coordinate system.
+    // mouseX, mouseY are in CinnamonScreen's scaled coordinate system (i.e., after Minecraft's global GUI scale).
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!shouldRender() || HudManager.isEditMode() || !isEnabled) return false
 
-        // Convert mouseX, mouseY (which are in CinnamonScreen-scaled system, relative to screen top-left)
-        // to coordinates relative to this element's top-left corner (also in CinnamonScreen-scaled system).
-        val localMouseX = mouseX - getX()
-        val localMouseY = mouseY - getY()
-
-        // Now, localMouseX/Y are relative to the element's scaled top-left.
-        // We need to check against button positions which are also effectively in this scaled space
-        // (base_pos * element.scale).
-
+        // Element's own scale factor. Avoid division by zero.
         val currentElementScale = this.scale
-        val actualButtonMargin = baseButtonMargin * currentElementScale
-        val actualButtonHeight = baseButtonHeight * currentElementScale
+        if (currentElementScale == 0.0f) return false
 
-        // The content width of the button area, in element's scaled units
-        val actualContentWidth = (getWidth() - 2 * baseButtonMargin) * currentElementScale
+        // Convert mouseX, mouseY (which are in CinnamonScreen-scaled system, relative to screen top-left)
+        // to coordinates relative to this element's scaled top-left corner.
+        val relativeScaledMouseX = mouseX - getX()
+        val relativeScaledMouseY = mouseY - getY()
 
-        var currentButtonTopY = actualButtonMargin // Relative to element's scaled top
+        // Transform to this element's local, unscaled coordinate system.
+        val localUnscaledMouseX = relativeScaledMouseX / currentElementScale
+        val localUnscaledMouseY = relativeScaledMouseY / currentElementScale
+
+        // Now, localUnscaledMouseX/Y are relative to the element's unscaled top-left (0,0).
+        // All button dimensions and positions will be in this local unscaled space.
+
+        val unscaledButtonMargin = baseButtonMargin.toFloat()
+        val unscaledButtonHeight = baseButtonHeight.toFloat()
+        // getWidth() returns the base, unscaled width of the element.
+        // unscaledContentWidth is the base width available for buttons inside margins.
+        val unscaledContentWidth = getWidth().toFloat() - 2 * unscaledButtonMargin
+
+        var currentUnscaledButtonTopY = unscaledButtonMargin
 
         for (btn in internalButtons) {
-            val buttonLeftX = actualButtonMargin // Relative to element's scaled left
+            val unscaledButtonLeftX = unscaledButtonMargin
 
-            if (localMouseX >= buttonLeftX && localMouseX < buttonLeftX + actualContentWidth &&
-                localMouseY >= currentButtonTopY && localMouseY < currentButtonTopY + actualButtonHeight) {
+            if (localUnscaledMouseX >= unscaledButtonLeftX && localUnscaledMouseX < unscaledButtonLeftX + unscaledContentWidth &&
+                localUnscaledMouseY >= currentUnscaledButtonTopY && localUnscaledMouseY < currentUnscaledButtonTopY + unscaledButtonHeight) {
                 btn.action()
                 return true
             }
-            currentButtonTopY += actualButtonHeight + actualButtonMargin
+            currentUnscaledButtonTopY += unscaledButtonHeight + unscaledButtonMargin
         }
         return false
     }

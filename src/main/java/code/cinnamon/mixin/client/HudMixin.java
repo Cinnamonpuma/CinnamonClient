@@ -16,8 +16,6 @@ public abstract class HudMixin {
         return HudManager.INSTANCE.getPacketHandlerHudElement();
     }
 
-    // Target HudScreen.renderContent, which matches (DrawContext, Int, Int, Float)
-    // The method descriptor uses IIF for Int, Int, Float.
     @Inject(method = "renderContent(Lnet/minecraft/client/gui/DrawContext;IIF)V", at = @At("TAIL"))
     private void onRenderContent(DrawContext context, int scaledMouseX, int scaledMouseY, float delta, CallbackInfo ci) {
         if (SharedVariables.enabled && MinecraftClient.getInstance().player != null && getHudElement().isEnabled()) {

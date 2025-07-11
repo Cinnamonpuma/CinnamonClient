@@ -99,13 +99,11 @@ object CinnamonTheme {
     val moduleBackgroundDisabled: Int get() = adjustBrightness(coreButtonBackground, -0.2f)
 
     init {
-        // Initialize with new defaults directly or load from config
-        // ThemeConfigManager.loadTheme() will call resetToDefaults if no config exists
         resetToDefaults()
     }
 
     fun applyTheme(theme: Theme) {
-        currentTheme = theme // Keep enum if used elsewhere, though direct values are now primary for defaults
+        currentTheme = theme
 
         coreBackgroundPrimary = theme.colors.coreBackgroundPrimary
         coreAccentPrimary = theme.colors.coreAccentPrimary
@@ -113,8 +111,6 @@ object CinnamonTheme {
         coreBorder = theme.colors.coreBorder
         coreButtonBackground = theme.colors.coreButtonBackgroundDef
 
-        // Update outline colors based on the applied theme's accent if that's the desired logic
-        // For now, resetToDefaults will set the new specific default outline colors
         buttonOutlineColor = coreAccentPrimary
         buttonOutlineHoverColor = adjustBrightness(coreAccentPrimary, -0.1f)
 
@@ -122,30 +118,27 @@ object CinnamonTheme {
     }
 
     fun resetToDefaults() {
-        // Apply the new default theme values directly
-        coreBackgroundPrimary = 67314467    // 0x04030223
-        coreAccentPrimary = 2126605840.toInt()     // 0x7EC14610
-        coreTextPrimary = 0xFFFFFFFF.toInt()     // White
-        coreBorder = 2126605840.toInt()            // 0x7EC14610
-        coreButtonBackground = 20987968     // 0x01404040
+        coreBackgroundPrimary = 67314467
+        coreAccentPrimary = 2126605840.toInt()
+        coreTextPrimary = 0xFFFFFFFF.toInt()
+        coreBorder = 2126605840.toInt()
+        coreButtonBackground = 20987968
 
-        coreStatusSuccess = 743223120      // 0x2C4C3B50
-        coreStatusWarning = 452958208      // 0x1AFFD800
-        coreStatusError = 468992565        // 0x1BF44335
+        coreStatusSuccess = 743223120
+        coreStatusWarning = 452958208
+        coreStatusError = 468992565
 
-        buttonOutlineColor = 2126605840.toInt()   // 0x7EC14610
-        buttonOutlineHoverColor = -6315615 // 0xFF9FA1A1
+        buttonOutlineColor = 2126605840.toInt()
+        buttonOutlineHoverColor = -6315615
 
         enableTextShadow = false
         useMinecraftFont = true
 
-        // Reset other properties not in the user's JSON to sensible defaults or keep existing logic
-        patternColor = 0x10ffffff.toInt() // Keep as is or choose a new default
-        overlayColor = 0x80000000.toInt() // Keep as is or choose a new default
-        glassHighlight = 0x20ffffff.toInt() // Keep as is or choose a new default
-        glassShadow = 0x40000000.toInt() // Keep as is or choose a new default
+        patternColor = 0x10ffffff.toInt()
+        overlayColor = 0x80000000.toInt()
+        glassHighlight = 0x20ffffff.toInt()
+        glassShadow = 0x40000000.toInt()
 
-        // Important: Call updateDependentColors after setting the base defaults
         updateDependentColors()
     }
 

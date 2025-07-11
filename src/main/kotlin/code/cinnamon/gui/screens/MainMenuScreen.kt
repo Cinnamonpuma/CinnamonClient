@@ -75,14 +75,13 @@ class MainMenuScreen : CinnamonScreen(Text.literal("Cinnamon Client").fillStyle(
         ))
     }
 
-    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
+    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         val centerX = guiX + guiWidth / 2
         val contentY = getContentY()
-        // This screen doesn't use scaledMouseX/Y in renderContent directly, but signature must match
     }
 
-    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
-        super.renderFooter(context, scaledMouseX, scaledMouseY, delta) // Pass along scaled if super expects them
+    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+        super.renderFooter(context, scaledMouseX, scaledMouseY, delta)
 
         val versionText = Text.literal("v1.5 - Minecraft 1.21.7").fillStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val versionWidth = textRenderer.getWidth(versionText)

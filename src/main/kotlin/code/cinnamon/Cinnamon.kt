@@ -64,7 +64,7 @@ object Cinnamon : ModInitializer {
             }
         }
 
-        // Use HudElementRegistry instead of the deprecated HudRenderCallback
+
         HudElementRegistry.addLast(Identifier.of("cinnamon", "main_hud_renderer")) { drawContext: DrawContext, renderTickCounter: RenderTickCounter ->
             val mc = MinecraftClient.getInstance()
             if (mc != null && mc.window != null) {
@@ -73,15 +73,14 @@ object Cinnamon : ModInitializer {
 
                 val scaleRatio = code.cinnamon.gui.CinnamonScreen.TARGET_SCALE_FACTOR / safeCurrentGuiScale
 
-                drawContext.matrices.pushMatrix() // Corrected method
+                drawContext.matrices.pushMatrix()
                 drawContext.matrices.scale(scaleRatio, scaleRatio, drawContext.matrices)
 
                 val partialTick = renderTickCounter.getTickProgress(false)
                 HudManager.render(drawContext, partialTick)
 
-                drawContext.matrices.popMatrix() // Corrected method
+                drawContext.matrices.popMatrix()
             } else {
-                // Fallback: Render without scaling if client/window not ready
                 val partialTick = renderTickCounter.getTickProgress(false)
                 HudManager.render(drawContext, partialTick)
             }

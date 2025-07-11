@@ -11,28 +11,22 @@ import kotlin.math.*
 
 class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val mc = MinecraftClient.getInstance()
-    // private var lastFps = 0 // Animation state can be re-added if desired
-    // private var fpsChangeAnimation = 0f
     private val cornerRadius = 6
-    private val internalPadding = 6 // Padding for the background around the text
+    private val internalPadding = 6
 
     override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
 
         context.matrices.pushMatrix()
-        context.matrices.translate(getX(), getY(), context.matrices) // Use Floats
-        context.matrices.scale(this.scale, this.scale, context.matrices) // scale is already Float
+        context.matrices.translate(getX(), getY(), context.matrices)
+        context.matrices.scale(this.scale, this.scale, context.matrices)
 
         val currentFps = mc.currentFps
-        // Animation logic can be re-inserted here if needed.
-
-        // Drawing is relative to (0,0).
-        // getWidth() and getHeight() define the text content area.
 
         if (backgroundColor != 0) {
             drawRoundedBackground(
                 context,
-                -internalPadding, // Draw background relative to (0,0), extending by padding
+                -internalPadding,
                 -internalPadding,
                 getWidth() + internalPadding * 2,
                 getHeight() + internalPadding * 2,
@@ -42,9 +36,8 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
 
         val fpsText = Text.literal("$currentFps Fps").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
 
-        // Text is drawn at (0,0) relative to the element's top-left (which is the start of the text content area).
         if (this.textShadowEnabled) {
-            context.drawText(mc.textRenderer, fpsText, 1, 1, 0x40000000, false) // Shadow offset by 1
+            context.drawText(mc.textRenderer, fpsText, 1, 1, 0x40000000, false)
         }
         context.drawText(mc.textRenderer, fpsText, 0, 0, this.textColor, false)
         context.matrices.popMatrix()

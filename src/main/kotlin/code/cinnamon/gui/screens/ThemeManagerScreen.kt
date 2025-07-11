@@ -148,29 +148,25 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         return Text.literal("Font: $fontName").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
     }
 
-    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
-        // Parameters are already scaled as per CinnamonScreen's contract for renderContent
-        // Use scaledMouseX, scaledMouseY directly
-
-        val contentY = getContentY() // This is a scaled Y coordinate
+    override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+        val contentY = getContentY()
         renderColorList(context, scaledMouseX, scaledMouseY, contentY)
     }
 
-    private fun renderColorList(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, contentYPos: Int) { // Already correct
-        val dims = getListDimensions() // dims are in scaled coordinates
+    private fun renderColorList(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, contentYPos: Int) {
+        val dims = getListDimensions()
 
         context.drawBorder(dims.x, dims.y, dims.width, dims.height, CinnamonTheme.borderColor)
 
         context.enableScissor(dims.x, dims.y, dims.x + dims.width, dims.y + dims.height)
         val colors = ColorType.values()
-        var currentY = dims.y + 10 - scrollOffset // currentY is a scaled Y
+        var currentY = dims.y + 10 - scrollOffset
         for ((index, colorType) in colors.withIndex()) {
             if (currentY > dims.y + dims.height) break
-            if (currentY + itemHeight < dims.y) { // itemHeight is scaled
+            if (currentY + itemHeight < dims.y) {
                 currentY += itemHeight
                 continue
             }
-            // Pass scaled mouse coordinates to renderColorItem
             renderColorItem(context, colorType, dims.x + 10, currentY, dims.width - 20, itemHeight - 5, scaledMouseX, scaledMouseY)
             currentY += itemHeight
         }
@@ -178,7 +174,6 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
 
     private fun renderColorItem(context: DrawContext, colorType: ColorType, x: Int, y: Int, width: Int, height: Int, scaledMouseX: Int, scaledMouseY: Int) {
-        // Compare scaled mouse coordinates with scaled item bounds (x, y, width, height are scaled)
         val isHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= y && scaledMouseY < y + height
         val backgroundColor = if (isHovered) CinnamonTheme.cardBackgroundHover else CinnamonTheme.cardBackground
         context.fill(x, y, x + width, y + height, backgroundColor)
@@ -208,42 +203,32 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        // First, let CinnamonButtons handle their clicks. Pass raw coordinates.
-        // CinnamonScreen.mouseClicked will scale them for CinnamonButton checks.
         if (super.mouseClicked(mouseX, mouseY, button)) {
             return true
         }
 
-        // Scale mouse coordinates for custom hit detection below
         val scaledMouseX = scaleMouseX(mouseX)
         val scaledMouseY = scaleMouseY(mouseY)
 
-        val dims = getListDimensions() // Scaled dimensions of the list area
+        val dims = getListDimensions()
 
-        // Compare scaled mouse coordinates with scaled list area bounds
         if (scaledMouseX >= dims.x && scaledMouseX < dims.x + dims.width &&
             scaledMouseY >= dims.y && scaledMouseY < dims.y + dims.height) {
 
             val colors = ColorType.values()
-            val listContentY = dims.y + 10 // Scaled Y of the first item's potential top
-            // Calculate adjustedMouseY based on scaledMouseY relative to the scrollable content
+            val listContentY = dims.y + 10
             val adjustedMouseYInList = scaledMouseY - listContentY + scrollOffset
 
             if (adjustedMouseYInList >= 0) {
-                val clickedIndex = (adjustedMouseYInList / itemHeight).toInt() // itemHeight is scaled
+                val clickedIndex = (adjustedMouseYInList / itemHeight).toInt()
 
                 if (clickedIndex >= 0 && clickedIndex < colors.size) {
-                    // No need to re-check if item is visible, scissor rect handles that.
-                    // The click is within the logical list area and an item was indexed.
                     val colorType = colors[clickedIndex]
                     openColorPicker(colorType)
                     return true
                 }
             }
         }
-        // If no custom element handled the click, and super did not (CinnamonButtons),
-        // then the click was not handled by this screen's specific logic.
-        // Screen.mouseClicked (vanilla) default is false, so this is fine.
         return false
     }
 
@@ -264,20 +249,17 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
-        // Scale mouse coordinates for the area check
-        val scaledMouseX = scaleMouseX(mouseX) // Though not used in current logic, good practice if X mattered
+        val scaledMouseX = scaleMouseX(mouseX)
         val scaledMouseY = scaleMouseY(mouseY)
 
-        val dims = getListDimensions() // Scaled dimensions
+        val dims = getListDimensions()
 
-        // Compare scaled mouse Y with scaled list area bounds
         if (scaledMouseY >= dims.y && scaledMouseY < dims.y + dims.height) {
-            val totalContentHeight = ColorType.values().size * itemHeight + 20 // Scaled total height
+            val totalContentHeight = ColorType.values().size * itemHeight + 20
             val maxScroll = maxOf(0, totalContentHeight - dims.height)
             scrollOffset = (scrollOffset - verticalAmount.toInt() * 20).coerceIn(0, maxScroll)
-            return true // Event handled
+            return true
         }
-        // Pass raw (original) mouse coordinates to super
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 
@@ -294,8 +276,8 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         CinnamonGuiManager.openMainMenu()
     }
 
-    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) { // Match super
-        super.renderFooter(context, scaledMouseX, scaledMouseY, delta) // Pass along scaled
+    override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+        super.renderFooter(context, scaledMouseX, scaledMouseY, delta)
         val statusText = Text.literal("Theme Editor").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         context.drawText(
             textRenderer,
