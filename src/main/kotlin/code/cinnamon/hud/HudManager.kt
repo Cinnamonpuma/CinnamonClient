@@ -12,6 +12,7 @@ import net.minecraft.client.gui.Element
 import code.cinnamon.hud.HudScreen
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.gui.theme.CinnamonTheme
+import code.cinnamon.hud.elements.SpotifyHudElement
 import net.minecraft.text.Style
 import net.minecraft.text.Text
 import kotlinx.serialization.json.Json
@@ -57,6 +58,8 @@ object HudManager {
         registerHudElement(KeystrokesHudElement(10f, 80f))
         registerHudElement(packetHandlerHudElement)
         registerHudElement(ArmorHudElement(10f, 120f))
+        registerHudElement(SpotifyHudElement(10f, 140f))
+
         loadHudConfig()
     }
 

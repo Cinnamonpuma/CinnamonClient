@@ -28,13 +28,14 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	
+
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
 	implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3"
 	implementation "org.lwjgl:lwjgl-opengl:3.3.2"
     implementation "org.lwjgl:lwjgl-glfw:3.3.2"
     implementation "org.lwjgl:lwjgl:3.3.2"
     implementation "com.google.code.gson:gson:2.8.9"
+	implementation("com.squareup.okhttp3:okhttp:5.1.0")
 }
 
 processResources {
