@@ -113,9 +113,5 @@ object Cinnamon : ModInitializer {
         }
 
         logger.info("Cinnamon mod initialized successfully!")
-
-        Runtime.getRuntime().addShutdownHook(Thread {
-            SpotifyAuthManager.stopServer()
-        })
     }
 }

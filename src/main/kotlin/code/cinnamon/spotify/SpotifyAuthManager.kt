@@ -39,30 +39,36 @@ object SpotifyAuthManager {
     }
 
     fun requestAccessToken(code: String) {
-        val requestBody = FormBody.Builder()
-            .add("grant_type", "authorization_code")
-            .add("code", code)
-            .add("redirect_uri", redirectUri)
-            .build()
+        println("[Spotify] Requesting access token with code: $code")
+        try {
+            val requestBody = FormBody.Builder()
+                .add("grant_type", "authorization_code")
+                .add("code", code)
+                .add("redirect_uri", redirectUri)
+                .build()
 
-        val credential = Base64.getEncoder().encodeToString("$clientId:$clientSecret".toByteArray())
+            val credential = Base64.getEncoder().encodeToString("$clientId:$clientSecret".toByteArray())
 
-        val request = Request.Builder()
-            .url("https://accounts.spotify.com/api/token")
-            .header("Authorization", "Basic $credential")
-            .post(requestBody)
-            .build()
+            val request = Request.Builder()
+                .url("https://accounts.spotify.com/api/token")
+                .header("Authorization", "Basic $credential")
+                .post(requestBody)
+                .build()
 
-        httpClient.newCall(request).execute().use { response ->
-            val json = Json.decodeFromString<TokenResponse>(response.body!!.string())
-            accessToken = json.accessToken
-            refreshToken = json.refreshToken
-            println("[Spotify] Access token received: $accessToken")
+            httpClient.newCall(request).execute().use { response ->
+                val responseBody = response.body?.string()
+                println("[Spotify] Token response: $responseBody")
+                val json = Json { ignoreUnknownKeys = true }.decodeFromString<TokenResponse>(responseBody!!)
+                accessToken = json.accessToken
+                refreshToken = json.refreshToken
+                println("[Spotify] Access token received: $accessToken")
+            }
+        } catch (e: Exception) {
+            println("[Spotify] Failed to request token: ${e.message}")
         }
     }
 
     fun getAccessToken(): String? = accessToken
-    fun stopServer() = SpotifyLoginPageServer.stop()
 
     private fun buildSpotifyAuthUrl(): String {
         val scope = "user-read-playback-state user-read-currently-playing"
@@ -98,19 +104,15 @@ object SpotifyLoginPageServer {
         println("[Spotify] Server listening at http://127.0.0.1:21852/")
     }
 
-    fun stop() {
-        server?.stop(0)
-        server = null
-    }
-
     private class Page(val resourcePath: String, val authUrl: String?) : HttpHandler {
         override fun handle(exchange: HttpExchange) {
             val stream = this::class.java.classLoader.getResourceAsStream(resourcePath)
             val html = stream?.bufferedReader()?.readText()
                 ?.replace("\${AUTH_URL}", authUrl ?: "#") ?: "<h1>Missing spotify_login.html</h1>"
 
-            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
-            exchange.responseBody.use { it.write(html.toByteArray()) }
+            val data = html.toByteArray()
+            exchange.sendResponseHeaders(200, data.size.toLong())
+            exchange.responseBody.use { it.write(data) }
         }
     }
 
@@ -121,16 +123,18 @@ object SpotifyLoginPageServer {
                 .map { it.split("=") }
                 .firstOrNull { it[0] == "code" }?.getOrNull(1)
 
-            if (code != null) {
-                SpotifyAuthManager.requestAccessToken(code)
-                exchange.sendResponseHeaders(200, 0)
-                exchange.responseBody.use { it.write("\u2705 Login successful. You can close this tab.".toByteArray()) }
-                stop()
+            val message = if (code != null) {
+                Thread {
+                    SpotifyAuthManager.requestAccessToken(code)
+                }.start()
+                "\u2705 Login successful. You can close this tab."
             } else {
-                val msg = "No code found."
-                exchange.sendResponseHeaders(400, msg.toByteArray().size.toLong())
-                exchange.responseBody.use { it.write(msg.toByteArray()) }
+                "No code found."
             }
+
+            val body = message.toByteArray()
+            exchange.sendResponseHeaders(if (code != null) 200 else 400, body.size.toLong())
+            exchange.responseBody.use { it.write(body) }
         }
     }
 }
