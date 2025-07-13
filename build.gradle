@@ -3,6 +3,7 @@ plugins {
 	id 'maven-publish'
 	id "org.jetbrains.kotlin.jvm" version "2.2.0"
 	id "org.jetbrains.kotlin.plugin.serialization" version "2.2.0"
+	id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 version = project.mod_version
@@ -13,29 +14,38 @@ base {
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+	mavenCentral()
+}
+
+configurations {
+	// ✅ Only this config is resolved by Shadow
+	shadowRuntime {
+		canBeResolved = true
+		canBeConsumed = false
+	}
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
+	// Fabric setup
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
+
+	// Kotlin & JSON
 	implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3"
+	implementation "com.google.code.gson:gson:2.8.9"
+
+	// ✅ LWJGL is used but NOT bundled
 	implementation "org.lwjgl:lwjgl-opengl:3.3.2"
-    implementation "org.lwjgl:lwjgl-glfw:3.3.2"
-    implementation "org.lwjgl:lwjgl:3.3.2"
-    implementation "com.google.code.gson:gson:2.8.9"
-	implementation("com.squareup.okhttp3:okhttp:5.1.0")
+	implementation "org.lwjgl:lwjgl-glfw:3.3.2"
+	implementation "org.lwjgl:lwjgl:3.3.2"
+	implementation (shadowRuntime "com.squareup.okhttp3:okhttp:4.12.0")
+
+	// ✅ OkHttp is shaded
+	shadowRuntime "com.squareup.okhttp3:okhttp:4.12.0"
+	include "com.squareup.okhttp3:okhttp:4.12.0"
 }
 
 processResources {
@@ -52,42 +62,48 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
 	kotlinOptions {
-		jvmTarget = 21
+		jvmTarget = "21"
 	}
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
 	withSourcesJar()
-
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
+}
+
+// ✅ shadowJar only bundles OkHttp from shadowRuntime
+tasks.named("shadowJar") {
+	archiveClassifier.set("dev-shadow")
+	configurations = [project.configurations.shadowRuntime]
+	// relocate 'okhttp3', 'your.mod.shadow.okhttp3' // optional, prevents conflicts
+}
+
+// ✅ remapShadowJar produces the final mod JAR
+tasks.register("remapShadowJar", net.fabricmc.loom.task.RemapJarTask) {
+	dependsOn tasks.named("shadowJar")
+	inputFile.set(tasks.named("shadowJar").get().archiveFile)
+	archiveClassifier.set("")
+	addNestedDependencies.set(true)
+}
+
+tasks.build {
+	dependsOn tasks.remapShadowJar
 }
 
 jar {
 	inputs.property "archivesName", project.base.archivesName
 
 	from("LICENSE") {
-		rename { "${it}_${inputs.properties.archivesName}"}
+		rename { "${it}_${inputs.properties.archivesName}" }
 	}
 }
 
-// configure the maven publication
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
 			artifactId = project.archives_base_name
 			from components.java
 		}
-	}
-
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
 	}
 }

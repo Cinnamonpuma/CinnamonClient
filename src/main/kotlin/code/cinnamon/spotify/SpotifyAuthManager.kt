@@ -39,7 +39,20 @@ object SpotifyAuthManager {
             .build()
             .toString()
 
-        Desktop.getDesktop().browse(URI(authUrl))
+        // Check if Desktop operations are supported before browsing
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().browse(URI(authUrl))
+            } catch (ex: Exception) {
+                println("⚠️ Failed to open browser for Spotify auth: ${ex.message}")
+                // Optionally handle fallback here (show message, etc)
+                return
+            }
+        } else {
+            println("⚠️ Desktop operations not supported; cannot open browser for Spotify auth.")
+            // Optionally handle fallback here (show message, etc)
+            return
+        }
 
         val server = com.sun.net.httpserver.HttpServer.create(InetSocketAddress(8888), 0)
         server.createContext("/callback") { exchange ->
