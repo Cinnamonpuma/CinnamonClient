@@ -70,6 +70,9 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
             try {
                 val newTrackData = SpotifyApi.getCurrentTrackData(token)
 
+                // Debug logging
+                println("[Spotify Debug] Track data received: $newTrackData")
+
                 // Update on main thread
                 mc.execute {
                     // Clear album texture if track changed
@@ -92,6 +95,7 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
                 }
             } catch (e: Exception) {
                 println("[Spotify] Error updating track data: ${e.message}")
+                e.printStackTrace()
             }
         }.start()
     }
@@ -100,6 +104,8 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
         val trackData = currentTrackData
 
         if (trackData != null) {
+            println("[Spotify Debug] Rendering track: ${trackData.title} by ${trackData.artist}")
+
             // Load album cover if needed
             if (trackData.albumImageUrl != null &&
                 trackData.albumImageUrl != loadingAlbumUrl &&
@@ -112,22 +118,22 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
             // Draw album cover
             if (albumTexture != null) {
                 try {
-                    // Use the correct drawTexture method with RenderPipelines.GUI_TEXTURED
                     context.drawTexture(
                         RenderPipelines.GUI_TEXTURED,
                         albumTexture!!,
-                        xOffset, // x position
-                        0, // y position
-                        0f, // u (texture x)
-                        0f, // v (texture y)
-                        albumSize, // width
-                        albumSize, // height
-                        albumSize, // texture width
-                        albumSize // texture height
+                        xOffset,
+                        0,
+                        0f,
+                        0f,
+                        albumSize,
+                        albumSize,
+                        albumSize,
+                        albumSize
                     )
+                    println("[Spotify Debug] Album cover drawn successfully")
                 } catch (e: Exception) {
                     println("[Spotify] Error drawing texture: ${e.message}")
-                    // If texture drawing fails, draw a placeholder
+                    e.printStackTrace()
                     drawAlbumPlaceholder(context, xOffset, 0)
                 }
                 xOffset += albumSize + padding
@@ -138,29 +144,46 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
             }
 
             // Draw track info with scrolling
-            val maxTextWidth = progressBarWidth - 8 // Leave some margin
+            val maxTextWidth = progressBarWidth - 8
+
+            // Title
+            val titleText = Text.literal(trackData.title)
+                .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
             drawScrollingText(context, trackData.title, xOffset, 2, maxTextWidth, textColor, true)
+
+            // Artist
+            val artistText = Text.literal(trackData.artist)
+                .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
             drawScrollingText(context, trackData.artist, xOffset, 14, maxTextWidth, 0x888888, false)
 
-            // Draw current time on the left side of progress bar
+            // Progress bar area
+            val progressY = albumSize - progressBarHeight - 12 // Move up to make room for times
+
+            // Draw current time
             val currentTimeStr = formatTime(trackData.currentTimeMs)
-            context.drawText(mc.textRenderer, Text.literal(currentTimeStr),
+            val currentTimeText = Text.literal(currentTimeStr)
+                .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+            context.drawText(mc.textRenderer, currentTimeText,
                 xOffset,
-                albumSize - 12,
+                progressY + progressBarHeight + 2,
                 0xAAAAAA, textShadowEnabled)
 
-            // Draw duration on the right side of progress bar
+            // Draw duration
             val durationStr = formatTime(trackData.durationMs)
-            val durationTextWidth = mc.textRenderer.getWidth(Text.literal(durationStr))
-            context.drawText(mc.textRenderer, Text.literal(durationStr),
+            val durationText = Text.literal(durationStr)
+                .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+            val durationTextWidth = mc.textRenderer.getWidth(durationText)
+            context.drawText(mc.textRenderer, durationText,
                 xOffset + progressBarWidth - durationTextWidth,
-                albumSize - 12,
+                progressY + progressBarHeight + 2,
                 0xAAAAAA, textShadowEnabled)
 
             // Draw progress bar
-            val progressY = albumSize - progressBarHeight - 2
             drawProgressBar(context, xOffset, progressY, progressBarWidth, progressBarHeight, trackData.progress)
+
+            println("[Spotify Debug] Progress: ${trackData.progress}, Time: ${currentTimeStr}/${durationStr}")
         } else {
+            println("[Spotify Debug] No track data available")
             // No track playing
             val text = Text.literal("♪ No track playing")
                 .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
@@ -169,8 +192,10 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
     }
 
     private fun drawAlbumPlaceholder(context: DrawContext, x: Int, y: Int) {
-        context.fill(x, y, x + albumSize, y + albumSize, 0xFF333333.toInt())
+        // Use a darker gray for better visibility
+        context.fill(x, y, x + albumSize, y + albumSize, 0xFF444444.toInt())
         val placeholderText = Text.literal("♪")
+            .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
         val textWidth = mc.textRenderer.getWidth(placeholderText)
         val textHeight = mc.textRenderer.fontHeight
         context.drawText(mc.textRenderer, placeholderText,
@@ -194,7 +219,7 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
             var scrollOffset = if (isTitle) titleScrollOffset else artistScrollOffset
 
             if (timeSinceStart > scrollDelay) {
-                val scrollDistance = textWidth - maxWidth + 20 // Extra space at the end
+                val scrollDistance = textWidth - maxWidth + 20
                 val scrollTime = timeSinceStart - scrollDelay
 
                 if (scrollTime < scrollDistance / scrollSpeed) {
@@ -237,8 +262,8 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
     }
 
     private fun drawProgressBar(context: DrawContext, x: Int, y: Int, width: Int, height: Int, progress: Float) {
-        // Background
-        context.fill(x, y, x + width, y + height, 0x44FFFFFF)
+        // Background - slightly more visible
+        context.fill(x, y, x + width, y + height, 0x66FFFFFF)
 
         // Progress
         val progressWidth = (width * progress.coerceIn(0f, 1f)).toInt()
@@ -249,8 +274,9 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
 
     private fun loadAlbumCover(imageUrl: String) {
         loadingAlbumUrl = imageUrl
+        println("[Spotify Debug] Loading album cover: $imageUrl")
 
-        // Load image asynchronously to avoid blocking the render thread
+        // Load image asynchronously
         Thread {
             try {
                 val url = URL(imageUrl)
@@ -260,22 +286,19 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
                     val scaledImage = scaleImage(bufferedImage, albumSize, albumSize)
                     val nativeImage = convertToNativeImage(scaledImage)
 
-                    // Create texture identifier
                     val textureName = "spotify_album_${System.currentTimeMillis()}"
                     val identifier = Identifier.of("cinnamon", textureName)
-
-                    // Create texture with correct constructor
                     val texture = NativeImageBackedTexture({ textureName }, nativeImage)
 
-                    // Register texture on main thread
                     mc.execute {
                         try {
                             mc.textureManager.registerTexture(identifier, texture)
                             albumTexture = identifier
                             loadingAlbumUrl = null
-                            println("[Spotify] Album cover loaded successfully")
+                            println("[Spotify Debug] Album cover loaded successfully")
                         } catch (e: Exception) {
                             println("[Spotify] Failed to register texture: ${e.message}")
+                            e.printStackTrace()
                             loadingAlbumUrl = null
                         }
                     }
@@ -330,6 +353,6 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
         }
     }
 
-    override fun getHeight(): Int = elementHeight
+    override fun getHeight(): Int = elementHeight + 12 // Extra space for time display
     override fun getName(): String = "Spotify"
 }

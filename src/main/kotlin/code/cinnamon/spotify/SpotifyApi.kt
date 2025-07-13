@@ -22,9 +22,19 @@ object SpotifyApi {
             .build()
 
         httpClient.newCall(req).execute().use { res ->
-            if (!res.isSuccessful) return null
+            println("[Spotify API] getCurrentSong response: ${res.code}")
+            if (!res.isSuccessful) {
+                println("[Spotify API] Error: ${res.message}")
+                return null
+            }
 
             val body = res.body?.string() ?: return null
+            if (body.isEmpty()) {
+                println("[Spotify API] Empty response - no track playing")
+                return null
+            }
+
+            println("[Spotify API] Response body: $body")
             val json = Json.parseToJsonElement(body).jsonObject
 
             val title = json["item"]?.jsonObject?.get("name")?.jsonPrimitive?.content ?: "Unknown"
@@ -42,38 +52,99 @@ object SpotifyApi {
             .build()
 
         httpClient.newCall(req).execute().use { res ->
-            if (!res.isSuccessful) return null
+            println("[Spotify API] getCurrentTrackData response: ${res.code}")
+
+            if (!res.isSuccessful) {
+                println("[Spotify API] Error response: ${res.message}")
+                if (res.code == 401) {
+                    println("[Spotify API] Token expired or invalid")
+                }
+                return null
+            }
 
             val body = res.body?.string() ?: return null
-            if (body.isEmpty()) return null // No track playing
+            if (body.isEmpty()) {
+                println("[Spotify API] Empty response - no track playing")
+                return null
+            }
 
-            val json = Json.parseToJsonElement(body).jsonObject
+            try {
+                println("[Spotify API] Raw response: $body")
+                val json = Json.parseToJsonElement(body).jsonObject
 
-            val item = json["item"]?.jsonObject ?: return null
-            val title = item["name"]?.jsonPrimitive?.content ?: "Unknown"
+                val item = json["item"]?.jsonObject
+                if (item == null) {
+                    println("[Spotify API] No item in response")
+                    return null
+                }
 
-            val artists = item["artists"]?.jsonArray
-            val artist = artists?.joinToString(", ") {
-                it.jsonObject["name"]?.jsonPrimitive?.content ?: "Unknown"
-            } ?: "Unknown"
+                val title = item["name"]?.jsonPrimitive?.content ?: "Unknown"
+                println("[Spotify API] Track title: $title")
 
-            val albumImageUrl = item["album"]?.jsonObject
-                ?.get("images")?.jsonArray?.firstOrNull()?.jsonObject
-                ?.get("url")?.jsonPrimitive?.content
+                val artists = item["artists"]?.jsonArray
+                val artist = if (artists != null) {
+                    artists.joinToString(", ") { artistObj ->
+                        artistObj.jsonObject["name"]?.jsonPrimitive?.content ?: "Unknown"
+                    }
+                } else {
+                    "Unknown"
+                }
+                println("[Spotify API] Artists: $artist")
 
-            // Get timing information
-            val progressMs = json["progress_ms"]?.jsonPrimitive?.long ?: 0L
-            val durationMs = item["duration_ms"]?.jsonPrimitive?.long ?: 1L
-            val progress = if (durationMs > 0) (progressMs.toFloat() / durationMs.toFloat()) else 0f
+                val album = item["album"]?.jsonObject
+                val albumImageUrl = album?.get("images")?.jsonArray?.firstOrNull()?.jsonObject?.get("url")?.jsonPrimitive?.content
+                println("[Spotify API] Album image URL: $albumImageUrl")
 
-            return SpotifyTrackData(
-                title = title,
-                artist = artist,
-                progress = progress.coerceIn(0f, 1f),
-                albumImageUrl = albumImageUrl,
-                currentTimeMs = progressMs,
-                durationMs = durationMs
-            )
+                // Get timing information
+                val progressMs = json["progress_ms"]?.jsonPrimitive?.long ?: 0L
+                val durationMs = item["duration_ms"]?.jsonPrimitive?.long ?: 1L
+                val progress = if (durationMs > 0) (progressMs.toFloat() / durationMs.toFloat()) else 0f
+
+                println("[Spotify API] Progress: ${progressMs}ms / ${durationMs}ms (${progress * 100}%)")
+
+                // Check if track is playing
+                val isPlaying = json["is_playing"]?.jsonPrimitive?.boolean ?: false
+                println("[Spotify API] Is playing: $isPlaying")
+
+                return SpotifyTrackData(
+                    title = title,
+                    artist = artist,
+                    progress = progress.coerceIn(0f, 1f),
+                    albumImageUrl = albumImageUrl,
+                    currentTimeMs = progressMs,
+                    durationMs = durationMs
+                )
+            } catch (e: Exception) {
+                println("[Spotify API] Error parsing JSON: ${e.message}")
+                e.printStackTrace()
+                return null
+            }
+        }
+    }
+
+    // Additional method to get player state for debugging
+    fun getPlayerState(token: String): String? {
+        val req = Request.Builder()
+            .url("https://api.spotify.com/v1/me/player")
+            .addHeader("Authorization", "Bearer $token")
+            .build()
+
+        httpClient.newCall(req).execute().use { res ->
+            println("[Spotify API] getPlayerState response: ${res.code}")
+
+            if (!res.isSuccessful) {
+                println("[Spotify API] Player state error: ${res.message}")
+                return null
+            }
+
+            val body = res.body?.string()
+            if (body.isNullOrEmpty()) {
+                println("[Spotify API] No active device found")
+                return null
+            }
+
+            println("[Spotify API] Player state: $body")
+            return body
         }
     }
 }
