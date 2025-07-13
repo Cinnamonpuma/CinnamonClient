@@ -284,20 +284,27 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
 
                 if (bufferedImage != null) {
                     val scaledImage = scaleImage(bufferedImage, albumSize, albumSize)
-                    val nativeImage = convertToNativeImage(scaledImage)
 
-                    val textureName = "spotify_album_${System.currentTimeMillis()}"
-                    val identifier = Identifier.of("cinnamon", textureName)
-                    val texture = NativeImageBackedTexture({ textureName }, nativeImage)
-
+                    // Switch to main thread for texture operations
                     mc.execute {
                         try {
+                            val nativeImage = convertToNativeImage(scaledImage)
+                            val textureName = "spotify_album_${System.currentTimeMillis()}"
+                            val identifier = Identifier.of("cinnamon", textureName)
+                            val texture = NativeImageBackedTexture({ textureName }, nativeImage)
+
+                            // Clean up old texture first
+                            albumTexture?.let { oldTexture ->
+                                mc.textureManager.destroyTexture(oldTexture)
+                            }
+
+                            // Register new texture
                             mc.textureManager.registerTexture(identifier, texture)
                             albumTexture = identifier
                             loadingAlbumUrl = null
                             println("[Spotify Debug] Album cover loaded successfully")
                         } catch (e: Exception) {
-                            println("[Spotify] Failed to register texture: ${e.message}")
+                            println("[Spotify] Failed to create/register texture: ${e.message}")
                             e.printStackTrace()
                             loadingAlbumUrl = null
                         }
