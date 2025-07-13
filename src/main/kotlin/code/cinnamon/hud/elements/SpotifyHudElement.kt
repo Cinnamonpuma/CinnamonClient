@@ -6,9 +6,9 @@ import code.cinnamon.spotify.SpotifyAuthManager
 import code.cinnamon.spotify.SpotifyApi
 import code.cinnamon.spotify.SpotifyTrackData
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gl.RenderPipelines
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.RenderLayer
-import net.minecraft.client.gl.RenderPipelines
 import net.minecraft.client.texture.NativeImage
 import net.minecraft.client.texture.NativeImageBackedTexture
 import net.minecraft.text.Style
@@ -112,6 +112,7 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
             // Draw album cover
             if (albumTexture != null) {
                 try {
+                    // Use the correct drawTexture method with RenderPipelines.GUI_TEXTURED
                     context.drawTexture(
                         RenderPipelines.GUI_TEXTURED,
                         albumTexture!!,
@@ -125,27 +126,14 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
                         albumSize // texture height
                     )
                 } catch (e: Exception) {
+                    println("[Spotify] Error drawing texture: ${e.message}")
                     // If texture drawing fails, draw a placeholder
-                    context.fill(xOffset, 0, xOffset + albumSize, albumSize, 0xFF333333.toInt())
-                    val placeholderText = Text.literal("♪")
-                    val textWidth = mc.textRenderer.getWidth(placeholderText)
-                    val textHeight = mc.textRenderer.fontHeight
-                    context.drawText(mc.textRenderer, placeholderText,
-                        xOffset + (albumSize - textWidth) / 2,
-                        (albumSize - textHeight) / 2,
-                        0xFFFFFF, false)
+                    drawAlbumPlaceholder(context, xOffset, 0)
                 }
                 xOffset += albumSize + padding
             } else {
                 // Draw placeholder while loading
-                context.fill(xOffset, 0, xOffset + albumSize, albumSize, 0xFF333333.toInt())
-                val placeholderText = Text.literal("♪")
-                val textWidth = mc.textRenderer.getWidth(placeholderText)
-                val textHeight = mc.textRenderer.fontHeight
-                context.drawText(mc.textRenderer, placeholderText,
-                    xOffset + (albumSize - textWidth) / 2,
-                    (albumSize - textHeight) / 2,
-                    0xFFFFFF, false)
+                drawAlbumPlaceholder(context, xOffset, 0)
                 xOffset += albumSize + padding
             }
 
@@ -154,14 +142,18 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
             drawScrollingText(context, trackData.title, xOffset, 2, maxTextWidth, textColor, true)
             drawScrollingText(context, trackData.artist, xOffset, 14, maxTextWidth, 0x888888, false)
 
-            // Draw duration and current time
+            // Draw current time on the left side of progress bar
             val currentTimeStr = formatTime(trackData.currentTimeMs)
-            val durationStr = formatTime(trackData.durationMs)
-            val timeText = "$currentTimeStr / $durationStr"
-            val timeTextWidth = mc.textRenderer.getWidth(Text.literal(timeText))
+            context.drawText(mc.textRenderer, Text.literal(currentTimeStr),
+                xOffset,
+                albumSize - 12,
+                0xAAAAAA, textShadowEnabled)
 
-            context.drawText(mc.textRenderer, Text.literal(timeText),
-                xOffset + progressBarWidth - timeTextWidth,
+            // Draw duration on the right side of progress bar
+            val durationStr = formatTime(trackData.durationMs)
+            val durationTextWidth = mc.textRenderer.getWidth(Text.literal(durationStr))
+            context.drawText(mc.textRenderer, Text.literal(durationStr),
+                xOffset + progressBarWidth - durationTextWidth,
                 albumSize - 12,
                 0xAAAAAA, textShadowEnabled)
 
@@ -174,6 +166,17 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
                 .setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
             context.drawText(mc.textRenderer, text, 0, (albumSize / 2) - 4, textColor, textShadowEnabled)
         }
+    }
+
+    private fun drawAlbumPlaceholder(context: DrawContext, x: Int, y: Int) {
+        context.fill(x, y, x + albumSize, y + albumSize, 0xFF333333.toInt())
+        val placeholderText = Text.literal("♪")
+        val textWidth = mc.textRenderer.getWidth(placeholderText)
+        val textHeight = mc.textRenderer.fontHeight
+        context.drawText(mc.textRenderer, placeholderText,
+            x + (albumSize - textWidth) / 2,
+            y + (albumSize - textHeight) / 2,
+            0xFFFFFF, false)
     }
 
     private fun drawScrollingText(context: DrawContext, text: String, x: Int, y: Int, maxWidth: Int, color: Int, isTitle: Boolean) {
@@ -257,25 +260,32 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
                     val scaledImage = scaleImage(bufferedImage, albumSize, albumSize)
                     val nativeImage = convertToNativeImage(scaledImage)
 
-                    // Create texture with proper constructor
+                    // Create texture identifier
                     val textureName = "spotify_album_${System.currentTimeMillis()}"
-                    val texture = NativeImageBackedTexture(textureName, nativeImage.width, nativeImage.height, false)
-                    texture.image = nativeImage
                     val identifier = Identifier.of("cinnamon", textureName)
+
+                    // Create texture with correct constructor
+                    val texture = NativeImageBackedTexture({ textureName }, nativeImage)
 
                     // Register texture on main thread
                     mc.execute {
-                        mc.textureManager.registerTexture(identifier, texture)
-                        albumTexture = identifier
-                        loadingAlbumUrl = null
+                        try {
+                            mc.textureManager.registerTexture(identifier, texture)
+                            albumTexture = identifier
+                            loadingAlbumUrl = null
+                            println("[Spotify] Album cover loaded successfully")
+                        } catch (e: Exception) {
+                            println("[Spotify] Failed to register texture: ${e.message}")
+                            loadingAlbumUrl = null
+                        }
                     }
                 } else {
-                    println("[Spotify] Failed to read album image")
+                    println("[Spotify] Failed to read album image from URL: $imageUrl")
                     loadingAlbumUrl = null
                 }
             } catch (e: Exception) {
-                // Failed to load image
                 println("[Spotify] Failed to load album cover: ${e.message}")
+                e.printStackTrace()
                 loadingAlbumUrl = null
             }
         }.start()
