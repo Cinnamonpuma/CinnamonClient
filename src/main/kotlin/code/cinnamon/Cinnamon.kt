@@ -1,5 +1,6 @@
 package code.cinnamon
 
+import code.cinnamon.commands.SpotifyCommand
 import com.mojang.brigadier.CommandDispatcher
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
@@ -72,7 +73,6 @@ object Cinnamon : ModInitializer {
             }
         }
 
-
         HudElementRegistry.addLast(Identifier.of("cinnamon", "main_hud_renderer")) { drawContext: DrawContext, renderTickCounter: RenderTickCounter ->
             val mc = MinecraftClient.getInstance()
             if (mc != null && mc.window != null) {
@@ -95,19 +95,10 @@ object Cinnamon : ModInitializer {
         }
         logger.info("Cinnamon HUD renderer registered with HudElementRegistry.")
 
+        // Register commands
         ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
-            dispatcher.register(
-                ClientCommandManager.literal("spotify")
-                    .executes { context ->
-                        val authUrl = SpotifyAuthManager.getAuthorizationUrl()
-                        code.cinnamon.spotify.SpotifyLoginPageServer.start(authUrl)
-
-                        // Simple message without click event to avoid conflicts
-                        val messageText = Text.literal("§a[Cinnamon] §fSpotify authentication started! Go to: §bhttp://127.0.0.1:21852/")
-                        context.source.sendFeedback(messageText)
-                        1
-                    }
-            )
+            // Register the SpotifyCommand
+            SpotifyCommand.register(dispatcher)
         }
 
         ClientTickEvents.END_CLIENT_TICK.register { client ->

@@ -57,17 +57,35 @@ object SpotifyAuthManager {
             httpClient.newCall(request).execute().use { response ->
                 val responseBody = response.body?.string()
                 println("[Spotify] Token response: $responseBody")
-                val json = Json { ignoreUnknownKeys = true }.decodeFromString<TokenResponse>(responseBody!!)
-                accessToken = json.accessToken
-                refreshToken = json.refreshToken
-                println("[Spotify] Access token received: $accessToken")
+                if (response.isSuccessful && responseBody != null) {
+                    val json = Json { ignoreUnknownKeys = true }.decodeFromString<TokenResponse>(responseBody)
+                    accessToken = json.accessToken
+                    refreshToken = json.refreshToken
+                    println("[Spotify] Access token received successfully")
+
+                    // Notify in-game that connection was successful
+                    MinecraftClient.getInstance().execute {
+                        MinecraftClient.getInstance().inGameHud.chatHud.addMessage(
+                            Text.literal("§a[Spotify] Successfully connected to Spotify!")
+                        )
+                    }
+                } else {
+                    println("[Spotify] Failed to get access token: ${response.code}")
+                }
             }
         } catch (e: Exception) {
             println("[Spotify] Failed to request token: ${e.message}")
+            e.printStackTrace()
         }
     }
 
     fun getAccessToken(): String? = accessToken
+
+    fun disconnect() {
+        accessToken = null
+        refreshToken = null
+        println("[Spotify] Disconnected from Spotify")
+    }
 
     private fun buildSpotifyAuthUrl(): String {
         val scope = "user-read-playback-state user-read-currently-playing"
@@ -82,34 +100,40 @@ object SpotifyAuthManager {
 }
 
 object SpotifyLoginPageServer {
-
     private var server: HttpServer? = null
 
-
-
     fun start(authUrl: String) {
-        if (server != null) return
-
-        server = HttpServer.create(InetSocketAddress(21852), 0).apply {
-            createContext("/", Page("assets/cinnamon/spotify_login.html", authUrl))
-            createContext("/spotify/token", TokenReceiver())
-            start()
+        if (server != null) {
+            println("[Spotify] Server already running")
+            return
         }
 
-        MinecraftClient.getInstance().execute {
-            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(
-                Text.literal("\u00a7a[Spotify] Please open http://127.0.0.1:21852/ in your browser to login.")
-            )
-        }
+        try {
+            server = HttpServer.create(InetSocketAddress(21852), 0).apply {
+                createContext("/", LoginPage("assets/cinnamon/spotify_login.html", authUrl))
+                createContext("/spotify/token", TokenReceiver())
+                start()
+            }
 
-        println("[Spotify] Server listening at http://127.0.0.1:21852/")
+            println("[Spotify] Server started at http://127.0.0.1:21852/")
+        } catch (e: Exception) {
+            println("[Spotify] Failed to start server: ${e.message}")
+            e.printStackTrace()
+        }
     }
 
-    private class Page(val resourcePath: String, val authUrl: String?) : HttpHandler {
+    fun stop() {
+        server?.stop(0)
+        server = null
+        println("[Spotify] Server stopped")
+    }
+
+    private class LoginPage(val resourcePath: String, val authUrl: String?) : HttpHandler {
         override fun handle(exchange: HttpExchange) {
             val stream = this::class.java.classLoader.getResourceAsStream(resourcePath)
             val html = stream?.bufferedReader()?.readText()
-                ?.replace("\${AUTH_URL}", authUrl ?: "#") ?: "<h1>Missing spotify_login.html</h1>"
+                ?.replace("\${AUTH_URL}", authUrl ?: "#")
+                ?: "<h1>Missing spotify_login.html</h1>"
 
             val data = html.toByteArray()
             exchange.sendResponseHeaders(200, data.size.toLong())
@@ -124,18 +148,50 @@ object SpotifyLoginPageServer {
                 .map { it.split("=") }
                 .firstOrNull { it[0] == "code" }?.getOrNull(1)
 
-            val message = if (code != null) {
+            if (code != null) {
+                // Start token request in background
                 Thread {
                     SpotifyAuthManager.requestAccessToken(code)
                 }.start()
-                "\u2705 Login successful. You can close this tab."
-            } else {
-                "No code found."
-            }
 
-            val body = message.toByteArray()
-            exchange.sendResponseHeaders(if (code != null) 200 else 400, body.size.toLong())
-            exchange.responseBody.use { it.write(body) }
+                // Serve success page
+                serveSuccessPage(exchange)
+
+                // Stop server after successful auth
+                Thread {
+                    Thread.sleep(2000) // Give time for page to load
+                    stop()
+                }.start()
+            } else {
+                val error = query.split("&")
+                    .map { it.split("=") }
+                    .firstOrNull { it[0] == "error" }?.getOrNull(1) ?: "Unknown error"
+
+                val message = "Authentication failed: $error"
+                val body = message.toByteArray()
+                exchange.sendResponseHeaders(400, body.size.toLong())
+                exchange.responseBody.use { it.write(body) }
+            }
+        }
+
+        private fun serveSuccessPage(exchange: HttpExchange) {
+            val stream = this::class.java.classLoader.getResourceAsStream("assets/cinnamon/spotify_success.html")
+            val html = stream?.bufferedReader()?.readText()
+                ?: """
+                <!DOCTYPE html>
+                <html>
+                <head><title>Success</title></head>
+                <body>
+                    <h1>✅ Login successful!</h1>
+                    <p>You can close this tab and return to Minecraft.</p>
+                    <script>setTimeout(() => window.close(), 3000);</script>
+                </body>
+                </html>
+                """.trimIndent()
+
+            val data = html.toByteArray()
+            exchange.sendResponseHeaders(200, data.size.toLong())
+            exchange.responseBody.use { it.write(data) }
         }
     }
 }
