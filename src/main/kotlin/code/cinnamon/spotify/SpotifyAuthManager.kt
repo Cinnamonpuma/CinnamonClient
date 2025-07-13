@@ -33,9 +33,8 @@ object SpotifyAuthManager {
     private var accessToken: String? = null
     private var refreshToken: String? = null
 
-    fun authenticate() {
-        val authUrl = buildSpotifyAuthUrl()
-        SpotifyLoginPageServer.start(authUrl)
+    fun getAuthorizationUrl(): String {
+        return buildSpotifyAuthUrl()
     }
 
     fun requestAccessToken(code: String) {
@@ -85,6 +84,8 @@ object SpotifyAuthManager {
 object SpotifyLoginPageServer {
 
     private var server: HttpServer? = null
+
+
 
     fun start(authUrl: String) {
         if (server != null) return

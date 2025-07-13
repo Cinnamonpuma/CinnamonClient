@@ -24,6 +24,7 @@ import net.minecraft.client.render.RenderTickCounter
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.Text
 import code.cinnamon.spotify.SpotifyAuthManager
+import net.minecraft.text.ClickEvent
 
 object Cinnamon : ModInitializer {
     private val logger = LoggerFactory.getLogger("cinnamon")
@@ -98,8 +99,12 @@ object Cinnamon : ModInitializer {
             dispatcher.register(
                 ClientCommandManager.literal("spotify")
                     .executes { context ->
-                        SpotifyAuthManager.authenticate()
-                        context.source.sendFeedback(Text.of("§a[Cinnamon] §fSpotify authentication started. Check your browser."))
+                        val authUrl = SpotifyAuthManager.getAuthorizationUrl()
+                        code.cinnamon.spotify.SpotifyLoginPageServer.start(authUrl)
+
+                        // Simple message without click event to avoid conflicts
+                        val messageText = Text.literal("§a[Cinnamon] §fSpotify authentication started! Go to: §bhttp://127.0.0.1:21852/")
+                        context.source.sendFeedback(messageText)
                         1
                     }
             )
