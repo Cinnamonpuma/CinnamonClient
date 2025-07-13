@@ -1,10 +1,18 @@
 package code.cinnamon.spotify
 
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
-import okhttp3.*
-import java.awt.Desktop
-import java.net.*
+import com.sun.net.httpserver.HttpExchange
+import com.sun.net.httpserver.HttpHandler
+import com.sun.net.httpserver.HttpServer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import net.minecraft.client.MinecraftClient
+import net.minecraft.text.Text
+import okhttp3.FormBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.net.InetSocketAddress
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -18,7 +26,7 @@ data class TokenResponse(
 object SpotifyAuthManager {
     private val clientId = "56654fae013745cebd3ccdff860c5d5b"
     private val clientSecret = "62aad2d60b584ad5b52bdcdbf3ad437d"
-    private val redirectUri = "http://127.0.0.1:8888/callback"
+    private val redirectUri = "http://127.0.0.1:21852/spotify/token"
 
     private val httpClient = OkHttpClient.Builder().readTimeout(30, TimeUnit.SECONDS).build()
 
@@ -26,56 +34,11 @@ object SpotifyAuthManager {
     private var refreshToken: String? = null
 
     fun authenticate() {
-        val state = UUID.randomUUID().toString()
-        val authUrl = HttpUrl.Builder()
-            .scheme("https")
-            .host("accounts.spotify.com")
-            .addPathSegment("authorize")
-            .addQueryParameter("response_type", "code")
-            .addQueryParameter("client_id", clientId)
-            .addQueryParameter("redirect_uri", redirectUri)
-            .addQueryParameter("scope", "user-read-playback-state user-read-currently-playing")
-            .addQueryParameter("state", state)
-            .build()
-            .toString()
-
-        // Check if Desktop operations are supported before browsing
-        if (Desktop.isDesktopSupported()) {
-            try {
-                Desktop.getDesktop().browse(URI(authUrl))
-            } catch (ex: Exception) {
-                println("⚠️ Failed to open browser for Spotify auth: ${ex.message}")
-                // Optionally handle fallback here (show message, etc)
-                return
-            }
-        } else {
-            println("⚠️ Desktop operations not supported; cannot open browser for Spotify auth.")
-            // Optionally handle fallback here (show message, etc)
-            return
-        }
-
-        val server = com.sun.net.httpserver.HttpServer.create(InetSocketAddress(8888), 0)
-        server.createContext("/callback") { exchange ->
-            val query = exchange.requestURI.query ?: return@createContext
-            val params = query.split("&").associate {
-                val (key, value) = it.split("=")
-                key to value
-            }
-
-            val code = params["code"] ?: return@createContext
-            exchange.sendResponseHeaders(200, 0)
-            exchange.responseBody.write("✅ Login success. You can close this.".toByteArray())
-            exchange.responseBody.close()
-
-            exchange.close()
-            server.stop(1)
-
-            requestAccessToken(code)
-        }
-        server.start()
+        val authUrl = buildSpotifyAuthUrl()
+        SpotifyLoginPageServer.start(authUrl)
     }
 
-    private fun requestAccessToken(code: String) {
+    fun requestAccessToken(code: String) {
         val requestBody = FormBody.Builder()
             .add("grant_type", "authorization_code")
             .add("code", code)
@@ -94,9 +57,80 @@ object SpotifyAuthManager {
             val json = Json.decodeFromString<TokenResponse>(response.body!!.string())
             accessToken = json.accessToken
             refreshToken = json.refreshToken
-            println("✅ Spotify Access Token: $accessToken")
+            println("[Spotify] Access token received: $accessToken")
         }
     }
 
     fun getAccessToken(): String? = accessToken
+    fun stopServer() = SpotifyLoginPageServer.stop()
+
+    private fun buildSpotifyAuthUrl(): String {
+        val scope = "user-read-playback-state user-read-currently-playing"
+        val state = UUID.randomUUID().toString()
+        return "https://accounts.spotify.com/authorize" +
+                "?response_type=code" +
+                "&client_id=$clientId" +
+                "&redirect_uri=$redirectUri" +
+                "&scope=${scope.replace(" ", "+")}" +
+                "&state=$state"
+    }
+}
+
+object SpotifyLoginPageServer {
+
+    private var server: HttpServer? = null
+
+    fun start(authUrl: String) {
+        if (server != null) return
+
+        server = HttpServer.create(InetSocketAddress(21852), 0).apply {
+            createContext("/", Page("assets/cinnamon/spotify_login.html", authUrl))
+            createContext("/spotify/token", TokenReceiver())
+            start()
+        }
+
+        MinecraftClient.getInstance().execute {
+            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(
+                Text.literal("\u00a7a[Spotify] Please open http://127.0.0.1:21852/ in your browser to login.")
+            )
+        }
+
+        println("[Spotify] Server listening at http://127.0.0.1:21852/")
+    }
+
+    fun stop() {
+        server?.stop(0)
+        server = null
+    }
+
+    private class Page(val resourcePath: String, val authUrl: String?) : HttpHandler {
+        override fun handle(exchange: HttpExchange) {
+            val stream = this::class.java.classLoader.getResourceAsStream(resourcePath)
+            val html = stream?.bufferedReader()?.readText()
+                ?.replace("\${AUTH_URL}", authUrl ?: "#") ?: "<h1>Missing spotify_login.html</h1>"
+
+            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(html.toByteArray()) }
+        }
+    }
+
+    private class TokenReceiver : HttpHandler {
+        override fun handle(exchange: HttpExchange) {
+            val query = exchange.requestURI.query ?: ""
+            val code = query.split("&")
+                .map { it.split("=") }
+                .firstOrNull { it[0] == "code" }?.getOrNull(1)
+
+            if (code != null) {
+                SpotifyAuthManager.requestAccessToken(code)
+                exchange.sendResponseHeaders(200, 0)
+                exchange.responseBody.use { it.write("\u2705 Login successful. You can close this tab.".toByteArray()) }
+                stop()
+            } else {
+                val msg = "No code found."
+                exchange.sendResponseHeaders(400, msg.toByteArray().size.toLong())
+                exchange.responseBody.use { it.write(msg.toByteArray()) }
+            }
+        }
+    }
 }

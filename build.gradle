@@ -32,6 +32,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-command-api-v2:${project.fabric_version}"
 
 	// Kotlin & JSON
 	implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3"

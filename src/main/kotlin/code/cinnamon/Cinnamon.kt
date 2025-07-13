@@ -1,6 +1,9 @@
 package code.cinnamon
 
+import com.mojang.brigadier.CommandDispatcher
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
 import net.minecraft.client.option.KeyBinding
@@ -18,10 +21,14 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.render.RenderTickCounter
+import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.text.Text
+import code.cinnamon.spotify.SpotifyAuthManager
 
 object Cinnamon : ModInitializer {
     private val logger = LoggerFactory.getLogger("cinnamon")
     private lateinit var openGuiKeybinding: KeyBinding
+    private var sentSpotifyMessage = false
 
     override fun onInitialize() {
         logger.info("Initializing Cinnamon mod...")
@@ -87,6 +94,28 @@ object Cinnamon : ModInitializer {
         }
         logger.info("Cinnamon HUD renderer registered with HudElementRegistry.")
 
+        ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
+            dispatcher.register(
+                ClientCommandManager.literal("spotify")
+                    .executes { context ->
+                        SpotifyAuthManager.authenticate()
+                        context.source.sendFeedback(Text.of("§a[Cinnamon] §fSpotify authentication started. Check your browser."))
+                        1
+                    }
+            )
+        }
+
+        ClientTickEvents.END_CLIENT_TICK.register { client ->
+            if (client.player != null && !sentSpotifyMessage) {
+                client.inGameHud.chatHud.addMessage(Text.of("§a[Cinnamon] §fUse /spotify to authenticate with Spotify."))
+                sentSpotifyMessage = true
+            }
+        }
+
         logger.info("Cinnamon mod initialized successfully!")
+
+        Runtime.getRuntime().addShutdownHook(Thread {
+            SpotifyAuthManager.stopServer()
+        })
     }
 }
