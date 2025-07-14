@@ -40,6 +40,7 @@ All modules are **toggleable and configurable** through the in-game GUI, giving 
 | **📡 Ping Display** | Displays latency to server or localhost | Adjustable style and scaling options |
 | **🛡️ Armor HUD** | Renders armor icons and durability | Fully customizable layout and positioning |
 | **🗺️ Coordinates HUD** | Shows player's X, Y, Z coordinates | Axis labeling, formatting, and screen placement |
+| **🎵 Spotify HUD** | Displays current Spotify track info and playback status | Song title, artist, progress bar, configurable colors and position |
 
 ### 🔧 Utility Modules
 
@@ -47,6 +48,7 @@ All modules are **toggleable and configurable** through the in-game GUI, giving 
 |--------|-------------|----------|
 | **✏️ HUD Edit Mode** | Drag-and-drop HUD repositioning | Snapping helpers, alignment guides, scaling |
 | **💡 Fullbright** | Maximum brightness override | Toggle-based lighting control |
+| **🖱️ Simple Auto Clicker** | Automates mouse clicks at configurable intervals | Adjustable CPS (clicks per second), toggle keybind, visual feedback |
 | **📦 Packet Handler** | Packet-layer utilities | Powers internal UI interactions |
 
 ---
@@ -65,6 +67,7 @@ Each module includes dedicated settings accessible via the GUI:
 - **🎯 Scaling** - Adjust size for optimal visibility
 - **🎨 Color Customization** - Personalize your aesthetic
 - **📍 Screen Positioning** - Place elements exactly where you want them
+- **🕹️ Keybinds & Behavior** (Auto Clicker) - Set toggle keys and click speed
 
 ---
 
