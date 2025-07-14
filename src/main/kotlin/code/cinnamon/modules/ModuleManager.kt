@@ -30,6 +30,7 @@ object ModuleManager {
 }
 
 abstract class Module(val name: String, val description: String) {
+    val settings = mutableListOf<Setting<*>>()
     var isEnabled = false
         private set
 

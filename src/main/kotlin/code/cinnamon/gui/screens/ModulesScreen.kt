@@ -21,6 +21,12 @@ import kotlin.math.max
 import kotlin.math.min
 
 import code.cinnamon.gui.screens.ColorPickerScreen
+import code.cinnamon.gui.screens.SettingsHelper
+import code.cinnamon.modules.BooleanSetting
+import code.cinnamon.modules.ColorSetting
+import code.cinnamon.modules.DoubleSetting
+import code.cinnamon.modules.ModeSetting
+import code.cinnamon.modules.Setting
 import code.cinnamon.modules.all.ChatPrefixModule
 import code.cinnamon.util.MinecraftColorCodes
 
@@ -31,7 +37,35 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     private var scrollOffset = 0
     internal val expandedStates = mutableMapOf<String, Boolean>()
     private val baseModuleHeight = 60
-    private val settingsModuleHeight = 200
+    private fun getSettingHeight(setting: Setting<*>): Int {
+        return when (setting) {
+            is BooleanSetting -> 14
+            is DoubleSetting -> 14
+            is ColorSetting -> 14
+            is ModeSetting -> {
+                if (setting.name == "Prefix Color") {
+                    val allColors = code.cinnamon.util.MinecraftColorCodes.entries
+                    val itemBoxHeight = 20
+                    val itemBoxWidth = 110
+                    val horizontalSpacing = 4
+                    val verticalSpacing = 4
+                    val itemsPerRow = kotlin.math.max(1, (getContentWidth() - 44 + horizontalSpacing) / (itemBoxWidth + horizontalSpacing))
+                    val numRows = (allColors.size + itemsPerRow - 1) / itemsPerRow
+                    numRows * (itemBoxHeight + verticalSpacing)
+                } else {
+                    14
+                }
+            }
+        }
+    }
+
+    private fun getSettingsHeight(settings: List<Setting<*>>): Int {
+        return settings.sumOf { getSettingHeight(it) }
+    }
+
+    private val settingsModuleHeight: (Module) -> Int = { module ->
+        baseModuleHeight + getSettingsHeight(module.settings) + 20
+    }
     private val settingsHudElementHeight = 148 + 14
     private val moduleSpacing = 8
     private val settingsAreaHeight = 120
@@ -45,7 +79,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             if (items.isEmpty()) return 0
             val totalHeightIncludingSpacing = items.sumOf { item ->
                 when (item) {
-                    is Module -> (if (expandedStates[item.name] == true) settingsModuleHeight else baseModuleHeight) + moduleSpacing
+                    is Module -> (if (expandedStates[item.name] == true) settingsModuleHeight(item) else baseModuleHeight) + moduleSpacing
                     is HudElement -> (if (expandedStates[item.getName()] == true) settingsHudElementHeight else baseModuleHeight) + moduleSpacing
                     else -> 0
                 }
@@ -125,7 +159,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         context.enableScissor(x, y, x + width, y + height)
         items.forEach { item ->
             val itemHeight = when (item) {
-                is Module -> if (expandedStates[item.name] == true) settingsModuleHeight else baseModuleHeight
+                is Module -> if (expandedStates[item.name] == true) settingsModuleHeight(item) else baseModuleHeight
                 is HudElement -> if (expandedStates[item.getName()] == true) settingsHudElementHeight else baseModuleHeight
                 else -> 0
             }
@@ -497,56 +531,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         return false
     }
 
-    private fun handleChatPrefixSettingsClick(scaledMouseX: Double, scaledMouseY: Double, settingsX: Int, settingsY: Int, settingsWidth: Int, module: ChatPrefixModule): Boolean {
-        var currentY = settingsY
-        currentY += 15
-
-        val selectableColors = MinecraftColorCodes.entries.filter { it.isColor || it == MinecraftColorCodes.RESET }
-
-        val itemBoxHeight = 20
-        val itemBoxWidth = 110
-        val horizontalSpacing = 4
-        val verticalSpacing = 4
-
-        val gridStartX = settingsX
-        var gridCurrentY = currentY
-
-
-        val effectiveSettingsContentHeight = settingsAreaHeight - 10
-
-
-        val itemsPerRow = max(1, (settingsWidth + horizontalSpacing) / (itemBoxWidth + horizontalSpacing))
-
-        var currentX = gridStartX
-        var itemsInCurrentRow = 0
-
-        for (colorEnumEntry in selectableColors) {
-            if (itemsInCurrentRow >= itemsPerRow) {
-                currentX = gridStartX
-                gridCurrentY += itemBoxHeight + verticalSpacing
-                itemsInCurrentRow = 0
-            }
-
-            if (gridCurrentY + itemBoxHeight > (settingsY + effectiveSettingsContentHeight) - 5) {
-                break
-            }
-
-            val itemHitboxX = currentX
-            val itemHitboxY = gridCurrentY
-            val itemHitboxEndX = itemHitboxX + itemBoxWidth
-            val itemHitboxEndY = itemHitboxY + itemBoxHeight
-
-            if (scaledMouseX >= itemHitboxX && scaledMouseX < itemHitboxEndX &&
-                scaledMouseY >= itemHitboxY && scaledMouseY < itemHitboxEndY) {
-                module.setSelectedColorCode(colorEnumEntry.code)
-                return true
-            }
-
-            currentX += itemBoxWidth + horizontalSpacing
-            itemsInCurrentRow++
-        }
-        return false
-    }
 
 
     private fun drawCheckbox(context: DrawContext, x: Int, y: Int, text: String, checked: Boolean) {
@@ -598,16 +582,18 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             CinnamonTheme.enableTextShadow
         )
 
-        val expandButtonText = if (expandedStates[module.name] == true) "-" else "+"
-        val expandButtonWidth = textRenderer.getWidth(expandButtonText)
-        context.drawText(
-            textRenderer,
-            Text.literal(expandButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-            x + width - expandButtonWidth - 12,
-            y + 8,
-            CinnamonTheme.primaryTextColor,
-            CinnamonTheme.enableTextShadow
-        )
+        if (module.settings.isNotEmpty()) {
+            val expandButtonText = if (expandedStates[module.name] == true) "-" else "+"
+            val expandButtonWidth = textRenderer.getWidth(expandButtonText)
+            context.drawText(
+                textRenderer,
+                Text.literal(expandButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
+                x + width - expandButtonWidth - 12,
+                y + 8,
+                CinnamonTheme.primaryTextColor,
+                CinnamonTheme.enableTextShadow
+            )
+        }
 
         context.drawText(
             textRenderer,
@@ -619,7 +605,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         )
 
         val bottomSectionY = if (expandedStates[module.name] == true) {
-            y + settingsModuleHeight - 30
+            y + settingsModuleHeight(module) - 30
         } else {
             y + baseModuleHeight - 30
         }
@@ -660,124 +646,17 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     }
 
     private fun renderModuleSettings(context: DrawContext, x: Int, y: Int, width: Int, height: Int, module: Module, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
-        var settingY = y
-        when (module) {
-            is AutoclickerModule -> {
-                context.drawText(textRenderer, Text.literal("Settings").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, settingY, CinnamonTheme.titleColor, CinnamonTheme.enableTextShadow)
-                settingY += 15
-                val buttonWidth = 16
-                val buttonHeight = 12
-                val settingSpacing = 14
-                val minCpsText = "Min CPS: %.1f".format(module.minCPS)
-                context.drawText(textRenderer, Text.literal(minCpsText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, settingY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
-                val minCpsButtonsX = x + width - 40
-                drawSettingButton(context, minCpsButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
-                drawSettingButton(context, minCpsButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
-                settingY += settingSpacing
-                val maxCpsText = "Max CPS: %.1f".format(module.maxCPS)
-                context.drawText(textRenderer, Text.literal(maxCpsText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, settingY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
-                val maxCpsButtonsX = x + width - 40
-                drawSettingButton(context, maxCpsButtonsX, settingY - 1, buttonWidth, buttonHeight, "-", false)
-                drawSettingButton(context, maxCpsButtonsX + 20, settingY - 1, buttonWidth, buttonHeight, "+", false)
-                settingY += settingSpacing
-                drawCheckbox(context, x, settingY - 1, "Humanization", module.enableHumanization)
-                settingY += settingSpacing
-                drawCheckbox(context, x, settingY - 1, "Burst Mode", module.burstMode)
-                settingY += settingSpacing
-                drawCheckbox(context, x, settingY - 1, "Left Click", module.leftClickEnabled)
-                settingY += settingSpacing
-                drawCheckbox(context, x, settingY - 1, "Right Click", module.rightClickEnabled)
-            }
-            is ChatPrefixModule -> {
-                context.drawText(textRenderer, Text.literal("Settings").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, settingY, CinnamonTheme.titleColor, CinnamonTheme.enableTextShadow)
-                settingY += 15
-
-                val allColors = MinecraftColorCodes.entries
-                val itemBoxHeight = 20
-                val itemBoxWidth = 110
-                val horizontalSpacing = 4
-                val verticalSpacing = 4
-
-                val gridStartX = x
-                var gridCurrentY = settingY
-                val availableGridWidth = width
-                val availableGridHeight = (y + height) - gridCurrentY - 5
-
-                val itemsPerRow = max(1, (availableGridWidth + horizontalSpacing) / (itemBoxWidth + horizontalSpacing))
-
-                var currentX = gridStartX
-                var itemsInCurrentRow = 0
-                var rowsRenderedCount = 0
-                var firstItemInRowY = gridCurrentY
-
-                if (allColors.isNotEmpty()) rowsRenderedCount = 1
-
-                for (colorEnumEntry in allColors) {
-                    if (itemsInCurrentRow >= itemsPerRow) {
-                        currentX = gridStartX
-                        gridCurrentY += itemBoxHeight + verticalSpacing
-                        itemsInCurrentRow = 0
-                        rowsRenderedCount++
-                        firstItemInRowY = gridCurrentY
-                    }
-
-                    if (gridCurrentY + itemBoxHeight > (y + height) - 5) {
-                        break
-                    }
-
-                    val isSelected = (module.selectedColorCode == colorEnumEntry.code)
-
-                    val checkboxX = currentX + 2
-                    val checkboxY = gridCurrentY + (itemBoxHeight - 10) / 2
-                    val checkboxSize = 10
-                    val checkboxBg = if (isSelected) CinnamonTheme.accentColor else CinnamonTheme.buttonBackground
-                    context.fill(checkboxX, checkboxY, checkboxX + checkboxSize, checkboxY + checkboxSize, checkboxBg)
-                    context.drawBorder(checkboxX, checkboxY, checkboxSize, checkboxSize, CinnamonTheme.borderColor)
-                    if (isSelected) {
-                        context.drawText(
-                            textRenderer,
-                            Text.literal("x").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-                            checkboxX + 1,
-                            checkboxY + 1,
-                            CinnamonTheme.titleColor,
-                            false
-                        )
-                    }
-
-                    val textX = checkboxX + checkboxSize + 6
-                    val textY = gridCurrentY + (itemBoxHeight - textRenderer.fontHeight) / 2
-                    context.drawText(
-                        textRenderer,
-                        Text.literal(colorEnumEntry.friendlyName).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-                        textX,
-                        textY,
-                        CinnamonTheme.primaryTextColor,
-                        CinnamonTheme.enableTextShadow
-                    )
-
-                    currentX += itemBoxWidth + horizontalSpacing
-                    itemsInCurrentRow++
-                }
-
-                if (allColors.isNotEmpty()) {
-                    if (itemsInCurrentRow == 0 && rowsRenderedCount > 1) {
-                        settingY = gridCurrentY - verticalSpacing
-                    } else {
-                        settingY = firstItemInRowY + itemBoxHeight
-                    }
-                    settingY += 5
-                }
-            }
-            else -> {
-                context.drawText(
-                    textRenderer,
-                    Text.literal("No settings available").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-                    x,
-                    settingY,
-                    CinnamonTheme.secondaryTextColor,
-                    CinnamonTheme.enableTextShadow
-                )
-            }
+        if (module.settings.isNotEmpty()) {
+            SettingsHelper.renderSettings(context, x, y, width, height, module.settings, scaledMouseX, scaledMouseY, delta)
+        } else {
+            context.drawText(
+                textRenderer,
+                Text.literal("No settings available").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
+                x,
+                y,
+                CinnamonTheme.secondaryTextColor,
+                CinnamonTheme.enableTextShadow
+            )
         }
     }
 
@@ -897,7 +776,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
             items.forEach { item ->
                 val currentItemHeight = when (item) {
-                    is Module -> if (expandedStates[item.name] == true) settingsModuleHeight else baseModuleHeight
+                    is Module -> if (expandedStates[item.name] == true) settingsModuleHeight(item) else baseModuleHeight
                     is HudElement -> if (expandedStates[item.getName()] == true) settingsHudElementHeight else baseModuleHeight
                     else -> 0
                 }
@@ -906,7 +785,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 if (scaledMouseY >= currentY && scaledMouseY < currentY + currentItemHeight) {
                     if (item is Module) {
                         val bottomSectionYModule = if (expandedStates[item.name] == true) {
-                            currentY + settingsModuleHeight - 30
+                            currentY + settingsModuleHeight(item) - 30
                         } else {
                             currentY + baseModuleHeight - 30
                         }
@@ -920,31 +799,25 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                             return true
                         }
 
-                        val expandButtonTextModule = if (expandedStates[item.name] == true) "-" else "+"
-                        val expandButtonWidthModule = textRenderer.getWidth(expandButtonTextModule)
-                        val expandButtonXModule = cardX + cardWidth - expandButtonWidthModule - 12
-                        val expandButtonYModule = currentY + 8
+                        if (item.settings.isNotEmpty()) {
+                            val expandButtonTextModule = if (expandedStates[item.name] == true) "-" else "+"
+                            val expandButtonWidthModule = textRenderer.getWidth(expandButtonTextModule)
+                            val expandButtonXModule = cardX + cardWidth - expandButtonWidthModule - 12
+                            val expandButtonYModule = currentY + 8
 
 
-                        if (scaledMouseX >= expandButtonXModule && scaledMouseX < expandButtonXModule + expandButtonWidthModule &&
-                            scaledMouseY >= expandButtonYModule && scaledMouseY < expandButtonYModule + textRenderer.fontHeight) {
-                            expandedStates[item.name] = !(expandedStates[item.name] ?: false)
-                            scrollOffset = min(scrollOffset, maxScrollOffset)
-                            return true
-                        }
-
-                        if (expandedStates[item.name] == true && item is AutoclickerModule) {
-                            val settingsContentX = cardX + 12
-                            val settingsContentY = currentY + 40 + 5
-
-                            if (handleAutoClickerSettings(scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, cardWidth - 24, item)) {
+                            if (scaledMouseX >= expandButtonXModule && scaledMouseX < expandButtonXModule + expandButtonWidthModule &&
+                                scaledMouseY >= expandButtonYModule && scaledMouseY < expandButtonYModule + textRenderer.fontHeight) {
+                                expandedStates[item.name] = !(expandedStates[item.name] ?: false)
+                                scrollOffset = min(scrollOffset, maxScrollOffset)
                                 return true
                             }
-                        } else if (expandedStates[item.name] == true && item is ChatPrefixModule) {
+                        }
+
+                        if (expandedStates[item.name] == true) {
                             val settingsContentX = cardX + 12
                             val settingsContentY = currentY + 40 + 5
-
-                            if (handleChatPrefixSettingsClick(scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, cardWidth - 24, item)) {
+                            if (SettingsHelper.handleMouseClick(scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, cardWidth - 24, settingsAreaHeight, item.settings)) {
                                 return true
                             }
                         }
@@ -997,69 +870,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
 
         return super.mouseClicked(mouseX, mouseY, button)
-    }
-
-    private fun handleAutoClickerSettings(scaledMouseX: Double, scaledMouseY: Double, settingsX: Int, settingsY: Int, settingsWidth: Int, module: AutoclickerModule): Boolean {
-        var checkY = settingsY + 15
-        val buttonWidth = 16
-        val buttonHeight = 12
-        val settingSpacing = 14
-        val checkboxSize = 10
-
-        val minCpsButtonsX = settingsX + settingsWidth - 40
-        if (scaledMouseY >= checkY - 1 && scaledMouseY < checkY - 1 + buttonHeight) {
-            if (scaledMouseX >= minCpsButtonsX && scaledMouseX < minCpsButtonsX + buttonWidth) {
-                module.setMinCPS(module.minCPS - 1.0f)
-                return true
-            }
-            if (scaledMouseX >= minCpsButtonsX + 20 && scaledMouseX < minCpsButtonsX + 20 + buttonWidth) {
-                module.setMinCPS(module.minCPS + 1.0f)
-                return true
-            }
-        }
-        checkY += settingSpacing
-
-        val maxCpsButtonsX = settingsX + settingsWidth - 40
-        if (scaledMouseY >= checkY - 1 && scaledMouseY < checkY - 1 + buttonHeight) {
-            if (scaledMouseX >= maxCpsButtonsX && scaledMouseX < maxCpsButtonsX + buttonWidth) {
-                module.setMaxCPS(module.maxCPS - 1.0f)
-                return true
-            }
-            if (scaledMouseX >= maxCpsButtonsX + 20 && scaledMouseX < maxCpsButtonsX + 20 + buttonWidth) {
-                module.setMaxCPS(module.maxCPS + 1.0f)
-                return true
-            }
-        }
-        checkY += settingSpacing
-
-        if (scaledMouseX >= settingsX && scaledMouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Humanization") &&
-            scaledMouseY >= checkY - 1 && scaledMouseY < checkY - 1 + checkboxSize) {
-            module.setHumanizationEnabled(!module.enableHumanization)
-            return true
-        }
-        checkY += settingSpacing
-
-        if (scaledMouseX >= settingsX && scaledMouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Burst Mode") &&
-            scaledMouseY >= checkY - 1 && scaledMouseY < checkY - 1 + checkboxSize) {
-            module.setBurstMode(!module.burstMode)
-            return true
-        }
-        checkY += settingSpacing
-
-        if (scaledMouseX >= settingsX && scaledMouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Left Click") &&
-            scaledMouseY >= checkY - 1 && scaledMouseY < checkY - 1 + checkboxSize) {
-            module.setLeftClickEnabled(!module.leftClickEnabled)
-            return true
-        }
-        checkY += settingSpacing
-
-        if (scaledMouseX >= settingsX && scaledMouseX < settingsX + checkboxSize + 6 + textRenderer.getWidth("Right Click") &&
-            scaledMouseY >= checkY - 1 && scaledMouseY < checkY - 1 + checkboxSize) {
-            module.setRightClickEnabled(!module.rightClickEnabled)
-            return true
-        }
-
-        return false
     }
 
     override fun close() {

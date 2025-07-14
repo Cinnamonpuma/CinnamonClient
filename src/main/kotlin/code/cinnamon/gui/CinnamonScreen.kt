@@ -100,7 +100,6 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         context.matrices.scale(scaleRatio, scaleRatio, context.matrices)
 
         renderBlurredBackground(context, scaledWidth, scaledHeight)
-        renderShadow(context)
 
         val scaledMouseX = scaleMouseX(mouseX.toDouble()).toInt()
         val scaledMouseY = scaleMouseY(mouseY.toDouble()).toInt()
@@ -117,15 +116,6 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     private fun renderBlurredBackground(context: DrawContext, scaledWidth: Int, scaledHeight: Int) {
         context.fill(0, 0, scaledWidth, scaledHeight, 0x80000000.toInt())
         context.fillGradient(0, 0, scaledWidth, scaledHeight, 0x40000000, 0x60000000)
-    }
-
-    private fun renderShadow(context: DrawContext) {
-        val shadowColor = 0x40000000
-        val fadeColor = 0x00000000
-
-        context.fillGradient(guiX, guiY + guiHeight, guiX + guiWidth, guiY + guiHeight + SHADOW_SIZE, shadowColor, fadeColor)
-        context.fillGradient(guiX + guiWidth, guiY, guiX + guiWidth + SHADOW_SIZE, guiY + guiHeight, shadowColor, fadeColor)
-        context.fillGradient(guiX + guiWidth, guiY + guiHeight, guiX + guiWidth + SHADOW_SIZE, guiY + guiHeight + SHADOW_SIZE, shadowColor, fadeColor)
     }
 
     private fun renderGuiBox(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
@@ -189,15 +179,31 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
 
         val closeButtonColor = if (isCloseHovered) theme.errorColor else theme.secondaryTextColor
 
-        context.drawHorizontalLine(closeButtonX + 3, closeButtonX + 13, closeButtonY + 3, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 4, closeButtonX + 12, closeButtonY + 4, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 5, closeButtonX + 11, closeButtonY + 5, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 6, closeButtonX + 10, closeButtonY + 6, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 7, closeButtonX + 9, closeButtonY + 7, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 6, closeButtonX + 10, closeButtonY + 9, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 5, closeButtonX + 11, closeButtonY + 10, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 4, closeButtonX + 12, closeButtonY + 11, closeButtonColor)
-        context.drawHorizontalLine(closeButtonX + 3, closeButtonX + 13, closeButtonY + 12, closeButtonColor)
+
+        val thickness = 2
+        val padding = 3
+
+
+        for (i in 0 until closeButtonSize - 2 * padding) {
+            for (j in 0 until thickness) {
+                val x = closeButtonX + padding + i
+                val y = closeButtonY + padding + i + j
+                if (y < closeButtonY + closeButtonSize - padding) {
+                    context.fill(x, y, x + 1, y + 1, closeButtonColor)
+                }
+            }
+        }
+
+
+        for (i in 0 until closeButtonSize - 2 * padding) {
+            for (j in 0 until thickness) {
+                val x = closeButtonX + closeButtonSize - padding - 1 - i
+                val y = closeButtonY + padding + i + j
+                if (y < closeButtonY + closeButtonSize - padding) {
+                    context.fill(x, y, x + 1, y + 1, closeButtonColor)
+                }
+            }
+        }
     }
 
     protected open fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
