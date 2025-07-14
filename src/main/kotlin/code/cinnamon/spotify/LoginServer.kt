@@ -21,7 +21,7 @@ object SpotifyLoginServer {
             start()
         }
 
-        // Notify user in-game
+
         MinecraftClient.getInstance().execute {
             MinecraftClient.getInstance().inGameHud.chatHud.addMessage(
                 Text.literal("§a[Spotify] Please open http://localhost:21852/ in your browser to login.")

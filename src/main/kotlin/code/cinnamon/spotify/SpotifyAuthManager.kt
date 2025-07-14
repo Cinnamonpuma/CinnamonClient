@@ -63,7 +63,7 @@ object SpotifyAuthManager {
                     refreshToken = json.refreshToken
                     println("[Spotify] Access token received successfully")
 
-                    // Notify in-game that connection was successful
+
                     MinecraftClient.getInstance().execute {
                         MinecraftClient.getInstance().inGameHud.chatHud.addMessage(
                             Text.literal("§a[Spotify] Successfully connected to Spotify!")
@@ -149,17 +149,17 @@ object SpotifyLoginPageServer {
                 .firstOrNull { it[0] == "code" }?.getOrNull(1)
 
             if (code != null) {
-                // Start token request in background
+
                 Thread {
                     SpotifyAuthManager.requestAccessToken(code)
                 }.start()
 
-                // Serve success page
+
                 serveSuccessPage(exchange)
 
-                // Stop server after successful auth
+
                 Thread {
-                    Thread.sleep(2000) // Give time for page to load
+                    Thread.sleep(2000)
                     stop()
                 }.start()
             } else {

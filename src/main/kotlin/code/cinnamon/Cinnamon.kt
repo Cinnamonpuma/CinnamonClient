@@ -95,9 +95,8 @@ object Cinnamon : ModInitializer {
         }
         logger.info("Cinnamon HUD renderer registered with HudElementRegistry.")
 
-        // Register commands
+
         ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
-            // Register the SpotifyCommand
             SpotifyCommand.register(dispatcher)
         }
 
