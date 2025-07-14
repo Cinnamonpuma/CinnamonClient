@@ -102,7 +102,9 @@ object Cinnamon : ModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             if (client.player != null && !sentSpotifyMessage) {
-                client.inGameHud.chatHud.addMessage(Text.of("§a[Cinnamon] §fUse /spotify to authenticate with Spotify."))
+                if (!SpotifyAuthManager.hasSavedToken()) {
+                    client.inGameHud.chatHud.addMessage(Text.of("§a[Cinnamon] §fUse /spotify to authenticate with Spotify."))
+                }
                 sentSpotifyMessage = true
             }
         }

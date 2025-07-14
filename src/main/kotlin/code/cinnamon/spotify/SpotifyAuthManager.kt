@@ -101,6 +101,10 @@ object SpotifyAuthManager {
         return accessToken
     }
 
+    fun hasSavedToken(): Boolean {
+        return tokenFile.exists() && tokenFile.length() > 0
+    }
+
     fun disconnect() {
         accessToken = null
         refreshToken = null
