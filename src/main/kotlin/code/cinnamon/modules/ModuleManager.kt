@@ -2,7 +2,8 @@ package code.cinnamon.modules
 
 import code.cinnamon.modules.all.AutoclickerModule
 import code.cinnamon.modules.all.ChatPrefixModule
-import code.cinnamon.modules.all.FullbrightModule 
+import code.cinnamon.modules.all.FullbrightModule
+import code.cinnamon.modules.all.CalculatorModule
 
 object ModuleManager {
     private val modules = mutableListOf<Module>()
@@ -24,6 +25,7 @@ object ModuleManager {
         registerModule(AutoclickerModule())
         registerModule(ChatPrefixModule())
         registerModule(FullbrightModule())
+        registerModule(CalculatorModule())
     }
 }
 

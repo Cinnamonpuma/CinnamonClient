@@ -37,6 +37,10 @@ dependencies {
 	// Kotlin & JSON
 	implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3"
 	implementation "com.google.code.gson:gson:2.8.9"
+	implementation("net.objecthunter:exp4j:0.4.8")
+	shadowRuntime("net.objecthunter:exp4j:0.4.8")
+	include("net.objecthunter:exp4j:0.4.8")
+
 
 	// ✅ LWJGL is used but NOT bundled
 	implementation "org.lwjgl:lwjgl-opengl:3.3.2"
