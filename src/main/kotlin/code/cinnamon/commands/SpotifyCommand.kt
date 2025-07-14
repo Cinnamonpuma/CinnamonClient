@@ -19,13 +19,18 @@ object SpotifyCommand {
                 .executes { context ->
                     executeSpotifyCommand(context)
                 }
+                .then(
+                    ClientCommandManager.literal("disconnect")
+                        .executes { context ->
+                            disconnectSpotify(context)
+                        }
+                )
         )
     }
 
     private fun executeSpotifyCommand(context: CommandContext<FabricClientCommandSource>): Int {
         val mc = MinecraftClient.getInstance()
 
-        // Check if already connected
         val existingToken = SpotifyAuthManager.getAccessToken()
         if (existingToken != null) {
             mc.inGameHud.chatHud.addMessage(
@@ -35,13 +40,13 @@ object SpotifyCommand {
         }
 
         try {
-            // Get authorization URL
+
             val authUrl = SpotifyAuthManager.getAuthorizationUrl()
 
-            // Start the login server
+
             SpotifyLoginPageServer.start(authUrl)
 
-            // Open browser automatically
+
             Util.getOperatingSystem().open(URI("http://127.0.0.1:21852/"))
 
             mc.inGameHud.chatHud.addMessage(
@@ -54,6 +59,18 @@ object SpotifyCommand {
             )
             println("[Spotify] Error starting authentication: ${e.message}")
         }
+
+        return 1
+    }
+
+    private fun disconnectSpotify(context: CommandContext<FabricClientCommandSource>): Int {
+        val mc = MinecraftClient.getInstance()
+
+        SpotifyAuthManager.disconnect()
+
+        mc.inGameHud.chatHud.addMessage(
+            Text.literal("§6[Spotify] Disconnected from Spotify. Use /spotify to reconnect.")
+        )
 
         return 1
     }

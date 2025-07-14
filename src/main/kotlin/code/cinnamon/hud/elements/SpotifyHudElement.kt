@@ -24,7 +24,7 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val progressBarWidth = 120
     private val progressBarHeight = 3
     private val padding = 6
-    private val textSpacing = 11 // Reduced spacing between text lines
+    private val textSpacing = 11
 
     private var albumTexture: Identifier? = null
     private var currentTrackData: SpotifyTrackData? = null
@@ -34,17 +34,10 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
 
     private var titleScrollOffset = 0f
     private var artistScrollOffset = 0f
-    private var lastScrollTime = 0L
-    private val scrollSpeed = 0.5f
-    private val scrollDelay = 2000L
-    private val scrollPause = 1000L
-
-    // Smooth scrolling variables
     private var titleScrollStartTime = 0L
     private var artistScrollStartTime = 0L
-    private val smoothScrollSpeed = 20f // pixels per second
-    private var titleScrollDirection = 1f // 1 for right-to-left, -1 for left-to-right
-    private var artistScrollDirection = 1f
+    private val scrollSpeed = 25f
+    private val scrollDelay = 2000L
 
     override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
@@ -82,17 +75,13 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
                         currentTrackData?.artist != newTrackData?.artist) {
                         titleScrollOffset = 0f
                         artistScrollOffset = 0f
-                        lastScrollTime = System.currentTimeMillis()
                         titleScrollStartTime = System.currentTimeMillis()
                         artistScrollStartTime = System.currentTimeMillis()
-                        titleScrollDirection = 1f
-                        artistScrollDirection = 1f
                     }
 
                     currentTrackData = newTrackData
                 }
             } catch (e: Exception) {
-                // Silent error handling
             }
         }.start()
     }
@@ -109,7 +98,6 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
 
             var xOffset = 0
 
-            // Draw album cover
             if (albumTexture != null) {
                 try {
                     context.drawTexture(
@@ -135,17 +123,14 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
 
             val maxTextWidth = progressBarWidth - 4
 
-            // Title - positioned at top of text area
+
             drawScrollingText(context, trackData.title, xOffset, 1, maxTextWidth, textColor, true)
 
-            // Artist - positioned below title with reduced spacing
             drawScrollingText(context, trackData.artist, xOffset, 1 + textSpacing, maxTextWidth, textColor, false)
 
-            // Progress bar - positioned below artist with small gap
             val progressY = 1 + textSpacing * 2 + 2
             drawProgressBar(context, xOffset, progressY, progressBarWidth, progressBarHeight, trackData.progress)
 
-            // Times - positioned below progress bar
             val timeY = progressY + progressBarHeight + 3
             val currentTimeStr = formatTime(trackData.currentTimeMs)
             val durationStr = formatTime(trackData.durationMs)
@@ -182,50 +167,29 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
 
         if (textWidth <= maxWidth) {
             context.drawText(mc.textRenderer, textObj, x, y, color, textShadowEnabled)
+            return
+        }
+
+        val currentTime = System.currentTimeMillis()
+        val scrollStartTime = if (isTitle) titleScrollStartTime else artistScrollStartTime
+
+        if (currentTime - scrollStartTime < scrollDelay) {
+            if (isTitle) titleScrollOffset = 0f else artistScrollOffset = 0f
         } else {
-            val currentTime = System.currentTimeMillis()
-            var scrollOffset: Float
+            val scrollTime = (currentTime - scrollStartTime - scrollDelay) / 1000f
+            val maxScrollDistance = (textWidth - maxWidth + 20).toFloat()
 
-            val scrollStartTime = if (isTitle) titleScrollStartTime else artistScrollStartTime
-            val scrollDirection = if (isTitle) titleScrollDirection else artistScrollDirection
+            val cycleTime = (maxScrollDistance / scrollSpeed) * 2 + 2f
+            val cycleProgress = (scrollTime % cycleTime) / cycleTime
 
-            val timeSinceStart = currentTime - scrollStartTime
-            if (timeSinceStart > scrollDelay) {
-                val scrollTime = (timeSinceStart - scrollDelay) / 1000f // Convert to seconds
-                val maxScrollDistance = (textWidth - maxWidth).toFloat()
-                val scrollProgress = scrollTime * smoothScrollSpeed * scrollDirection
-
-                // Calculate current position
-                val currentPosition = if (isTitle) titleScrollOffset else artistScrollOffset
-                val newPosition = currentPosition + scrollProgress * 0.016f // Approximate frame time
-
-                // Check boundaries and reverse direction if needed
-                if (newPosition <= -maxScrollDistance) {
-                    // Hit right boundary, reverse direction
-                    scrollOffset = -maxScrollDistance
-                    if (isTitle) {
-                        titleScrollDirection = -1f
-                        titleScrollStartTime = currentTime
-                    } else {
-                        artistScrollDirection = -1f
-                        artistScrollStartTime = currentTime
-                    }
-                } else if (newPosition >= 0f) {
-                    // Hit left boundary, reverse direction
-                    scrollOffset = 0f
-                    if (isTitle) {
-                        titleScrollDirection = 1f
-                        titleScrollStartTime = currentTime
-                    } else {
-                        artistScrollDirection = 1f
-                        artistScrollStartTime = currentTime
-                    }
-                } else {
-                    // Normal scrolling
-                    scrollOffset = -scrollProgress.coerceIn(0f, maxScrollDistance)
-                }
+            val scrollOffset = if (cycleProgress < 0.4f) {
+                -(cycleProgress / 0.4f) * maxScrollDistance
+            } else if (cycleProgress < 0.6f) {
+                -maxScrollDistance
+            } else if (cycleProgress < 0.9f) {
+                -maxScrollDistance + ((cycleProgress - 0.6f) / 0.3f) * maxScrollDistance
             } else {
-                scrollOffset = if (isTitle) titleScrollOffset else artistScrollOffset
+                0f
             }
 
             if (isTitle) {
@@ -233,11 +197,14 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
             } else {
                 artistScrollOffset = scrollOffset
             }
-
-            context.enableScissor(x, y, x + maxWidth, y + mc.textRenderer.fontHeight)
-            context.drawText(mc.textRenderer, textObj, x + scrollOffset.toInt(), y, color, textShadowEnabled)
-            context.disableScissor()
         }
+
+        val currentOffset = if (isTitle) titleScrollOffset else artistScrollOffset
+
+
+        context.enableScissor(x, y, x + maxWidth, y + mc.textRenderer.fontHeight)
+        context.drawText(mc.textRenderer, textObj, x + currentOffset.toInt(), y, color, textShadowEnabled)
+        context.disableScissor()
     }
 
     private fun formatTime(timeMs: Long): String {
@@ -336,7 +303,7 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
     override fun getHeight(): Int {
         val token = SpotifyAuthManager.getAccessToken()
         return if (token != null) {
-            // More compact height calculation
+
             val textHeight = mc.textRenderer.fontHeight
             maxOf(albumSize, textHeight * 2 + textSpacing + progressBarHeight + 6)
         } else {
