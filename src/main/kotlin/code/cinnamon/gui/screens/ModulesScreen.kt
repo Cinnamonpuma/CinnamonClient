@@ -39,6 +39,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     private val baseModuleHeight = 60
     private fun getSettingHeight(setting: Setting<*>): Int {
         return when (setting) {
+            is code.cinnamon.modules.LookAtHudSetting -> 14
             is BooleanSetting -> 14
             is DoubleSetting -> 14
             is ColorSetting -> 14
@@ -255,24 +256,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         )
         currentY += 15
 
-        if (element !is PacketHandlerHudElement) {
-            val textColorText = "Text Color: ${element.textColor.toRGBHexString()}"
-            context.drawText(textRenderer, Text.literal(textColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
-            val setTextColorButtonText = "[Set]"
-            val setTextColorButtonWidth = textRenderer.getWidth(setTextColorButtonText)
-            context.drawText(textRenderer, Text.literal(setTextColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x + width - setTextColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
-            currentY += 14
-
-            val bgColorText = "Background: ${element.backgroundColor.toRGBAHexString()}"
-            context.drawText(textRenderer, Text.literal(bgColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
-            val setBgColorButtonText = "[Set]"
-            val setBgColorButtonWidth = textRenderer.getWidth(setBgColorButtonText)
-            context.drawText(textRenderer, Text.literal(setBgColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x + width - setBgColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
-            currentY += 14
-
-            drawCheckbox(context, x, currentY, "Enable Text Shadow", element.textShadowEnabled)
-            currentY += 14
-        }
+        SettingsHelper.renderSettings(context, x, currentY, width, height, element.settings, scaledMouseX, scaledMouseY, delta)
 
         if (element is KeystrokesHudElement) {
             val keyPressedTextColorText = "Pressed Text: ${element.keypressedTextColor.toRGBHexString()}"
@@ -336,59 +320,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         currentY += 15
         val textElementHeight = textRenderer.fontHeight
 
-        if (element !is PacketHandlerHudElement) {
-            val setTextColorButtonText = "[Set]"
-            val setTextColorButtonWidth = textRenderer.getWidth(setTextColorButtonText)
-            val setTextColorButtonX = settingsX + settingsWidth - setTextColorButtonWidth
-            val setTextColorButtonY = currentY
-            if (scaledMouseX >= setTextColorButtonX && scaledMouseX < setTextColorButtonX + setTextColorButtonWidth &&
-                scaledMouseY >= setTextColorButtonY && scaledMouseY < setTextColorButtonY + textElementHeight
-            ) {
-                CinnamonGuiManager.openScreen(ColorPickerScreen(
-                    initialColor = element.textColor,
-                    onPick = { pickedColor ->
-                        element.textColor = pickedColor
-                        HudManager.markChangesForSave()
-                        CinnamonGuiManager.openScreen(this)
-                    },
-                    onCancel = { CinnamonGuiManager.openScreen(this) }
-                ))
-                return true
-            }
-            currentY += 14
-            val setBgColorButtonText = "[Set]"
-            val setBgColorButtonWidth = textRenderer.getWidth(setBgColorButtonText)
-            val setBgColorButtonX = settingsX + settingsWidth - setBgColorButtonWidth
-            val setBgColorButtonY = currentY
-            if (scaledMouseX >= setBgColorButtonX && scaledMouseX < setBgColorButtonX + setBgColorButtonWidth &&
-                scaledMouseY >= setBgColorButtonY && scaledMouseY < setBgColorButtonY + textElementHeight
-            ) {
-                CinnamonGuiManager.openScreen(ColorPickerScreen(
-                    initialColor = element.backgroundColor,
-                    onPick = { pickedColor ->
-                        element.backgroundColor = pickedColor
-                        HudManager.markChangesForSave()
-                        CinnamonGuiManager.openScreen(this)
-                    },
-                    onCancel = { CinnamonGuiManager.openScreen(this) }
-                ))
-                return true
-            }
-            currentY += 14
-
-            val checkboxSize = 10
-            val shadowCheckboxX = settingsX
-            val shadowCheckboxY = currentY
-            val shadowCheckboxText = "Enable Text Shadow"
-            val shadowCheckboxTextWidth = textRenderer.getWidth(shadowCheckboxText)
-            if (scaledMouseX >= shadowCheckboxX && scaledMouseX < shadowCheckboxX + checkboxSize + 6 + shadowCheckboxTextWidth &&
-                scaledMouseY >= shadowCheckboxY && scaledMouseY < shadowCheckboxY + checkboxSize
-            ) {
-                element.textShadowEnabled = !element.textShadowEnabled
-                HudManager.markChangesForSave()
-                return true
-            }
-            currentY += 14
+        if (SettingsHelper.handleMouseClick(scaledMouseX, scaledMouseY, settingsX, currentY, settingsWidth, height, element.settings)) {
+            return true
         }
 
         if (element is KeystrokesHudElement) {

@@ -12,21 +12,34 @@ import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.RaycastContext
+import code.cinnamon.modules.BooleanSetting
 import kotlin.math.sqrt
 
 class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
+    private val showNameSetting = BooleanSetting("Show Name", true)
+    private val textColorSetting = code.cinnamon.modules.ColorSetting("Text Color", 0xFFFFFFFF.toInt())
+    private val backgroundColorSetting = code.cinnamon.modules.ColorSetting("Background Color", 0x00000000.toInt())
+    private val textShadowEnabledSetting = BooleanSetting("Text Shadow", false)
+
+    init {
+        settings.add(showNameSetting)
+        settings.add(textColorSetting)
+        settings.add(backgroundColorSetting)
+        settings.add(textShadowEnabledSetting)
+    }
+
     private val mc = MinecraftClient.getInstance()
 
-    // Cache for performance
+
     private var cachedText: Text? = null
     private var cachedWidth: Int = 0
     private var cachedHeight: Int = 0
     private var lastUpdateTime: Long = 0
 
-    // Configuration
-    private val updateInterval = 50L // Update every 50ms for smoother performance
+
+    private val updateInterval = 50L
     private val decimalPlaces = 2
-    private val maxRaycastDistance = 1000.0 // Maximum distance to raycast
+    private val maxRaycastDistance = 1000.0
 
     override fun renderElement(context: DrawContext, tickDelta: Float) {
         if (!isEnabled) return
@@ -45,23 +58,23 @@ class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.matrices.translate(getX(), getY(), context.matrices)
         context.matrices.scale(this.scale, this.scale, context.matrices)
 
-        // Draw background if enabled
-        if (backgroundColor != 0) {
+
+        if (backgroundColorSetting.value != 0) {
             drawRoundedBackground(
                 context,
                 -2,
                 -2,
                 cachedWidth + 4,
                 cachedHeight + 4,
-                this.backgroundColor
+                backgroundColorSetting.value
             )
         }
 
-        // Draw text with shadow if enabled
-        if (this.textShadowEnabled) {
+
+        if (textShadowEnabledSetting.value) {
             context.drawText(mc.textRenderer, textToRender, 1, 1, 0x40000000, false)
         }
-        context.drawText(mc.textRenderer, textToRender, 0, 0, this.textColor, false)
+        context.drawText(mc.textRenderer, textToRender, 0, 0, textColorSetting.value, false)
 
         context.matrices.popMatrix()
     }
@@ -77,12 +90,11 @@ class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
             return
         }
 
-        // Perform custom raycast with extended range
+
         val eyePos = player.getCameraPosVec(1.0f)
         val lookVec = player.getRotationVec(1.0f)
         val endPos = eyePos.add(lookVec.multiply(maxRaycastDistance))
 
-        // Raycast for blocks
         val blockHitResult = world.raycast(RaycastContext(
             eyePos,
             endPos,
@@ -91,7 +103,6 @@ class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
             player
         ))
 
-        // Raycast for entities
         val entityHitResult = raycastEntities(eyePos, endPos, player)
 
         val text = when {
@@ -99,12 +110,20 @@ class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
                     eyePos.squaredDistanceTo(entityHitResult.entity.pos) < eyePos.squaredDistanceTo(blockHitResult.pos)) -> {
                 val distance = calculateEntityDistance(eyePos, entityHitResult.entity.pos)
                 val entityName = entityHitResult.entity.displayName?.string ?: "Entity"
-                Text.literal("$entityName: ${formatDistance(distance)}")
+                if (showNameSetting.value) {
+                    Text.literal("$entityName: ${formatDistance(distance)}")
+                } else {
+                    Text.literal(formatDistance(distance))
+                }
             }
             blockHitResult.type != HitResult.Type.MISS -> {
                 val distance = calculateBlockDistance(eyePos, blockHitResult.blockPos)
                 val blockName = getBlockName(blockHitResult.blockPos)
-                Text.literal("$blockName: ${formatDistance(distance)}")
+                if (showNameSetting.value) {
+                    Text.literal("$blockName: ${formatDistance(distance)}")
+                } else {
+                    Text.literal(formatDistance(distance))
+                }
             }
             else -> null
         }
@@ -125,12 +144,11 @@ class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
         var closestEntity: net.minecraft.entity.Entity? = null
         var closestDistance = Double.MAX_VALUE
 
-        // Get entities in the path
         val box = net.minecraft.util.math.Box(start, end)
         val entities = world.getOtherEntities(player, box)
 
         for (entity in entities) {
-            val entityBox = entity.boundingBox.expand(0.3) // Small expansion for easier targeting
+            val entityBox = entity.boundingBox.expand(0.3)
             val hitResult = entityBox.raycast(start, end)
 
             if (hitResult.isPresent) {
@@ -161,7 +179,6 @@ class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
         val world = mc.world ?: return "Unknown"
         val blockState = world.getBlockState(blockPos)
         return blockState.block.translationKey.let { key ->
-            // Get the display name or fall back to a simplified version
             val displayName = Text.translatable(key).string
             if (displayName.contains("block.minecraft.")) {
                 displayName.substringAfter("block.minecraft.")
@@ -194,12 +211,11 @@ class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
             return
         }
 
-        // Draw main rectangles
-        context.fill(x + r, y, x + width - r, y + height, color) // Center
-        context.fill(x, y + r, x + r, y + height - r, color) // Left
-        context.fill(x + width - r, y + r, x + width, y + height - r, color) // Right
+        context.fill(x + r, y, x + width - r, y + height, color)
+        context.fill(x, y + r, x + r, y + height - r, color)
+        context.fill(x + width - r, y + r, x + width, y + height - r, color)
 
-        // Draw rounded corners
+
         drawRoundedCorner(context, x, y, r, color, Corner.TOP_LEFT)
         drawRoundedCorner(context, x + width - r, y, r, color, Corner.TOP_RIGHT)
         drawRoundedCorner(context, x, y + height - r, r, color, Corner.BOTTOM_LEFT)

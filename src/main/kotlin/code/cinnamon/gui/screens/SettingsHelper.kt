@@ -2,6 +2,7 @@ package code.cinnamon.gui.screens
 
 import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.modules.BooleanSetting
+import code.cinnamon.modules.LookAtHudSetting
 import code.cinnamon.modules.ColorSetting
 import code.cinnamon.modules.DoubleSetting
 import code.cinnamon.modules.ModeSetting
@@ -25,6 +26,10 @@ object SettingsHelper {
         var currentY = y
         for (setting in settings) {
             when (setting) {
+                is LookAtHudSetting -> {
+                    renderCheckbox(context, x, currentY, setting.name, setting.value)
+                    currentY += 14
+                }
                 is BooleanSetting -> {
                     renderCheckbox(context, x, currentY, setting.name, setting.value)
                     currentY += 14
@@ -47,7 +52,7 @@ object SettingsHelper {
                     currentY += 14
                 }
                 is ColorSetting -> {
-                    val text = "${setting.name}: #${String.format("%06X", setting.value)}"
+                    val text = "${setting.name}: #${String.format("%08X", setting.value)}"
                     context.drawText(
                         mc.textRenderer,
                         Text.literal(text).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
@@ -154,6 +159,16 @@ object SettingsHelper {
         var currentY = y
         for (setting in settings) {
             when (setting) {
+                is LookAtHudSetting -> {
+                    val checkboxSize = 10
+                    if (mouseX >= x && mouseX < x + checkboxSize + 6 + mc.textRenderer.getWidth(setting.name) &&
+                        mouseY >= currentY && mouseY < currentY + checkboxSize
+                    ) {
+                        setting.value = !setting.value
+                        return true
+                    }
+                    currentY += 14
+                }
                 is BooleanSetting -> {
                     val checkboxSize = 10
                     if (mouseX >= x && mouseX < x + checkboxSize + 6 + mc.textRenderer.getWidth(setting.name) &&
@@ -187,6 +202,14 @@ object SettingsHelper {
                     if (mouseX >= buttonX && mouseX < buttonX + buttonWidth &&
                         mouseY >= currentY && mouseY < currentY + mc.textRenderer.fontHeight
                     ) {
+                        mc.setScreen(ColorPickerScreen(
+                            initialColor = setting.value,
+                            onPick = { pickedColor ->
+                                setting.value = pickedColor
+                                mc.setScreen(ModulesScreen())
+                            },
+                            onCancel = { mc.setScreen(ModulesScreen()) }
+                        ))
                         return true
                     }
                     currentY += 14
