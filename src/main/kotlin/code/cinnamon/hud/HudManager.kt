@@ -161,6 +161,10 @@ object HudManager {
         try {
             configDir.mkdirs()
             val configs = hudElements.map { element ->
+                val genericSettings = element.settings
+                    .filter { it.name !in listOf("Text Color", "Background Color", "Text Shadow") }
+                    .associate { it.name to it.value.toString() }
+
                 when (element) {
                     is PacketHandlerHudElement -> element.toConfig()
                     is KeystrokesHudElement -> element.toConfig()
@@ -172,7 +176,8 @@ object HudManager {
                         isEnabled = element.isEnabled,
                         textColor = element.textColor,
                         backgroundColor = element.backgroundColor,
-                        textShadowEnabled = element.textShadowEnabled
+                        textShadowEnabled = element.textShadowEnabled,
+                        genericSettings = genericSettings
                     )
                 }
             }
@@ -207,6 +212,19 @@ object HudManager {
                             element.textColor = config.textColor
                             element.backgroundColor = config.backgroundColor
                             element.textShadowEnabled = config.textShadowEnabled
+
+                            config.genericSettings.forEach { (settingName, settingValue) ->
+                                element.settings.find { it.name == settingName }?.let { setting ->
+                                    when (setting) {
+                                        is code.cinnamon.modules.BooleanSetting -> setting.value = settingValue.toBoolean()
+                                        is code.cinnamon.modules.LookAtHudSetting -> setting.value = settingValue.toBoolean()
+                                        is code.cinnamon.modules.DoubleSetting -> setting.value = settingValue.toDouble()
+                                        is code.cinnamon.modules.ColorSetting -> setting.value = settingValue.toInt()
+                                        is code.cinnamon.modules.ModeSetting -> setting.value = settingValue
+                                        else -> {}
+                                    }
+                                }
+                            }
                         }
                     }
                 }

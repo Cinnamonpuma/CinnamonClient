@@ -19,4 +19,5 @@ data class HudElementConfig(
     val buttonTextShadowEnabled: Boolean? = null,
     val buttonHoverColor: Int? = null,
     val buttonOutlineColor: Int? = null,
+    val genericSettings: Map<String, String> = emptyMap(),
 )

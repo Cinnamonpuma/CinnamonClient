@@ -5,6 +5,8 @@ import net.minecraft.client.gui.DrawContext
 import kotlin.math.max
 import kotlin.math.min
 import code.cinnamon.gui.CinnamonScreen
+import code.cinnamon.modules.BooleanSetting
+import code.cinnamon.modules.ColorSetting
 import code.cinnamon.modules.Setting
 
 abstract class HudElement(
@@ -21,11 +23,27 @@ abstract class HudElement(
 
     var isEnabled: Boolean = true
 
-    var textColor: Int = 0xFFFFFFFF.toInt()
-    var backgroundColor: Int = 0x00000000.toInt()
-    var textShadowEnabled: Boolean = false
+    private val textColorSetting = ColorSetting("Text Color", 0xFFFFFFFF.toInt())
+    private val backgroundColorSetting = ColorSetting("Background Color", 0x00000000.toInt())
+    private val textShadowEnabledSetting = BooleanSetting("Text Shadow", false)
 
     val settings = mutableListOf<Setting<*>>()
+
+    init {
+        settings.add(textColorSetting)
+        settings.add(backgroundColorSetting)
+        settings.add(textShadowEnabledSetting)
+    }
+
+    var textColor: Int
+        get() = textColorSetting.value
+        set(value) { textColorSetting.value = value }
+    var backgroundColor: Int
+        get() = backgroundColorSetting.value
+        set(value) { backgroundColorSetting.value = value }
+    var textShadowEnabled: Boolean
+        get() = textShadowEnabledSetting.value
+        set(value) { textShadowEnabledSetting.value = value }
 
     private var isDragging: Boolean = false
     private var dragOffsetX: Float = 0f

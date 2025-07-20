@@ -17,15 +17,9 @@ import kotlin.math.sqrt
 
 class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
     private val showNameSetting = BooleanSetting("Show Name", true)
-    private val textColorSetting = code.cinnamon.modules.ColorSetting("Text Color", 0xFFFFFFFF.toInt())
-    private val backgroundColorSetting = code.cinnamon.modules.ColorSetting("Background Color", 0x00000000.toInt())
-    private val textShadowEnabledSetting = BooleanSetting("Text Shadow", false)
 
     init {
         settings.add(showNameSetting)
-        settings.add(textColorSetting)
-        settings.add(backgroundColorSetting)
-        settings.add(textShadowEnabledSetting)
     }
 
     private val mc = MinecraftClient.getInstance()
@@ -59,22 +53,22 @@ class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
         context.matrices.scale(this.scale, this.scale, context.matrices)
 
 
-        if (backgroundColorSetting.value != 0) {
+        if (backgroundColor != 0) {
             drawRoundedBackground(
                 context,
                 -2,
                 -2,
                 cachedWidth + 4,
                 cachedHeight + 4,
-                backgroundColorSetting.value
+                backgroundColor
             )
         }
 
 
-        if (textShadowEnabledSetting.value) {
+        if (textShadowEnabled) {
             context.drawText(mc.textRenderer, textToRender, 1, 1, 0x40000000, false)
         }
-        context.drawText(mc.textRenderer, textToRender, 0, 0, textColorSetting.value, false)
+        context.drawText(mc.textRenderer, textToRender, 0, 0, textColor, false)
 
         context.matrices.popMatrix()
     }
