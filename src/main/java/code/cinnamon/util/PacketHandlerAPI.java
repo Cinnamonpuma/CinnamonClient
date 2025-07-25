@@ -16,6 +16,7 @@ public class PacketHandlerAPI {
     private static final Queue<DelayedPacket> delayedPackets = new ConcurrentLinkedQueue<>();
     private static final Queue<Packet<? extends PacketListener>> packetQueue = new ConcurrentLinkedQueue<>();
     private static boolean packetBlocking = false;
+    private static boolean guiPacketBlocking = false;
     private static boolean safeClose = false;
 
     private static class DelayedPacket {
@@ -94,6 +95,14 @@ public class PacketHandlerAPI {
 
     public static boolean isPacketBlocking() {
         return packetBlocking;
+    }
+
+    public static void setGuiPacketBlocking(boolean block) {
+        guiPacketBlocking = block;
+    }
+
+    public static boolean isGuiPacketBlocking() {
+        return guiPacketBlocking;
     }
 
     public static boolean isSafeCloseEnabled() {

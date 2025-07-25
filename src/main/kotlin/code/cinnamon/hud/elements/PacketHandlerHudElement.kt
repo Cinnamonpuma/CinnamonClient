@@ -57,6 +57,9 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
                 PacketHandlerAPI.startPacketBlocking()
             }
         },
+        HudButtonInternal({ "Chat Delay: ${PacketHandlerAPI.isGuiPacketBlocking()}" }) {
+            PacketHandlerAPI.setGuiPacketBlocking(!PacketHandlerAPI.isGuiPacketBlocking())
+        },
         HudButtonInternal({ "Save GUI" }) {
             client.player?.let { player ->
                 try {

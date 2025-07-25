@@ -27,8 +27,11 @@ public class PacketHandlerMixin {
     }
 
     private boolean isInventoryActionPacket(Packet<?> packet) {
+        if (PacketHandlerAPI.isGuiPacketBlocking()) {
+            return true;
+        }
         return packet instanceof ClickSlotC2SPacket
-            || packet instanceof UpdateSelectedSlotC2SPacket;
+                || packet instanceof UpdateSelectedSlotC2SPacket;
     }
 
     @Inject(method = "disconnect", at = @At("HEAD"), cancellable = true)

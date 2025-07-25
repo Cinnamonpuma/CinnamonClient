@@ -50,25 +50,22 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         }
 
         if (shouldRender && getHudElement().isEnabled()) {
-            // Scale mouse coordinates for hover effects
             double scaledMouseX = scaleMouseX(mouseX);
             double scaledMouseY = scaleMouseY(mouseY);
 
-            // Store scaled mouse coordinates in the HUD element before rendering
-            // This assumes your HUD element has methods to set current mouse position
+
             getHudElement().setCurrentMousePosition(scaledMouseX, scaledMouseY);
 
-            // Save the current matrix state
+
             context.getMatrices().pushMatrix();
 
-            // Apply consistent scaling like CinnamonScreen
+
             float scaleRatio = getScaleRatio();
             context.getMatrices().scale(scaleRatio, scaleRatio, context.getMatrices());
 
-            // Now render the element with consistent scaling
+
             getHudElement().renderElement(context, delta);
 
-            // Restore the matrix state
             context.getMatrices().popMatrix();
         }
     }
@@ -81,7 +78,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
             shouldHandle = true;
         }
         if (!HudManager.INSTANCE.isEditMode() && shouldHandle && getHudElement().isEnabled()) {
-            // Scale mouse coordinates consistently
+
             double scaledMouseX = scaleMouseX(mouseX);
             double scaledMouseY = scaleMouseY(mouseY);
 
@@ -99,7 +96,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
             shouldHandle = true;
         }
         if (!HudManager.INSTANCE.isEditMode() && shouldHandle && getHudElement().isEnabled()) {
-            // Scale mouse coordinates consistently
+
             double scaledMouseX = scaleMouseX(mouseX);
             double scaledMouseY = scaleMouseY(mouseY);
 
@@ -117,7 +114,6 @@ public abstract class PacketHandlerHudHandledScreenMixin {
             shouldHandle = true;
         }
         if (!HudManager.INSTANCE.isEditMode() && shouldHandle && getHudElement().isEnabled()) {
-            // Scale mouse coordinates and deltas consistently
             double scaledMouseX = scaleMouseX(mouseX);
             double scaledMouseY = scaleMouseY(mouseY);
             double scaledDeltaX = deltaX / getScaleRatio();
@@ -137,7 +133,7 @@ public abstract class PacketHandlerHudHandledScreenMixin {
             shouldHandle = true;
         }
         if (!HudManager.INSTANCE.isEditMode() && shouldHandle && getHudElement().isEnabled()) {
-            // Scale mouse coordinates consistently
+
             double scaledMouseX = scaleMouseX(mouseX);
             double scaledMouseY = scaleMouseY(mouseY);
 

@@ -1,6 +1,6 @@
 package code.cinnamon.mixin.client;
 
-// import code.cinnamon.client.gui.NewGlobalShaderBackgroundRenderer; // No longer needed here
+
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
