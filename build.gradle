@@ -51,6 +51,11 @@ dependencies {
 	// ✅ OkHttp is shaded
 	shadowRuntime "com.squareup.okhttp3:okhttp:4.12.0"
 	include "com.squareup.okhttp3:okhttp:4.12.0"
+
+	// Reflections
+	implementation "org.reflections:reflections:0.10.2"
+	shadowRuntime "org.reflections:reflections:0.10.2"
+	include "org.reflections:reflections:0.10.2"
 }
 
 processResources {

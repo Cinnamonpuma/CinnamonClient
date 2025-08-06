@@ -26,10 +26,14 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     private val baseButtonMargin = 2
 
     var buttonColor: Int = 20987968
-    var buttonTextColor: Int = 0xFFFFFFFF.toInt()
-    var buttonTextShadowEnabled: Boolean = false
     var buttonHoverColor: Int = -6315615
     var buttonOutlineColor: Int = 2126605840.toInt()
+
+    init {
+        settings.add(code.cinnamon.modules.ColorSetting("Button Color", buttonColor) { value -> buttonColor = value })
+        settings.add(code.cinnamon.modules.ColorSetting("Button Hover Color", buttonHoverColor) { value -> buttonHoverColor = value })
+        settings.add(code.cinnamon.modules.ColorSetting("Button Outline Color", buttonOutlineColor) { value -> buttonOutlineColor = value })
+    }
 
     private fun createStyledText(text: String): Text =
         Text.literal(text).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
@@ -90,8 +94,6 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
     fun applyConfig(config: HudElementConfig) {
         if (config.buttonColor != null) buttonColor = config.buttonColor
-        if (config.buttonTextColor != null) buttonTextColor = config.buttonTextColor
-        if (config.buttonTextShadowEnabled != null) buttonTextShadowEnabled = config.buttonTextShadowEnabled
         config.buttonHoverColor?.let { this.buttonHoverColor = it }
         config.buttonOutlineColor?.let { this.buttonOutlineColor = it }
         this.setX(config.x)
@@ -114,8 +116,6 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
             backgroundColor = backgroundColor,
             textShadowEnabled = textShadowEnabled,
             buttonColor = buttonColor,
-            buttonTextColor = buttonTextColor,
-            buttonTextShadowEnabled = buttonTextShadowEnabled,
             buttonHoverColor = this.buttonHoverColor,
             buttonOutlineColor = this.buttonOutlineColor
         )
@@ -203,7 +203,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         val textX = x + (width - textWidth) / 2f
         val textY = y + (height - fontHeight) / 2f
 
-        context.drawText(tr, text, textX.toInt(), textY.toInt(), buttonTextColor, buttonTextShadowEnabled)
+        context.drawText(tr, text, textX.toInt(), textY.toInt(), textColor, textShadowEnabled)
     }
 
     override fun getWidth(): Int =

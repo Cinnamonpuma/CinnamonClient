@@ -1,16 +1,17 @@
 package code.cinnamon.modules
 
-import code.cinnamon.modules.all.AutoclickerModule
-import code.cinnamon.modules.all.ChatPrefixModule
-import code.cinnamon.modules.all.FullbrightModule
-import code.cinnamon.modules.all.CalculatorModule
+import org.reflections.Reflections
+import org.reflections.scanners.Scanners
+import org.slf4j.LoggerFactory
 
 object ModuleManager {
     private val modules = mutableListOf<Module>()
+    private val logger = LoggerFactory.getLogger("cinnamon")
 
     fun registerModule(module: Module) {
         modules.add(module)
     }
+
     fun getModules(): List<Module> = modules.toList()
     fun getModule(name: String): Module? = modules.find { it.name == name }
     fun enableModule(name: String) = getModule(name)?.enable()
@@ -22,10 +23,19 @@ object ModuleManager {
     fun isModuleEnabled(name: String): Boolean = getModule(name)?.isEnabled ?: false
 
     fun initialize() {
-        registerModule(AutoclickerModule())
-        registerModule(ChatPrefixModule())
-        registerModule(FullbrightModule())
-        registerModule(CalculatorModule())
+        val reflections = Reflections("code.cinnamon.modules.all", Scanners.SubTypes)
+        val moduleClasses = reflections.getSubTypesOf(Module::class.java)
+
+        for (moduleClass in moduleClasses) {
+            try {
+                val constructor = moduleClass.getConstructor()
+                val module = constructor.newInstance()
+                registerModule(module)
+                logger.info("Registered module: ${module.name}")
+            } catch (e: Exception) {
+                logger.error("Failed to register module: ${moduleClass.simpleName}", e)
+            }
+        }
     }
 }
 

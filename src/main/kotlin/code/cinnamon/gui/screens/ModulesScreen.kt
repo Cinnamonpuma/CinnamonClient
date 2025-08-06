@@ -30,11 +30,15 @@ import code.cinnamon.modules.Setting
 import code.cinnamon.modules.all.ChatPrefixModule
 import code.cinnamon.util.MinecraftColorCodes
 
+import code.cinnamon.gui.components.CinnamonTextField
+
 class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
     private var selectedCategory = "All"
     private val categories = listOf("All", "Combat", "Movement", "Render", "Player", "World")
     private val categoryButtons = mutableListOf<CinnamonButton>()
     private var scrollOffset = 0
+    private var searchQuery = ""
+    private lateinit var searchBar: CinnamonTextField
     internal val expandedStates = mutableMapOf<String, Boolean>()
     private val baseModuleHeight = 60
     private fun getSettingHeight(setting: Setting<*>): Int {
@@ -85,13 +89,26 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                     else -> 0
                 }
             }
-            val effectiveTotalHeight = totalHeightIncludingSpacing - moduleSpacing
-            val categoryAreaHeight = 50
+            val effectiveTotalHeight = totalHeightIncludingSpacing
+            val categoryAreaHeight = 66
             val moduleListHeight = getContentHeight() - categoryAreaHeight - 20
             return max(0, effectiveTotalHeight - moduleListHeight)
         }
 
     override fun initializeComponents() {
+        searchBar = CinnamonTextField(
+            textRenderer,
+            getContentX() + 10,
+            getContentY() + 10,
+            200,
+            20
+        )
+        searchBar.setChangedListener { query ->
+            searchQuery = query
+            scrollOffset = 0
+        }
+        addDrawableChild(searchBar)
+
         addButton(CinnamonButton(
             guiX + PADDING,
             getFooterY() + 8,
@@ -123,7 +140,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             val buttonX = categoryStartX + index * (categoryButtonWidth + categorySpacing)
             val catButton = CinnamonButton(
                 buttonX,
-                getContentY() + 10,
+                getContentY() + 40,
                 categoryButtonWidth,
                 CinnamonTheme.BUTTON_HEIGHT_SMALL,
                 Text.literal(category).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
@@ -136,14 +153,14 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     }
 
     override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
-
+        searchBar.render(context, scaledMouseX, scaledMouseY, delta)
 
         val contentX = getContentX()
         val contentY = getContentY()
         val contentWidth = getContentWidth()
         val contentHeight = getContentHeight()
-        val categoryAreaHeight = 50
-        val moduleListY = contentY + categoryAreaHeight + 10
+        val categoryAreaHeight = 66
+        val moduleListY = contentY + categoryAreaHeight
         val moduleListHeight = contentHeight - categoryAreaHeight - 20
 
         renderModuleList(context, contentX + 10, moduleListY, contentWidth - 20, moduleListHeight, scaledMouseX, scaledMouseY, delta)
@@ -274,38 +291,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             currentY += 14
         }
 
-        if (element is PacketHandlerHudElement) {
-            val buttonColorText = "Button Color: ${element.buttonColor.toRGBAHexString()}"
-            context.drawText(textRenderer, Text.literal(buttonColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
-            val setButtonColorButtonText = "[Set]"
-            val setButtonColorButtonWidth = textRenderer.getWidth(setButtonColorButtonText)
-            context.drawText(textRenderer, Text.literal(setButtonColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x + width - setButtonColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
-            currentY += 14
-
-            val buttonTextColorText = "Button Text: ${element.buttonTextColor.toRGBHexString()}"
-            context.drawText(textRenderer, Text.literal(buttonTextColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
-            val setButtonTextColorButtonText = "[Set]"
-            val setButtonTextColorButtonWidth = textRenderer.getWidth(setButtonTextColorButtonText)
-            context.drawText(textRenderer, Text.literal(setButtonTextColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x + width - setButtonTextColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
-            currentY += 14
-
-            drawCheckbox(context, x, currentY, "Button Text Shadow", element.buttonTextShadowEnabled)
-            currentY += 14
-
-            val buttonHoverColorText = "Hover Outline: ${element.buttonHoverColor.toRGBAHexString()}"
-            context.drawText(textRenderer, Text.literal(buttonHoverColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
-            val setButtonHoverColorButtonText = "[Set]"
-            val setButtonHoverColorButtonWidth = textRenderer.getWidth(setButtonHoverColorButtonText)
-            context.drawText(textRenderer, Text.literal(setButtonHoverColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x + width - setButtonHoverColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
-            currentY += 14
-
-            val buttonOutlineColorText = "Button Outline: ${element.buttonOutlineColor.toRGBAHexString()}"
-            context.drawText(textRenderer, Text.literal(buttonOutlineColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
-            val setButtonOutlineColorButtonText = "[Set]"
-            val setButtonOutlineColorButtonWidth = textRenderer.getWidth(setButtonOutlineColorButtonText)
-            context.drawText(textRenderer, Text.literal(setButtonOutlineColorButtonText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x + width - setButtonOutlineColorButtonWidth, currentY, CinnamonTheme.accentColor, false)
-            currentY += 14
-        }
     }
 
     private fun handleHudElementSettingsClick(
@@ -343,7 +328,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 ))
                 return true
             }
-            currentY += 14
+            currentY += 18
 
             val setKeyPressedBgColorButtonText = "[Set]"
             val setKeyPressedBgColorButtonWidth = textRenderer.getWidth(setKeyPressedBgColorButtonText)
@@ -366,101 +351,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             currentY += 14
         }
 
-        if (element is PacketHandlerHudElement) {
-            val setButtonColorButtonText = "[Set]"
-            val setButtonColorButtonWidth = textRenderer.getWidth(setButtonColorButtonText)
-            val setButtonColorButtonX = settingsX + settingsWidth - setButtonColorButtonWidth
-            val setButtonColorButtonY = currentY
-            if (scaledMouseX >= setButtonColorButtonX && scaledMouseX < setButtonColorButtonX + setButtonColorButtonWidth &&
-                scaledMouseY >= setButtonColorButtonY && scaledMouseY < setButtonColorButtonY + textElementHeight
-            ) {
-                CinnamonGuiManager.openScreen(ColorPickerScreen(
-                    initialColor = element.buttonColor,
-                    onPick = { pickedColor ->
-                        element.buttonColor = pickedColor
-                        HudManager.markChangesForSave()
-                        CinnamonGuiManager.openScreen(this)
-                    },
-                    onCancel = { CinnamonGuiManager.openScreen(this) }
-                ))
-                return true
-            }
-            currentY += 14
-
-            val setButtonTextColorButtonText = "[Set]"
-            val setButtonTextColorButtonWidth = textRenderer.getWidth(setButtonTextColorButtonText)
-            val setButtonTextColorButtonX = settingsX + settingsWidth - setButtonTextColorButtonWidth
-            val setButtonTextColorButtonY = currentY
-            if (scaledMouseX >= setButtonTextColorButtonX && scaledMouseX < setButtonTextColorButtonX + setButtonTextColorButtonWidth &&
-                scaledMouseY >= setButtonTextColorButtonY && scaledMouseY < setButtonTextColorButtonY + textElementHeight
-            ) {
-                CinnamonGuiManager.openScreen(ColorPickerScreen(
-                    initialColor = element.buttonTextColor,
-                    onPick = { pickedColor ->
-                        element.buttonTextColor = pickedColor
-                        HudManager.markChangesForSave()
-                        CinnamonGuiManager.openScreen(this)
-                    },
-                    onCancel = { CinnamonGuiManager.openScreen(this) }
-                ))
-                return true
-            }
-            currentY += 14
-
-            val checkboxSize = 10
-            val buttonShadowCheckboxX = settingsX
-            val buttonShadowCheckboxY = currentY
-            val buttonShadowCheckboxText = "Button Text Shadow"
-            val buttonShadowCheckboxTextWidth = textRenderer.getWidth(buttonShadowCheckboxText)
-            if (scaledMouseX >= buttonShadowCheckboxX && scaledMouseX < buttonShadowCheckboxX + checkboxSize + 6 + buttonShadowCheckboxTextWidth &&
-                scaledMouseY >= buttonShadowCheckboxY && scaledMouseY < buttonShadowCheckboxY + checkboxSize
-            ) {
-                element.buttonTextShadowEnabled = !element.buttonTextShadowEnabled
-                HudManager.markChangesForSave()
-                return true
-            }
-            currentY += 14
-
-            val setButtonHoverColorButtonText = "[Set]"
-            val setButtonHoverColorButtonWidth = textRenderer.getWidth(setButtonHoverColorButtonText)
-            val setButtonHoverColorButtonX = settingsX + settingsWidth - setButtonHoverColorButtonWidth
-            val setButtonHoverColorButtonY = currentY
-            if (scaledMouseX >= setButtonHoverColorButtonX && scaledMouseX < setButtonHoverColorButtonX + setButtonHoverColorButtonWidth &&
-                scaledMouseY >= setButtonHoverColorButtonY && scaledMouseY < setButtonHoverColorButtonY + textElementHeight
-            ) {
-                CinnamonGuiManager.openScreen(ColorPickerScreen(
-                    initialColor = element.buttonHoverColor,
-                    onPick = { pickedColor ->
-                        element.buttonHoverColor = pickedColor
-                        HudManager.markChangesForSave()
-                        CinnamonGuiManager.openScreen(this)
-                    },
-                    onCancel = { CinnamonGuiManager.openScreen(this) }
-                ))
-                return true
-            }
-            currentY += 14
-
-            val setButtonOutlineColorButtonText = "[Set]"
-            val setButtonOutlineColorButtonWidth = textRenderer.getWidth(setButtonOutlineColorButtonText)
-            val setButtonOutlineColorButtonX = settingsX + settingsWidth - setButtonOutlineColorButtonWidth
-            val setButtonOutlineColorButtonY = currentY
-            if (scaledMouseX >= setButtonOutlineColorButtonX && scaledMouseX < setButtonOutlineColorButtonX + setButtonOutlineColorButtonWidth &&
-                scaledMouseY >= setButtonOutlineColorButtonY && scaledMouseY < setButtonOutlineColorButtonY + textElementHeight
-            ) {
-                CinnamonGuiManager.openScreen(ColorPickerScreen(
-                    initialColor = element.buttonOutlineColor,
-                    onPick = { pickedColor ->
-                        element.buttonOutlineColor = pickedColor
-                        HudManager.markChangesForSave()
-                        CinnamonGuiManager.openScreen(this)
-                    },
-                    onCancel = { CinnamonGuiManager.openScreen(this) }
-                ))
-                return true
-            }
-            currentY += 14
-        }
         return false
     }
 
@@ -664,7 +554,20 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         if (selectedCategory == "All" || selectedCategory == "Render") {
             items.addAll(HudManager.getElements())
         }
-        return items.distinct()
+
+        val distinctItems = items.distinct()
+
+        if (searchQuery.isBlank()) {
+            return distinctItems
+        }
+
+        return distinctItems.filter { item ->
+            when (item) {
+                is Module -> item.name.contains(searchQuery, ignoreCase = true)
+                is HudElement -> item.getName().contains(searchQuery, ignoreCase = true)
+                else -> false
+            }
+        }
     }
 
     private fun getModuleCategory(moduleName: String): String {
@@ -688,6 +591,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        searchBar.mouseClicked(mouseX, mouseY, button)
+
         val scaledMouseX = scaleMouseX(mouseX)
         val scaledMouseY = scaleMouseY(mouseY)
 
@@ -695,8 +600,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val contentY = getContentY()
         val contentWidth = getContentWidth()
         val contentHeight = getContentHeight()
-        val moduleListY = contentY + 60
-        val moduleListHeight = contentHeight - 70
+        val moduleListY = contentY + 66
+        val moduleListHeight = contentHeight - 76
 
 
         if (scaledMouseX >= contentX && scaledMouseX < contentX + contentWidth &&
@@ -809,6 +714,20 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         CinnamonGuiManager.openMainMenu()
         HudManager.markChangesForSave()
         HudManager.saveHudConfig()
+    }
+
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (searchBar.keyPressed(keyCode, scanCode, modifiers)) {
+            return true
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers)
+    }
+
+    override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        if (searchBar.charTyped(chr, modifiers)) {
+            return true
+        }
+        return super.charTyped(chr, modifiers)
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
