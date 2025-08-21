@@ -233,13 +233,11 @@ class ColorPickerScreen(
             if (mX >= applyButtonX && mX < applyButtonX + buttonDrawWidth) {
                 val color = (hsvToRgb(hue, saturation, brightness) and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
                 onPick(color)
-                close()
                 return true
             }
             val cancelButtonX = applyButtonX + buttonDrawWidth + buttonSpacing
             if (mX >= cancelButtonX && mX < cancelButtonX + buttonDrawWidth) {
                 onCancel()
-                close()
                 return true
             }
         }

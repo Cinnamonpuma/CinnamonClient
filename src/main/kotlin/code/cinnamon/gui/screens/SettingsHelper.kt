@@ -8,6 +8,7 @@ import code.cinnamon.modules.DoubleSetting
 import code.cinnamon.modules.ModeSetting
 import code.cinnamon.modules.Setting
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
 import net.minecraft.text.Style
 
@@ -22,7 +23,7 @@ object SettingsHelper {
         scaledMouseX: Int,
         scaledMouseY: Int,
         delta: Float
-    ) {
+    ): Int {
         var currentY = y
         for (setting in settings) {
             when (setting) {
@@ -145,9 +146,11 @@ object SettingsHelper {
                 }
             }
         }
+        return currentY
     }
 
     fun handleMouseClick(
+        parent: Screen,
         mouseX: Double,
         mouseY: Double,
         x: Int,
@@ -206,9 +209,9 @@ object SettingsHelper {
                             initialColor = setting.value,
                             onPick = { pickedColor ->
                                 setting.value = pickedColor
-                                mc.setScreen(ModulesScreen())
+                                mc.setScreen(parent)
                             },
-                            onCancel = { mc.setScreen(ModulesScreen()) }
+                            onCancel = { mc.setScreen(parent) }
                         ))
                         return true
                     }

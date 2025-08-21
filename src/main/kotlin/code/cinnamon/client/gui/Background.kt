@@ -1,7 +1,6 @@
 package code.cinnamon.client.gui
 
 import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.RenderLayer
 import net.minecraft.util.Identifier
 import net.minecraft.client.gl.RenderPipelines
 

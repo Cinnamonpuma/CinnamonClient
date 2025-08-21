@@ -273,9 +273,10 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         )
         currentY += 15
 
-        SettingsHelper.renderSettings(context, x, currentY, width, height, element.settings, scaledMouseX, scaledMouseY, delta)
+        var newY = SettingsHelper.renderSettings(context, x, currentY, width, height, element.settings, scaledMouseX, scaledMouseY, delta)
 
         if (element is KeystrokesHudElement) {
+            currentY = newY
             val keyPressedTextColorText = "Pressed Text: ${element.keypressedTextColor.toRGBHexString()}"
             context.drawText(textRenderer, Text.literal(keyPressedTextColorText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())), x, currentY, CinnamonTheme.primaryTextColor, CinnamonTheme.enableTextShadow)
             val setKeyPressedTextColorButtonText = "[Set]"
@@ -305,7 +306,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         currentY += 15
         val textElementHeight = textRenderer.fontHeight
 
-        if (SettingsHelper.handleMouseClick(scaledMouseX, scaledMouseY, settingsX, currentY, settingsWidth, height, element.settings)) {
+        if (SettingsHelper.handleMouseClick(this, scaledMouseX, scaledMouseY, settingsX, currentY, settingsWidth, height, element.settings)) {
             return true
         }
 
@@ -655,7 +656,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                         if (expandedStates[item.name] == true) {
                             val settingsContentX = cardX + 12
                             val settingsContentY = currentY + 40 + 5
-                            if (SettingsHelper.handleMouseClick(scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, cardWidth - 24, settingsAreaHeight, item.settings)) {
+                            if (SettingsHelper.handleMouseClick(this, scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, cardWidth - 24, settingsAreaHeight, item.settings)) {
                                 return true
                             }
                         }
