@@ -15,6 +15,13 @@ base {
 
 repositories {
 	mavenCentral()
+	maven {
+		name = "Modrinth"
+		url = "https://api.modrinth.com/maven"
+		content {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 
 configurations {
@@ -33,6 +40,9 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-command-api-v2:${project.fabric_version}"
+
+	// Sodium
+	modCompileOnlyApi("maven.modrinth:sodium:mc1.21.6-0.6.13-fabric")
 
 	// Kotlin & JSON
 	implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3"

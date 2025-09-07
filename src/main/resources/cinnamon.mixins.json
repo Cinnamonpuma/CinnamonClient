@@ -11,7 +11,8 @@
 		"client.PacketHandlerHudHandledScreenMixin",
 		"client.HudMixin",
 		"ClientPlayNetworkHandlerMixin",
-		"LightmapTextureManagerMixin"
+		"LightmapTextureManagerMixin",
+		"client.ChunkBuilderMeshingTaskMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
