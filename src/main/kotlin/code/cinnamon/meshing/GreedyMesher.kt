@@ -9,11 +9,9 @@ import net.caffeinemc.mods.sodium.client.render.chunk.data.BuiltSectionMeshParts
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.DefaultTerrainRenderPasses
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass
 import net.caffeinemc.mods.sodium.client.render.chunk.vertex.builder.ChunkMeshBufferBuilder
-import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEncoder
 import net.caffeinemc.mods.sodium.client.util.NativeBuffer
 import net.caffeinemc.mods.sodium.client.world.cloned.ChunkRenderContext
 import net.minecraft.client.render.chunk.ChunkOcclusionData
-import net.minecraft.util.math.BlockPos
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -37,8 +35,7 @@ object GreedyMesher {
                 infoBuilder.addRenderPass(pass)
             } else {
                 val emptyBuffer = NativeBuffer.copy(ByteBuffer.allocate(0))
-                // The vertex counts array needs to have a size equal to the number of facing directions.
-                val vertexCounts = IntArray(ModelQuadFacing.DIRECTIONS)
+                val vertexCounts = IntArray(ModelQuadFacing.COUNT)
                 meshParts[pass] = BuiltSectionMeshParts(emptyBuffer, vertexCounts)
             }
         }
