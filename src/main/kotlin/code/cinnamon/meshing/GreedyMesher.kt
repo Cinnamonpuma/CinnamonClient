@@ -28,9 +28,7 @@ object GreedyMesher {
             buffer.start(render.sectionIndex)
 
             if (pass == DefaultTerrainRenderPasses.SOLID) {
-                // The actual greedy meshing logic would go here.
-                // For now, we are just ensuring the data structure is correct.
-                // The buffer will be empty, but correctly processed.
+                // Greedy meshing logic would go here
             }
 
             if (!buffer.isEmpty) {
@@ -38,10 +36,10 @@ object GreedyMesher {
                 meshParts[pass] = BuiltSectionMeshParts(nativeBuffer, intArrayOf(buffer.count()))
                 infoBuilder.addRenderPass(pass)
             } else {
-                // For all other passes, create empty data with a valid vertex count array.
                 val emptyBuffer = NativeBuffer.copy(ByteBuffer.allocate(0))
-                meshParts[pass] = BuiltSectionMeshParts(emptyBuffer, intArrayOf(0))
-                // Do not add the pass to the infoBuilder if it has no geometry
+                // The vertex counts array needs to have a size equal to the number of facing directions.
+                val vertexCounts = IntArray(ModelQuadFacing.DIRECTIONS)
+                meshParts[pass] = BuiltSectionMeshParts(emptyBuffer, vertexCounts)
             }
         }
 
