@@ -21,7 +21,6 @@ object GreedyMesher {
         val meshParts = mutableMapOf<TerrainRenderPass, BuiltSectionMeshParts>()
 
         for (pass in DefaultTerrainRenderPasses.ALL) {
-            // This is the version that fixed the crashes. It produces empty meshes but is stable.
             val emptyBuffer = NativeBuffer.copy(ByteBuffer.allocate(0))
             val vertexCounts = IntArray(ModelQuadFacing.COUNT)
             meshParts[pass] = BuiltSectionMeshParts(emptyBuffer, vertexCounts)
