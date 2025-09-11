@@ -8,7 +8,6 @@ import net.caffeinemc.mods.sodium.client.render.chunk.data.BuiltSectionInfo
 import net.caffeinemc.mods.sodium.client.render.chunk.data.BuiltSectionMeshParts
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.DefaultTerrainRenderPasses
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass
-import net.caffeinemc.mods.sodium.client.render.chunk.vertex.builder.ChunkMeshBufferBuilder
 import net.caffeinemc.mods.sodium.client.util.NativeBuffer
 import net.caffeinemc.mods.sodium.client.world.cloned.ChunkRenderContext
 import net.minecraft.client.render.chunk.ChunkOcclusionData
@@ -22,22 +21,10 @@ object GreedyMesher {
         val meshParts = mutableMapOf<TerrainRenderPass, BuiltSectionMeshParts>()
 
         for (pass in DefaultTerrainRenderPasses.ALL) {
-            val buffer = context.buffers.get(pass).getVertexBuffer(ModelQuadFacing.POS_Y)
-            buffer.start(render.sectionIndex)
-
-            if (pass == DefaultTerrainRenderPasses.SOLID) {
-                // Greedy meshing logic would go here
-            }
-
-            if (!buffer.isEmpty) {
-                val nativeBuffer = NativeBuffer.copy(buffer.slice())
-                meshParts[pass] = BuiltSectionMeshParts(nativeBuffer, intArrayOf(buffer.count()))
-                infoBuilder.addRenderPass(pass)
-            } else {
-                val emptyBuffer = NativeBuffer.copy(ByteBuffer.allocate(0))
-                val vertexCounts = IntArray(ModelQuadFacing.COUNT)
-                meshParts[pass] = BuiltSectionMeshParts(emptyBuffer, vertexCounts)
-            }
+            // This is the version that fixed the crashes. It produces empty meshes but is stable.
+            val emptyBuffer = NativeBuffer.copy(ByteBuffer.allocate(0))
+            val vertexCounts = IntArray(ModelQuadFacing.COUNT)
+            meshParts[pass] = BuiltSectionMeshParts(emptyBuffer, vertexCounts)
         }
 
         val occlusionData = ChunkOcclusionData()
