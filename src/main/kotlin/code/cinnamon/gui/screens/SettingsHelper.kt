@@ -208,7 +208,7 @@ object SettingsHelper {
                         mc.setScreen(ColorPickerScreen(
                             initialColor = setting.value,
                             onPick = { pickedColor ->
-                                setting.value = pickedColor
+                                setting.set(pickedColor)
                                 mc.setScreen(parent)
                             },
                             onCancel = { mc.setScreen(parent) }
