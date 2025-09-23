@@ -435,8 +435,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
 
         renderToggleSwitch(context, x + width - 50, bottomSectionY + 6, 30, 16, module.isEnabled, scaledMouseX, scaledMouseY)
-        val statusColor = if (module.isEnabled) CinnamonTheme.successColor else CinnamonTheme.moduleDisabledColor
-        context.fill(x + 12, bottomSectionY + 18, x + 20, bottomSectionY + 26, statusColor)
 
         val keybindText = getModuleKeybind(module.name)
         if (keybindText.isNotEmpty()) {

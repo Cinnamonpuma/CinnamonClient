@@ -64,11 +64,6 @@ object ModuleConfigManager {
                     } else {
                         module.disable(fromLoad = true)
                     }
-                    if (moduleState.isEnabled) {
-                        module.enable(fromLoad = true)
-                    } else {
-                        module.disable(fromLoad = true)
-                    }
                 } else {
                     println("[ModuleConfigManager] Found state for unknown module: ${moduleState.name}")
                 }
