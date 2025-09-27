@@ -5,6 +5,16 @@ import kotlin.math.sqrt
 
 object GraphicsUtils {
 
+    fun withAlpha(color: Int, alpha: Int): Int {
+        return (color and 0x00FFFFFF) or (alpha shl 24)
+    }
+
+    fun multiplyAlpha(color: Int, alphaFactor: Float): Int {
+        val originalAlpha = (color ushr 24) and 0xFF
+        val newAlpha = (originalAlpha * alphaFactor).toInt().coerceIn(0, 255)
+        return (color and 0x00FFFFFF) or (newAlpha shl 24)
+    }
+
     enum class Corner { TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT }
 
     private fun drawPixel(context: DrawContext, x: Int, y: Int, color: Int) {
@@ -16,7 +26,7 @@ object GraphicsUtils {
         for (i in 0 until radius) {
             for (j in 0 until radius) {
                 val dist = sqrt((i * i + j * j).toDouble())
-                if (dist <= radius - 0.5f) { 
+                if (dist <= radius - 0.5f) {
                     val pixelX: Int
                     val pixelY: Int
                     when (type) {
@@ -48,7 +58,7 @@ object GraphicsUtils {
         for (i in 0 until radius) {
             for (j in 0 until radius) {
                 val dist = sqrt((i * i + j * j).toDouble())
-                if (dist >= radius - 1.5f && dist <= radius - 0.5f) { 
+                if (dist >= radius - 1.5f && dist <= radius - 0.5f) {
                     val pixelX: Int
                     val pixelY: Int
                     when (type) {
@@ -80,7 +90,7 @@ object GraphicsUtils {
         val y = yF.toInt()
         val width = widthF.toInt()
         val height = heightF.toInt()
-        var r = radiusF.toInt() 
+        var r = radiusF.toInt()
 
         if (width <= 0 || height <= 0) return
         r = r.coerceAtMost(width / 2).coerceAtMost(height / 2).coerceAtLeast(0)
@@ -90,22 +100,22 @@ object GraphicsUtils {
             return
         }
 
-        
+
         context.fill(x + r, y + r, x + width - r, y + height - r, color)
-        
-        
+
+
         context.fill(x + r, y, x + width - r, y + r, color)
-        
-        
+
+
         context.fill(x + r, y + height - r, x + width - r, y + height, color)
-        
-        
+
+
         context.fill(x, y + r, x + r, y + height - r, color)
-        
-        
+
+
         context.fill(x + width - r, y + r, x + width, y + height - r, color)
 
-        
+
         drawFilledSingleCorner(context, x, y, r, color, Corner.TOP_LEFT)
         drawFilledSingleCorner(context, x + width - r, y, r, color, Corner.TOP_RIGHT)
         drawFilledSingleCorner(context, x, y + height - r, r, color, Corner.BOTTOM_LEFT)
@@ -122,18 +132,18 @@ object GraphicsUtils {
         if (width <= 0 || height <= 0) return
         radius = radius.coerceAtMost(width / 2).coerceAtMost(height / 2).coerceAtLeast(0)
 
-        if (radius == 0) { 
-            context.fill(x, y, x + width, y + 1, color) 
-            context.fill(x, y + height - 1, x + width, y + height, color) 
-            context.fill(x, y + 1, x + 1, y + height - 1, color) 
+        if (radius == 0) {
+            context.fill(x, y, x + width, y + 1, color)
+            context.fill(x, y + height - 1, x + width, y + height, color)
+            context.fill(x, y + 1, x + 1, y + height - 1, color)
             context.fill(x + width - 1, y + 1, x + width, y + height - 1, color)
             return
         }
-        
-        context.fill(x + radius, y, x + width - radius, y + 1, color) 
-        context.fill(x + radius, y + height - 1, x + width - radius, y + height, color) 
-        context.fill(x, y + radius, x + 1, y + height - radius, color) 
-        context.fill(x + width - 1, y + radius, x + width, y + height - radius, color) 
+
+        context.fill(x + radius, y, x + width - radius, y + 1, color)
+        context.fill(x + radius, y + height - 1, x + width - radius, y + height, color)
+        context.fill(x, y + radius, x + 1, y + height - radius, color)
+        context.fill(x + width - 1, y + radius, x + width, y + height - radius, color)
 
         drawSingleCornerBorder(context, x, y, radius, color, Corner.TOP_LEFT)
         drawSingleCornerBorder(context, x + width - radius, y, radius, color, Corner.TOP_RIGHT)

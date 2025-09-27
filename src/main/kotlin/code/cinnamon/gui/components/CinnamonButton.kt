@@ -7,6 +7,7 @@ import net.minecraft.client.gui.Element
 import net.minecraft.client.gui.Selectable
 import net.minecraft.text.Text
 import code.cinnamon.gui.theme.CinnamonTheme
+import code.cinnamon.gui.utils.GraphicsUtils
 import kotlin.math.max
 import kotlin.math.min
 
@@ -20,6 +21,7 @@ class CinnamonButton(
     var isPrimary: Boolean = false
 ) : Element, Drawable, Selectable {
 
+    var alpha: Float = 1.0f
     private var isHovered = false
     private var isPressed = false
     private var isEnabled = true
@@ -60,18 +62,19 @@ class CinnamonButton(
         isHovered = isMouseOver(mouseX.toDouble(), mouseY.toDouble())
 
         context.matrices.pushMatrix()
-        context.matrices.translate(x.toFloat(), y.toFloat(), context.matrices)
+        context.matrices.translate(x.toFloat(), y.toFloat())
 
-        val backgroundColor = getBackgroundColor()
-        val textColor = getTextColor()
+        val backgroundColor = GraphicsUtils.multiplyAlpha(getBackgroundColor(), this.alpha)
+        val textColor = GraphicsUtils.multiplyAlpha(getTextColor(), this.alpha)
 
         drawRoundedRect(context, 0, 0, width, height, backgroundColor)
 
-        val borderColor = if (isHovered || isPressed) {
+        val baseBorderColor = if (isHovered || isPressed) {
             CinnamonTheme.buttonOutlineHoverColor
         } else {
             CinnamonTheme.buttonOutlineColor
         }
+        val borderColor = GraphicsUtils.multiplyAlpha(baseBorderColor, this.alpha)
 
         drawBorder(context, 0, 0, width, height, borderColor)
 
@@ -89,9 +92,10 @@ class CinnamonButton(
         )
 
         if (isHovered && isEnabled) {
-            val alpha = (animationProgress * 0.1f * 255).toInt().coerceIn(0, 255)
-            val overlayColor = (alpha shl 24) or 0xFFFFFF
-            context.fill(0, 0, width, height, overlayColor)
+            val baseHoverColor = 0x1AFFFFFF // White with 10% alpha
+            val animatedHoverColor = GraphicsUtils.multiplyAlpha(baseHoverColor, animationProgress)
+            val finalHoverColor = GraphicsUtils.multiplyAlpha(animatedHoverColor, this.alpha)
+            context.fill(0, 0, width, height, finalHoverColor)
         }
 
         context.matrices.popMatrix()

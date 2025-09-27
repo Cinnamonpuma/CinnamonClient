@@ -9,7 +9,6 @@ import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.gui.utils.GraphicsUtils
 import net.minecraft.util.Identifier
-import net.minecraft.client.gl.RenderPipelines
 import kotlin.math.max
 import kotlin.math.min
 
@@ -18,6 +17,8 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     protected val buttons = mutableListOf<CinnamonButton>()
     private var isSidebarOpen = false
     private val sidebarButtons = mutableListOf<CinnamonButton>()
+    private var sidebarAnimationProgress = 0.0f
+    private var lastAnimationTime = 0L
 
 
     protected var guiWidth = 600
@@ -49,6 +50,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         calculateGuiDimensions()
         initializeComponents()
         initializeSidebarButtons()
+        lastAnimationTime = System.currentTimeMillis()
     }
 
     protected open fun getDesiredGuiWidth(effectiveScaledWidth: Int): Int {
@@ -66,11 +68,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         guiWidth = getDesiredGuiWidth(scaledWidth)
         guiHeight = getDesiredGuiHeight(scaledHeight)
 
-        if (isSidebarOpen) {
-            guiX = (scaledWidth - (guiWidth + SIDEBAR_WIDTH)) / 2 + SIDEBAR_WIDTH
-        } else {
-            guiX = (scaledWidth - guiWidth) / 2
-        }
+        guiX = (scaledWidth - guiWidth) / 2
         guiY = (scaledHeight - guiHeight) / 2
     }
 
@@ -93,34 +91,57 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     protected fun scaleMouseY(mouseY: Double): Double = mouseY / getScaleRatio()
 
     abstract fun initializeComponents()
+
+    override fun resize(client: MinecraftClient, width: Int, height: Int) {
+        this.init(client, width, height)
+    }
+
     protected abstract fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float)
 
     protected open val shouldRenderDefaultGuiBox: Boolean = true
 
+    // We render our own background, so we override this to do nothing.
+    override fun renderBackground(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {}
+
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        super.render(context, mouseX, mouseY, delta)
+        val currentTime = System.currentTimeMillis()
+        val deltaTime = (currentTime - lastAnimationTime) / 1000.0f
+        lastAnimationTime = currentTime
+
+        sidebarAnimationProgress = if (isSidebarOpen) min(1.0f, sidebarAnimationProgress + deltaTime * 6f)
+        else max(0.0f, sidebarAnimationProgress - deltaTime * 6f)
 
         val scaleRatio = getScaleRatio()
         val scaledWidth = getEffectiveWidth()
         val scaledHeight = getEffectiveHeight()
 
         context.matrices.pushMatrix()
-        context.matrices.scale(scaleRatio, scaleRatio, context.matrices)
+        context.matrices.scale(scaleRatio, scaleRatio)
 
+        // Render our custom background
         renderBlurredBackground(context, scaledWidth, scaledHeight)
 
         val scaledMouseX = scaleMouseX(mouseX.toDouble()).toInt()
         val scaledMouseY = scaleMouseY(mouseY.toDouble()).toInt()
 
+        // 1. Render the main panel and its content
         renderGuiBox(context, scaledMouseX, scaledMouseY, delta)
 
-        if (isSidebarOpen) {
+        // 2. Render all managed widgets.
+        // This calls our empty renderBackground() and then renders the widgets inside our scaled matrix.
+        // We pass the original mouseX/Y because the superclass expects them.
+        super.render(context, mouseX, mouseY, delta)
+
+        // 3. Render the sidebar on top of the content
+        if (sidebarAnimationProgress > 0) {
             renderSidebar(context, scaledMouseX, scaledMouseY, delta)
         }
 
-        buttons.forEach { button ->
-            button.render(context, scaledMouseX, scaledMouseY, delta)
-        }
+        // 4. Render the header on top of everything
+        renderHeader(context, scaledMouseX, scaledMouseY, delta)
+
+        // 5. Render non-widget buttons (e.g., footer buttons)
+        buttons.forEach { it.render(context, scaledMouseX, scaledMouseY, delta) }
 
         context.matrices.popMatrix()
     }
@@ -135,7 +156,6 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
             GraphicsUtils.drawFilledRoundedRect(context, guiX.toFloat(), guiY.toFloat(), guiWidth.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, theme.coreBackgroundPrimary)
         }
 
-        renderHeader(context, scaledMouseX, scaledMouseY, delta)
         renderFooter(context, scaledMouseX, scaledMouseY, delta)
         renderContent(context, scaledMouseX, scaledMouseY, delta)
 
@@ -217,49 +237,56 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         val scaledMouseX = scaleMouseX(mouseX)
         val scaledMouseY = scaleMouseY(mouseY)
 
+        // 1. Handle hamburger menu click
         val hamburgerX = guiX + PADDING
         val hamburgerY = guiY + (HEADER_HEIGHT - 20) / 2
-        if (scaledMouseX >= hamburgerX && scaledMouseX < hamburgerX + 20 &&
-            scaledMouseY >= hamburgerY && scaledMouseY < hamburgerY + 20) {
+        if (scaledMouseX >= hamburgerX && scaledMouseX < hamburgerX + 20 && scaledMouseY >= hamburgerY && scaledMouseY < hamburgerY + 20) {
             isSidebarOpen = !isSidebarOpen
-            calculateGuiDimensions()
-            initializeSidebarButtons()
             return true
         }
 
-        if (isSidebarOpen) {
-            sidebarButtons.forEach { btn ->
-                if (btn.isMouseOver(scaledMouseX, scaledMouseY)) {
-                    btn.mouseClicked(scaledMouseX, scaledMouseY, button)
-                    return true
-                }
-            }
-        }
-
+        // 2. Handle close button click
         val closeButtonSize = 16
         val closeButtonX = guiX + guiWidth - closeButtonSize - 8
         val closeButtonY = guiY + (HEADER_HEIGHT - closeButtonSize) / 2
-
-        if (scaledMouseX >= closeButtonX && scaledMouseX < closeButtonX + closeButtonSize &&
-            scaledMouseY >= closeButtonY && scaledMouseY < closeButtonY + closeButtonSize) {
+        if (scaledMouseX >= closeButtonX && scaledMouseX < closeButtonX + closeButtonSize && scaledMouseY >= closeButtonY && scaledMouseY < closeButtonY + closeButtonSize) {
             close()
             return true
         }
 
-        if (scaledMouseX >= guiX && scaledMouseX < guiX + guiWidth &&
-            scaledMouseY >= guiY && scaledMouseY < guiY + guiHeight) {
-
-            buttons.forEach { btn ->
-                if (btn.isMouseOver(scaledMouseX, scaledMouseY)) {
-                    btn.mouseClicked(scaledMouseX, scaledMouseY, button)
-                    return true
+        // 3. Handle sidebar interactions if it's open
+        if (isSidebarOpen && sidebarAnimationProgress > 0.1f) {
+            val sidebarX = guiX
+            val sidebarEndX = sidebarX + SIDEBAR_WIDTH
+            if (scaledMouseX >= sidebarX && scaledMouseX < sidebarEndX && scaledMouseY >= guiY && scaledMouseY < guiY + guiHeight) {
+                for (btn in sidebarButtons) {
+                    if (btn.mouseClicked(scaledMouseX, scaledMouseY, button)) return true
                 }
+                // Absorb clicks on the sidebar background, but don't close it
+                return true
             }
-            return super.mouseClicked(mouseX, mouseY, button)
         }
 
-        close()
-        return true
+        // 4. Delegate to widgets and other elements if the click is within the main GUI area
+        if (scaledMouseX >= guiX && scaledMouseX < guiX + guiWidth && scaledMouseY >= guiY && scaledMouseY < guiY + guiHeight) {
+            // Let the default screen handler deal with widgets (like search bar)
+            if (super.mouseClicked(scaledMouseX, scaledMouseY, button)) return true
+
+            // Handle footer buttons
+            for (btn in buttons) {
+                if (btn.mouseClicked(scaledMouseX, scaledMouseY, button)) return true
+            }
+        }
+
+        // 5. If a click is outside the GUI, close the sidebar if it's open
+        if (isSidebarOpen) {
+            isSidebarOpen = false
+            return true
+        }
+
+        // If click is outside GUI and sidebar is closed, do nothing (don't close the screen).
+        // The ESC key will handle closing.
+        return false
     }
 
     override fun mouseMoved(mouseX: Double, mouseY: Double) {
@@ -269,11 +296,13 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         buttons.forEach { btn ->
             btn.mouseMoved(scaledMouseX, scaledMouseY)
         }
-        super.mouseMoved(mouseX, mouseY)
+        super.mouseMoved(scaledMouseX, scaledMouseY)
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
+        return super.mouseScrolled(scaledMouseX, scaledMouseY, horizontalAmount, verticalAmount)
     }
 
     protected fun addButton(button: CinnamonButton) {
@@ -299,7 +328,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
 
     private fun initializeSidebarButtons() {
         sidebarButtons.clear()
-        val sidebarX = guiX - SIDEBAR_WIDTH
+        val sidebarX = guiX
         val buttonWidth = SIDEBAR_WIDTH - PADDING * 2
         var currentY = guiY + HEADER_HEIGHT + PADDING
 
@@ -344,10 +373,19 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     }
 
     private fun renderSidebar(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
-        val sidebarX = guiX - SIDEBAR_WIDTH
-        GraphicsUtils.drawFilledRoundedRect(context, sidebarX.toFloat(), guiY.toFloat(), SIDEBAR_WIDTH.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, theme.coreBackgroundPrimary)
-        GraphicsUtils.drawRoundedRectBorder(context, sidebarX.toFloat(), guiY.toFloat(), SIDEBAR_WIDTH.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, theme.borderColor)
+        val sidebarX = guiX
+        val alpha = sidebarAnimationProgress
 
-        sidebarButtons.forEach { it.render(context, scaledMouseX, scaledMouseY, delta) }
+        val intAlpha = (alpha * 255).toInt()
+        val backgroundColor = GraphicsUtils.withAlpha(theme.coreBackgroundPrimary, intAlpha)
+        val borderColor = GraphicsUtils.withAlpha(theme.borderColor, intAlpha)
+
+        GraphicsUtils.drawFilledRoundedRect(context, sidebarX.toFloat(), guiY.toFloat(), SIDEBAR_WIDTH.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, backgroundColor)
+        GraphicsUtils.drawRoundedRectBorder(context, sidebarX.toFloat(), guiY.toFloat(), SIDEBAR_WIDTH.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, borderColor)
+
+        sidebarButtons.forEach {
+            it.alpha = alpha
+            it.render(context, scaledMouseX, scaledMouseY, delta)
+        }
     }
 }

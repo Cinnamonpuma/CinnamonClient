@@ -38,6 +38,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     private val categories = listOf("All", "Combat", "Movement", "Render", "Player", "World")
     private var isCategoryDropdownOpen = false
     private var scrollOffset = 0
+    private var dropdownAnimationProgress = 0.0f
+    private var lastAnimationTime = 0L
     private var searchQuery = ""
     private lateinit var searchBar: CinnamonTextField
     internal val expandedStates = mutableMapOf<String, Boolean>()
@@ -120,11 +122,19 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 onClick = { _, _ -> close() }
             )
         )
+        lastAnimationTime = System.currentTimeMillis()
     }
 
     override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
-        searchBar.render(context, scaledMouseX, scaledMouseY, delta)
-        renderCategoryDropdown(context, getContentX() + 220, getContentY() + 10, 120, 20, scaledMouseX, scaledMouseY)
+        val currentTime = System.currentTimeMillis()
+        val deltaTime = (currentTime - lastAnimationTime) / 1000.0f
+        lastAnimationTime = currentTime
+
+        if (isCategoryDropdownOpen) {
+            dropdownAnimationProgress = min(1.0f, dropdownAnimationProgress + deltaTime * 6f)
+        } else {
+            dropdownAnimationProgress = max(0.0f, dropdownAnimationProgress - deltaTime * 6f)
+        }
 
         val contentX = getContentX()
         val contentY = getContentY()
@@ -139,6 +149,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         if (maxScrollOffset > 0) {
             renderScrollbar(context, contentX + contentWidth - 8, moduleListY, 6, moduleListHeight)
         }
+
+        renderCategoryDropdown(context, getContentX() + 220, getContentY() + 10, 120, 20, scaledMouseX, scaledMouseY, dropdownAnimationProgress)
     }
 
     private fun renderModuleList(context: DrawContext, x: Int, y: Int, width: Int, height: Int, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
@@ -541,7 +553,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        searchBar.mouseClicked(mouseX, mouseY, button)
+        if (super.mouseClicked(mouseX, mouseY, button)) return true
 
         val scaledMouseX = scaleMouseX(mouseX)
         val scaledMouseY = scaleMouseY(mouseY)
@@ -556,7 +568,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             return true
         }
 
-        if (isCategoryDropdownOpen) {
+        if (isCategoryDropdownOpen && dropdownAnimationProgress >= 1.0f) {
             val dropdownListY = dropdownY + dropdownHeight + 2
             val dropdownListHeight = categories.size * (dropdownHeight + 2)
 
@@ -580,6 +592,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             } else {
                 return true
             }
+        } else if (isCategoryDropdownOpen) {
+            return true
         }
 
         val contentX = getContentX()
@@ -693,22 +707,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button)
-    }
-
-
-    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
-        if (searchBar.keyPressed(keyCode, scanCode, modifiers)) {
-            return true
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers)
-    }
-
-    override fun charTyped(chr: Char, modifiers: Int): Boolean {
-        if (searchBar.charTyped(chr, modifiers)) {
-            return true
-        }
-        return super.charTyped(chr, modifiers)
+        return false
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
@@ -736,7 +735,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
 
-    private fun renderCategoryDropdown(context: DrawContext, x: Int, y: Int, width: Int, height: Int, scaledMouseX: Int, scaledMouseY: Int) {
+    private fun renderCategoryDropdown(context: DrawContext, x: Int, y: Int, width: Int, height: Int, scaledMouseX: Int, scaledMouseY: Int, animationProgress: Float) {
         val isHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= y && scaledMouseY < y + height
         val bgColor = if (isHovered) CinnamonTheme.buttonBackgroundHover else CinnamonTheme.buttonBackground
         GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), 4f, bgColor)
@@ -753,17 +752,20 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             CinnamonTheme.enableTextShadow
         )
 
-        if (isCategoryDropdownOpen) {
+        if (animationProgress > 0) {
             val dropdownY = y + height + 2
-            val dropdownHeight = categories.size * (height + 2)
-            GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), dropdownY.toFloat(), width.toFloat(), dropdownHeight.toFloat(), 4f, CinnamonTheme.coreBackgroundPrimary)
-            GraphicsUtils.drawRoundedRectBorder(context, x.toFloat(), dropdownY.toFloat(), width.toFloat(), dropdownHeight.toFloat(), 4f, CinnamonTheme.borderColor)
+            val dropdownHeight = (categories.size * (height + 2) * animationProgress).toInt()
+            val alpha = (animationProgress * 255).toInt()
+
+            context.enableScissor(x, dropdownY, x + width, dropdownY + dropdownHeight)
+            GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), dropdownY.toFloat(), width.toFloat(), dropdownHeight.toFloat(), 4f, GraphicsUtils.withAlpha(CinnamonTheme.coreBackgroundPrimary, alpha))
+            GraphicsUtils.drawRoundedRectBorder(context, x.toFloat(), dropdownY.toFloat(), width.toFloat(), dropdownHeight.toFloat(), 4f, GraphicsUtils.withAlpha(CinnamonTheme.borderColor, alpha))
 
             categories.forEachIndexed { index, category ->
                 val itemY = dropdownY + index * (height + 2)
                 val isItemHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= itemY && scaledMouseY < itemY + height
                 if (isItemHovered) {
-                    context.fill(x, itemY, x + width, itemY + height, CinnamonTheme.buttonBackgroundHover)
+                    context.fill(x, itemY, x + width, itemY + height, GraphicsUtils.withAlpha(CinnamonTheme.buttonBackgroundHover, alpha))
                 }
                 val categoryText = Text.literal(category).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
                 val categoryTextWidth = textRenderer.getWidth(categoryText)
@@ -772,10 +774,11 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                     categoryText,
                     x + (width - categoryTextWidth) / 2,
                     itemY + (height - textRenderer.fontHeight) / 2,
-                    CinnamonTheme.primaryTextColor,
+                    GraphicsUtils.withAlpha(CinnamonTheme.primaryTextColor, alpha),
                     CinnamonTheme.enableTextShadow
                 )
             }
+            context.disableScissor()
         }
     }
 }
