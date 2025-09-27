@@ -22,6 +22,7 @@ import kotlin.math.min
 
 import code.cinnamon.gui.screens.ColorPickerScreen
 import code.cinnamon.gui.screens.SettingsHelper
+import code.cinnamon.gui.utils.GraphicsUtils
 import code.cinnamon.modules.BooleanSetting
 import code.cinnamon.modules.ColorSetting
 import code.cinnamon.modules.DoubleSetting
@@ -35,7 +36,7 @@ import code.cinnamon.gui.components.CinnamonTextField
 class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
     private var selectedCategory = "All"
     private val categories = listOf("All", "Combat", "Movement", "Render", "Player", "World")
-    private val categoryButtons = mutableListOf<CinnamonButton>()
+    private var isCategoryDropdownOpen = false
     private var scrollOffset = 0
     private var searchQuery = ""
     private lateinit var searchBar: CinnamonTextField
@@ -109,51 +110,21 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
         addDrawableChild(searchBar)
 
-        addButton(CinnamonButton(
-            guiX + PADDING,
-            getFooterY() + 8,
-            60,
-            CinnamonTheme.BUTTON_HEIGHT_SMALL,
-            Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-            { _, _ -> CinnamonGuiManager.openMainMenu() }
-        ))
-        updateCategoryButtons()
-    }
-
-    private fun selectCategory(newCategory: String) {
-        this.selectedCategory = newCategory
-        this.buttons.removeAll(this.categoryButtons.toSet())
-        this.categoryButtons.clear()
-        updateCategoryButtons()
-        this.scrollOffset = 0
-    }
-
-    private fun updateCategoryButtons() {
-        val contentX = getContentX()
-        val contentWidth = getContentWidth()
-        val categoryButtonWidth = 80
-        val categorySpacing = 5
-        val totalCategoryWidth = categories.size * categoryButtonWidth + (categories.size - 1) * categorySpacing
-        val categoryStartX = contentX + (contentWidth - totalCategoryWidth) / 2
-
-        categories.forEachIndexed { index, category ->
-            val buttonX = categoryStartX + index * (categoryButtonWidth + categorySpacing)
-            val catButton = CinnamonButton(
-                buttonX,
-                getContentY() + 40,
-                categoryButtonWidth,
+        addButton(
+            CinnamonButton(
+                guiX + guiWidth - PADDING - 70,
+                getFooterY() + (FOOTER_HEIGHT - CinnamonTheme.BUTTON_HEIGHT_SMALL) / 2,
+                70,
                 CinnamonTheme.BUTTON_HEIGHT_SMALL,
-                Text.literal(category).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-                { _, _ -> selectCategory(category) },
-                this.selectedCategory == category
+                Text.literal("Close").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
+                onClick = { _, _ -> close() }
             )
-            this.categoryButtons.add(catButton)
-            addButton(catButton)
-        }
+        )
     }
 
     override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         searchBar.render(context, scaledMouseX, scaledMouseY, delta)
+        renderCategoryDropdown(context, getContentX() + 220, getContentY() + 10, 120, 20, scaledMouseX, scaledMouseY)
 
         val contentX = getContentX()
         val contentY = getContentY()
@@ -201,9 +172,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             if (isHovered && height == baseModuleHeight) CinnamonTheme.cardBackgroundHover else CinnamonTheme.cardBackground
         }
 
-        drawRoundedRect(context, x, y, width, height, cardBackgroundColor)
+        GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), CORNER_RADIUS, cardBackgroundColor)
         val borderColor = if (element.isEnabled) CinnamonTheme.accentColor else CinnamonTheme.borderColor
-        drawRoundedBorder(context, x, y, width, height, borderColor)
+        GraphicsUtils.drawRoundedRectBorder(context, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), CORNER_RADIUS, borderColor)
 
         context.drawText(
             textRenderer,
@@ -393,9 +364,9 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             if (isHovered) CinnamonTheme.cardBackgroundHover else CinnamonTheme.cardBackground
         }
 
-        drawRoundedRect(context, x, y, width, moduleHeight, cardBackgroundColor)
+        GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), y.toFloat(), width.toFloat(), moduleHeight.toFloat(), CORNER_RADIUS, cardBackgroundColor)
         val borderColor = if (module.isEnabled) CinnamonTheme.accentColor else CinnamonTheme.borderColor
-        drawRoundedBorder(context, x, y, width, moduleHeight, borderColor)
+        GraphicsUtils.drawRoundedRectBorder(context, x.toFloat(), y.toFloat(), width.toFloat(), moduleHeight.toFloat(), CORNER_RADIUS, borderColor)
 
         context.drawText(
             textRenderer,
@@ -508,11 +479,11 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         } else {
             if (isHovered) CinnamonTheme.buttonBackgroundHover else CinnamonTheme.buttonBackground
         }
-        drawRoundedRect(context, x, y, width, height, switchBg)
+        GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), 4f, switchBg)
         val knobSize = height - 4
         val knobX = if (enabled) x + width - knobSize - 2 else x + 2
         val knobY = y + 2
-        drawRoundedRect(context, knobX, knobY, knobSize, knobSize, CinnamonTheme.titleColor)
+        GraphicsUtils.drawFilledRoundedRect(context, knobX.toFloat(), knobY.toFloat(), knobSize.toFloat(), knobSize.toFloat(), 4f, CinnamonTheme.titleColor)
     }
 
     private fun renderScrollbar(context: DrawContext, x: Int, y: Int, width: Int, height: Int) {
@@ -520,26 +491,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val thumbHeight = max(20, (height * height) / (maxScrollOffset + height))
         val thumbY = y + (scrollOffset * (height - thumbHeight)) / maxScrollOffset
         context.fill(x + 1, thumbY.toInt(), x + width - 1, thumbY.toInt() + thumbHeight, CinnamonTheme.accentColor)
-    }
-
-    private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
-        context.fill(x + 2, y, x + width - 2, y + height, color)
-        context.fill(x, y + 2, x + width, y + height - 2, color)
-        context.fill(x + 1, y + 1, x + 2, y + 2, color)
-        context.fill(x + width - 2, y + 1, x + width - 1, y + 2, color)
-        context.fill(x + 1, y + height - 2, x + 2, y + height - 1, color)
-        context.fill(x + width - 2, y + height - 2, x + width - 1, y + height - 1, color)
-    }
-
-    private fun drawRoundedBorder(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
-        context.fill(x + 2, y, x + width - 2, y + 1, color)
-        context.fill(x + 2, y + height - 1, x + width - 2, y + height, color)
-        context.fill(x, y + 2, x + 1, y + height - 2, color)
-        context.fill(x + width - 1, y + 2, x + width, y + height - 2, color)
-        context.fill(x + 1, y + 1, x + 2, y + 2, color)
-        context.fill(x + width - 2, y + 1, x + width - 1, y + 2, color)
-        context.fill(x + 1, y + height - 2, x + 2, y + height - 1, color)
-        context.fill(x + width - 2, y + height - 2, x + width - 1, y + height - 1, color)
     }
 
     private fun getFilteredModules(): List<Any> {
@@ -571,7 +522,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
     private fun getModuleCategory(moduleName: String): String {
         return when (moduleName.lowercase()) {
-            "autoclicker" -> "Player"
+            "autoclicker" -> "Combat"
             "speed", "flight", "nofall" -> "Movement"
             else -> "Player"
         }
@@ -594,6 +545,42 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
         val scaledMouseX = scaleMouseX(mouseX)
         val scaledMouseY = scaleMouseY(mouseY)
+
+        val dropdownX = getContentX() + 220
+        val dropdownY = getContentY() + 10
+        val dropdownWidth = 120
+        val dropdownHeight = 20
+
+        if (scaledMouseX >= dropdownX && scaledMouseX < dropdownX + dropdownWidth && scaledMouseY >= dropdownY && scaledMouseY < dropdownY + dropdownHeight) {
+            isCategoryDropdownOpen = !isCategoryDropdownOpen
+            return true
+        }
+
+        if (isCategoryDropdownOpen) {
+            val dropdownListY = dropdownY + dropdownHeight + 2
+            val dropdownListHeight = categories.size * (dropdownHeight + 2)
+
+            var itemClicked = false
+            categories.forEachIndexed { index, category ->
+                val itemY = dropdownListY + index * (dropdownHeight + 2)
+                if (scaledMouseX >= dropdownX && scaledMouseX < dropdownX + dropdownWidth && scaledMouseY >= itemY && scaledMouseY < itemY + dropdownHeight) {
+                    selectedCategory = category
+                    isCategoryDropdownOpen = false
+                    scrollOffset = 0
+                    itemClicked = true
+                }
+            }
+            if (itemClicked) return true
+
+            val isClickInsideDropdown = scaledMouseX >= dropdownX && scaledMouseX < dropdownX + dropdownWidth &&
+                    scaledMouseY >= dropdownY && scaledMouseY < dropdownListY + dropdownListHeight
+
+            if (!isClickInsideDropdown) {
+                isCategoryDropdownOpen = false
+            } else {
+                return true
+            }
+        }
 
         val contentX = getContentX()
         val contentY = getContentY()
@@ -709,11 +696,6 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         return super.mouseClicked(mouseX, mouseY, button)
     }
 
-    override fun close() {
-        CinnamonGuiManager.openMainMenu()
-        HudManager.markChangesForSave()
-        HudManager.saveHudConfig()
-    }
 
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         if (searchBar.keyPressed(keyCode, scanCode, modifiers)) {
@@ -752,5 +734,48 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
 
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
+    }
+
+    private fun renderCategoryDropdown(context: DrawContext, x: Int, y: Int, width: Int, height: Int, scaledMouseX: Int, scaledMouseY: Int) {
+        val isHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= y && scaledMouseY < y + height
+        val bgColor = if (isHovered) CinnamonTheme.buttonBackgroundHover else CinnamonTheme.buttonBackground
+        GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), 4f, bgColor)
+        GraphicsUtils.drawRoundedRectBorder(context, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), 4f, CinnamonTheme.borderColor)
+
+        val buttonText = Text.literal(selectedCategory + " ▾").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+        val textWidth = textRenderer.getWidth(buttonText)
+        context.drawText(
+            textRenderer,
+            buttonText,
+            x + (width - textWidth) / 2,
+            y + (height - textRenderer.fontHeight) / 2,
+            CinnamonTheme.primaryTextColor,
+            CinnamonTheme.enableTextShadow
+        )
+
+        if (isCategoryDropdownOpen) {
+            val dropdownY = y + height + 2
+            val dropdownHeight = categories.size * (height + 2)
+            GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), dropdownY.toFloat(), width.toFloat(), dropdownHeight.toFloat(), 4f, CinnamonTheme.coreBackgroundPrimary)
+            GraphicsUtils.drawRoundedRectBorder(context, x.toFloat(), dropdownY.toFloat(), width.toFloat(), dropdownHeight.toFloat(), 4f, CinnamonTheme.borderColor)
+
+            categories.forEachIndexed { index, category ->
+                val itemY = dropdownY + index * (height + 2)
+                val isItemHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= itemY && scaledMouseY < itemY + height
+                if (isItemHovered) {
+                    context.fill(x, itemY, x + width, itemY + height, CinnamonTheme.buttonBackgroundHover)
+                }
+                val categoryText = Text.literal(category).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont()))
+                val categoryTextWidth = textRenderer.getWidth(categoryText)
+                context.drawText(
+                    textRenderer,
+                    categoryText,
+                    x + (width - categoryTextWidth) / 2,
+                    itemY + (height - textRenderer.fontHeight) / 2,
+                    CinnamonTheme.primaryTextColor,
+                    CinnamonTheme.enableTextShadow
+                )
+            }
+        }
     }
 }

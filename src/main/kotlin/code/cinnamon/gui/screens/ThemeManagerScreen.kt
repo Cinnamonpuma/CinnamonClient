@@ -120,7 +120,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
             100,
             CinnamonTheme.BUTTON_HEIGHT,
             Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-            { _, _ -> CinnamonGuiManager.openMainMenu() }
+            { _, _ -> CinnamonGuiManager.openModulesScreen() }
         )
         addButton(backButton!!)
 
@@ -273,7 +273,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
 
     override fun close() {
         ThemeConfigManager.saveTheme()
-        CinnamonGuiManager.openMainMenu()
+        CinnamonGuiManager.openModulesScreen()
     }
 
     override fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {

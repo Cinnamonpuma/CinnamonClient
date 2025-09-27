@@ -31,7 +31,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
     )
     override fun close() {
 
-        CinnamonGuiManager.openMainMenu()
+        CinnamonGuiManager.openModulesScreen()
     }
     override fun initializeComponents() {
         addButton(CinnamonButton(
@@ -40,7 +40,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             60,
             CinnamonTheme.BUTTON_HEIGHT_SMALL,
             Text.literal("Back").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-            { _, _ -> CinnamonGuiManager.openMainMenu() }
+            { _, _ -> CinnamonGuiManager.openModulesScreen() }
         ))
 
         addButton(CinnamonButton(

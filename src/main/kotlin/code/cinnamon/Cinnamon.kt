@@ -54,7 +54,7 @@ object Cinnamon : ModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             if (openGuiKeybinding.wasPressed()) {
-                CinnamonGuiManager.openMainMenu()
+                CinnamonGuiManager.openModulesScreen()
             }
 
             if (KeybindingManager.wasPressed("cinnamon.toggle_autoclicker")) {

@@ -1,5 +1,6 @@
 package code.cinnamon.hud
 
+import code.cinnamon.gui.CinnamonGuiManager
 import code.cinnamon.gui.CinnamonScreen
 import code.cinnamon.gui.theme.CinnamonTheme
 import net.minecraft.client.gui.DrawContext
@@ -105,7 +106,7 @@ class HudScreen : CinnamonScreen(Text.literal("HUD Editor").setStyle(Style.EMPTY
     override fun close() {
         HudManager.onEditMenuClosed()
         HudManager.setEditMode(false)
-        super.close()
+        CinnamonGuiManager.openModulesScreen()
     }
 
     override fun shouldCloseOnEsc(): Boolean = true

@@ -7,15 +7,18 @@ import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
 import code.cinnamon.gui.components.CinnamonButton
 import code.cinnamon.gui.theme.CinnamonTheme
+import code.cinnamon.gui.utils.GraphicsUtils
 import net.minecraft.util.Identifier
 import net.minecraft.client.gl.RenderPipelines
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.sqrt
 
 abstract class CinnamonScreen(title: Text) : Screen(title) {
     protected val theme = CinnamonTheme
     protected val buttons = mutableListOf<CinnamonButton>()
+    private var isSidebarOpen = false
+    private val sidebarButtons = mutableListOf<CinnamonButton>()
+
 
     protected var guiWidth = 600
     protected var guiHeight = 450
@@ -28,7 +31,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         const val FOOTER_HEIGHT = 35
         const val SIDEBAR_WIDTH = 180
         const val PADDING = 15
-        const val CORNER_RADIUS = 8
+        const val CORNER_RADIUS = 8f
         const val SHADOW_SIZE = 4
         private val LOGO_TEXTURE = Identifier.of("cinnamon", "textures/gui/logo.png")
 
@@ -45,6 +48,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         buttons.clear()
         calculateGuiDimensions()
         initializeComponents()
+        initializeSidebarButtons()
     }
 
     protected open fun getDesiredGuiWidth(effectiveScaledWidth: Int): Int {
@@ -62,7 +66,11 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         guiWidth = getDesiredGuiWidth(scaledWidth)
         guiHeight = getDesiredGuiHeight(scaledHeight)
 
-        guiX = (scaledWidth - guiWidth) / 2
+        if (isSidebarOpen) {
+            guiX = (scaledWidth - (guiWidth + SIDEBAR_WIDTH)) / 2 + SIDEBAR_WIDTH
+        } else {
+            guiX = (scaledWidth - guiWidth) / 2
+        }
         guiY = (scaledHeight - guiHeight) / 2
     }
 
@@ -106,6 +114,10 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
 
         renderGuiBox(context, scaledMouseX, scaledMouseY, delta)
 
+        if (isSidebarOpen) {
+            renderSidebar(context, scaledMouseX, scaledMouseY, delta)
+        }
+
         buttons.forEach { button ->
             button.render(context, scaledMouseX, scaledMouseY, delta)
         }
@@ -120,7 +132,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
 
     private fun renderGuiBox(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         if (shouldRenderDefaultGuiBox) {
-            drawRoundedRect(context, guiX, guiY, guiWidth, guiHeight, theme.coreBackgroundPrimary)
+            GraphicsUtils.drawFilledRoundedRect(context, guiX.toFloat(), guiY.toFloat(), guiWidth.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, theme.coreBackgroundPrimary)
         }
 
         renderHeader(context, scaledMouseX, scaledMouseY, delta)
@@ -128,28 +140,14 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         renderContent(context, scaledMouseX, scaledMouseY, delta)
 
         if (shouldRenderDefaultGuiBox) {
-            drawRoundedBorder(context, guiX, guiY, guiWidth, guiHeight, theme.borderColor)
+            GraphicsUtils.drawRoundedRectBorder(context, guiX.toFloat(), guiY.toFloat(), guiWidth.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, theme.borderColor)
         }
     }
 
     protected open fun renderHeader(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         val headerY = guiY
 
-        val logoPadding = PADDING / 2
-        val desiredLogoHeight = HEADER_HEIGHT - 2 * logoPadding
-        val desiredLogoWidth = desiredLogoHeight
-
-        val logoX = guiX + PADDING
-        val logoY = guiY + (HEADER_HEIGHT - desiredLogoHeight) / 2
-
-        context.drawTexture(
-            RenderPipelines.GUI_TEXTURED,
-            LOGO_TEXTURE,
-            logoX, logoY,
-            0f, 0f,
-            desiredLogoWidth, desiredLogoHeight,
-            desiredLogoWidth, desiredLogoHeight
-        )
+        renderHamburgerIcon(context, guiX + PADDING, headerY + (HEADER_HEIGHT - 20) / 2, 20, 20, scaledMouseX, scaledMouseY)
 
         val titleText = this.title.copy().setStyle(Style.EMPTY.withFont(theme.getCurrentFont()))
         val titleTextWidth = textRenderer.getWidth(titleText)
@@ -165,8 +163,8 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
         )
 
         context.fill(
-            guiX + CORNER_RADIUS, headerY + HEADER_HEIGHT - 1,
-            guiX + guiWidth - CORNER_RADIUS, headerY + HEADER_HEIGHT,
+            (guiX + CORNER_RADIUS).toInt(), headerY + HEADER_HEIGHT - 1,
+            (guiX + guiWidth - CORNER_RADIUS).toInt(), headerY + HEADER_HEIGHT,
             theme.borderColor
         )
 
@@ -209,76 +207,34 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     protected open fun renderFooter(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         val footerY = guiY + guiHeight - FOOTER_HEIGHT
         context.fill(
-            guiX + CORNER_RADIUS, footerY,
-            guiX + guiWidth - CORNER_RADIUS, footerY + 1,
+            (guiX + CORNER_RADIUS).toInt(), footerY,
+            (guiX + guiWidth - CORNER_RADIUS).toInt(), footerY + 1,
             theme.borderColor
         )
-    }
-
-    private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int, topRounded: Boolean = true, bottomRounded: Boolean = true) {
-        val radius = CORNER_RADIUS
-        val centerY = if (topRounded) y + radius else y
-        val centerHeight = height - (if (topRounded) radius else 0) - (if (bottomRounded) radius else 0)
-
-        context.fill(x, centerY, x + width, centerY + centerHeight, color)
-
-        if (topRounded) context.fill(x + radius, y, x + width - radius, y + radius, color)
-        else context.fill(x, y, x + width, y + radius, color)
-
-        if (bottomRounded) context.fill(x + radius, y + height - radius, x + width - radius, y + height, color)
-        else context.fill(x, y + height - radius, x + width, y + height, color)
-
-        if (topRounded) {
-            drawRoundedCorner(context, x, y, radius, color, true, true)
-            drawRoundedCorner(context, x + width - radius, y, radius, color, false, true)
-        }
-
-        if (bottomRounded) {
-            drawRoundedCorner(context, x, y + height - radius, radius, color, true, false)
-            drawRoundedCorner(context, x + width - radius, y + height - radius, radius, color, false, false)
-        }
-    }
-
-    private fun drawRoundedCorner(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, left: Boolean, top: Boolean) {
-        for (i in 0 until radius) {
-            for (j in 0 until radius) {
-                if (sqrt((i * i + j * j).toDouble()) <= radius - 0.5) {
-                    val pixelX = if (left) x + radius - 1 - i else x + i
-                    val pixelY = if (top) y + radius - 1 - j else y + j
-                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)
-                }
-            }
-        }
-    }
-
-    private fun drawRoundedBorder(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
-        context.fill(x + CORNER_RADIUS, y, x + width - CORNER_RADIUS, y + 1, color)
-        context.fill(x + CORNER_RADIUS, y + height - 1, x + width - CORNER_RADIUS, y + height, color)
-        context.fill(x, y + CORNER_RADIUS, x + 1, y + height - CORNER_RADIUS, color)
-        context.fill(x + width - 1, y + CORNER_RADIUS, x + width, y + height - CORNER_RADIUS, color)
-
-        drawCornerBorder(context, x, y, CORNER_RADIUS, color, true, true)
-        drawCornerBorder(context, x + width - CORNER_RADIUS, y, CORNER_RADIUS, color, false, true)
-        drawCornerBorder(context, x, y + height - CORNER_RADIUS, CORNER_RADIUS, color, true, false)
-        drawCornerBorder(context, x + width - CORNER_RADIUS, y + height - CORNER_RADIUS, CORNER_RADIUS, color, false, false)
-    }
-
-    private fun drawCornerBorder(context: DrawContext, x: Int, y: Int, radius: Int, color: Int, left: Boolean, top: Boolean) {
-        for (i in 0 until radius) {
-            for (j in 0 until radius) {
-                val distance = sqrt((i * i + j * j).toDouble())
-                if (distance >= radius - 1.5 && distance <= radius - 0.5) {
-                    val pixelX = if (left) x + radius - 1 - i else x + i
-                    val pixelY = if (top) y + radius - 1 - j else y + j
-                    context.fill(pixelX, pixelY, pixelX + 1, pixelY + 1, color)
-                }
-            }
-        }
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         val scaledMouseX = scaleMouseX(mouseX)
         val scaledMouseY = scaleMouseY(mouseY)
+
+        val hamburgerX = guiX + PADDING
+        val hamburgerY = guiY + (HEADER_HEIGHT - 20) / 2
+        if (scaledMouseX >= hamburgerX && scaledMouseX < hamburgerX + 20 &&
+            scaledMouseY >= hamburgerY && scaledMouseY < hamburgerY + 20) {
+            isSidebarOpen = !isSidebarOpen
+            calculateGuiDimensions()
+            initializeSidebarButtons()
+            return true
+        }
+
+        if (isSidebarOpen) {
+            sidebarButtons.forEach { btn ->
+                if (btn.isMouseOver(scaledMouseX, scaledMouseY)) {
+                    btn.mouseClicked(scaledMouseX, scaledMouseY, button)
+                    return true
+                }
+            }
+        }
 
         val closeButtonSize = 16
         val closeButtonX = guiX + guiWidth - closeButtonSize - 8
@@ -331,4 +287,67 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
     protected fun getFooterY(): Int = guiY + guiHeight - FOOTER_HEIGHT
 
     override fun shouldCloseOnEsc(): Boolean = true
+
+    private fun renderHamburgerIcon(context: DrawContext, x: Int, y: Int, width: Int, height: Int, scaledMouseX: Int, scaledMouseY: Int) {
+        val isHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= y && scaledMouseY < y + height
+        val color = if (isHovered) theme.accentColor else theme.primaryTextColor
+        val lineY = y + (height - 8) / 2
+        context.fill(x, lineY, x + width, lineY + 2, color)
+        context.fill(x, lineY + 6, x + width, lineY + 8, color)
+        context.fill(x, lineY + 12, x + width, lineY + 14, color)
+    }
+
+    private fun initializeSidebarButtons() {
+        sidebarButtons.clear()
+        val sidebarX = guiX - SIDEBAR_WIDTH
+        val buttonWidth = SIDEBAR_WIDTH - PADDING * 2
+        var currentY = guiY + HEADER_HEIGHT + PADDING
+
+        sidebarButtons.add(CinnamonButton(
+            sidebarX + PADDING,
+            currentY,
+            buttonWidth,
+            CinnamonTheme.BUTTON_HEIGHT_LARGE,
+            Text.literal("Modules"),
+            { _, _ -> CinnamonGuiManager.openModulesScreen() }
+        ))
+        currentY += CinnamonTheme.BUTTON_HEIGHT_LARGE + PADDING
+
+        sidebarButtons.add(CinnamonButton(
+            sidebarX + PADDING,
+            currentY,
+            buttonWidth,
+            CinnamonTheme.BUTTON_HEIGHT_LARGE,
+            Text.literal("Keybindings"),
+            { _, _ -> CinnamonGuiManager.openKeybindingsScreen() }
+        ))
+        currentY += CinnamonTheme.BUTTON_HEIGHT_LARGE + PADDING
+
+        sidebarButtons.add(CinnamonButton(
+            sidebarX + PADDING,
+            currentY,
+            buttonWidth,
+            CinnamonTheme.BUTTON_HEIGHT_LARGE,
+            Text.literal("HUD Editor"),
+            { _, _ -> client?.setScreen(code.cinnamon.hud.HudScreen()) }
+        ))
+        currentY += CinnamonTheme.BUTTON_HEIGHT_LARGE + PADDING
+
+        sidebarButtons.add(CinnamonButton(
+            sidebarX + PADDING,
+            currentY,
+            buttonWidth,
+            CinnamonTheme.BUTTON_HEIGHT_LARGE,
+            Text.literal("Theme Manager"),
+            { _, _ -> CinnamonGuiManager.openThemeManagerScreen() }
+        ))
+    }
+
+    private fun renderSidebar(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
+        val sidebarX = guiX - SIDEBAR_WIDTH
+        GraphicsUtils.drawFilledRoundedRect(context, sidebarX.toFloat(), guiY.toFloat(), SIDEBAR_WIDTH.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, theme.coreBackgroundPrimary)
+        GraphicsUtils.drawRoundedRectBorder(context, sidebarX.toFloat(), guiY.toFloat(), SIDEBAR_WIDTH.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, theme.borderColor)
+
+        sidebarButtons.forEach { it.render(context, scaledMouseX, scaledMouseY, delta) }
+    }
 }

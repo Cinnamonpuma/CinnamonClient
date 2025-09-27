@@ -3,7 +3,6 @@ package code.cinnamon.gui
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
-import code.cinnamon.gui.screens.MainMenuScreen
 import code.cinnamon.gui.screens.ModulesScreen
 import code.cinnamon.gui.screens.KeybindingsScreen
 import code.cinnamon.modules.ModuleManager
@@ -13,9 +12,6 @@ import code.cinnamon.gui.screens.ThemeManagerScreen
 object CinnamonGuiManager {
     private val client = MinecraftClient.getInstance()
 
-    fun openMainMenu() {
-        client.setScreen(MainMenuScreen())
-    }
     fun openScreen(screen: Screen) {
         client.setScreen(screen)
     }
