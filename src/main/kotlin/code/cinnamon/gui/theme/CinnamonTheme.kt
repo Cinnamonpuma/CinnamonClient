@@ -41,7 +41,7 @@ object CinnamonTheme {
     var coreStatusWarning = 0xFFff9800.toInt()
     var coreStatusError = 0xFFf44336.toInt()
     var enableTextShadow: Boolean = true
-    var useMinecraftFont: Boolean = false
+    var useMinecraftFont: Boolean = true
 
     var currentTheme: Theme = Theme.DARK
 

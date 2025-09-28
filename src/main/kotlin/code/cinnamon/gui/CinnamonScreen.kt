@@ -378,7 +378,7 @@ abstract class CinnamonScreen(title: Text) : Screen(title) {
 
         val intAlpha = (alpha * 255).toInt()
         val backgroundColor = GraphicsUtils.withAlpha(theme.coreBackgroundPrimary, intAlpha)
-        val borderColor = GraphicsUtils.withAlpha(theme.borderColor, intAlpha)
+        val borderColor = theme.borderColor
 
         GraphicsUtils.drawFilledRoundedRect(context, sidebarX.toFloat(), guiY.toFloat(), SIDEBAR_WIDTH.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, backgroundColor)
         GraphicsUtils.drawRoundedRectBorder(context, sidebarX.toFloat(), guiY.toFloat(), SIDEBAR_WIDTH.toFloat(), guiHeight.toFloat(), CORNER_RADIUS, borderColor)
