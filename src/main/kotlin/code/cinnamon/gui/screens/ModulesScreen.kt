@@ -115,16 +115,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         }
         addDrawableChild(searchBar)
 
-        addButton(
-            CinnamonButton(
-                guiX + guiWidth - PADDING - 70,
-                getFooterY() + (FOOTER_HEIGHT - CinnamonTheme.BUTTON_HEIGHT_SMALL) / 2,
-                70,
-                CinnamonTheme.BUTTON_HEIGHT_SMALL,
-                Text.literal("Close").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-                onClick = { _, _ -> close() }
-            )
-        )
+
         lastAnimationTime = System.currentTimeMillis()
     }
 

@@ -68,7 +68,7 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val contentY = getContentY()
         val listY = contentY + 20
         val listWidth = guiWidth - 80
-        val listHeight = getContentHeight() - (2 * CinnamonTheme.BUTTON_HEIGHT) - 85
+        val listHeight = getContentHeight() - CinnamonTheme.BUTTON_HEIGHT - 65
         return ListDimensions(listX, listY, listWidth, listHeight)
     }
 
@@ -141,7 +141,6 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
 
     private fun renderColorList(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, contentYPos: Int) {
         val dims = getListDimensions()
-        context.drawBorder(dims.x, dims.y, dims.width, dims.height, CinnamonTheme.borderColor)
         context.enableScissor(dims.x, dims.y, dims.x + dims.width, dims.y + dims.height)
 
         val colors = ColorType.values()
@@ -164,18 +163,19 @@ class ThemeManagerScreen : CinnamonScreen(Text.literal("Theme Manager").setStyle
         val transparentBg = CinnamonTheme.coreBackgroundPrimary and 0x00FFFFFF
         context.fillGradient(dims.x, dims.y, dims.x + dims.width, dims.y + fadeHeight, CinnamonTheme.coreBackgroundPrimary, transparentBg)
         context.fillGradient(dims.x, dims.y + dims.height - fadeHeight, dims.x + dims.width, dims.y + dims.height, transparentBg, CinnamonTheme.coreBackgroundPrimary)
+        GraphicsUtils.drawRoundedRectBorder(context, dims.x.toFloat(), dims.y.toFloat(), dims.width.toFloat(), dims.height.toFloat(), CORNER_RADIUS, CinnamonTheme.borderColor)
     }
 
     private fun renderColorItem(context: DrawContext, colorType: ColorType, x: Int, y: Int, width: Int, height: Int, scaledMouseX: Int, scaledMouseY: Int) {
         val isHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= y && scaledMouseY < y + height
         val backgroundColor = if (isHovered) CinnamonTheme.cardBackgroundHover else CinnamonTheme.cardBackground
-        context.fill(x, y, x + width, y + height, backgroundColor)
-        context.drawBorder(x, y, width, height, CinnamonTheme.borderColor)
+        GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), CORNER_RADIUS, backgroundColor)
+        GraphicsUtils.drawRoundedRectBorder(context, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), CORNER_RADIUS, CinnamonTheme.borderColor)
 
         val colorSquareSize = height - 10
         val currentColor = colorType.currentColor()
-        context.fill(x + 10, y + 5, x + 10 + colorSquareSize, y + 5 + colorSquareSize, currentColor)
-        context.drawBorder(x + 10, y + 5, colorSquareSize, colorSquareSize, 0xFFFFFFFF.toInt())
+        GraphicsUtils.drawFilledRoundedRect(context, (x + 10).toFloat(), (y + 5).toFloat(), colorSquareSize.toFloat(), colorSquareSize.toFloat(), CORNER_RADIUS / 2, currentColor)
+        GraphicsUtils.drawRoundedRectBorder(context, (x + 10).toFloat(), (y + 5).toFloat(), colorSquareSize.toFloat(), colorSquareSize.toFloat(), CORNER_RADIUS / 2, 0xFFFFFFFF.toInt())
 
         context.drawText(
             textRenderer,
