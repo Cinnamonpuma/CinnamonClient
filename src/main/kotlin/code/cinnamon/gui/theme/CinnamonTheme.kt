@@ -118,18 +118,18 @@ object CinnamonTheme {
     }
 
     fun resetToDefaults() {
-        coreBackgroundPrimary = 67314467
-        coreAccentPrimary = 2126605840.toInt()
-        coreTextPrimary = 0xFFFFFFFF.toInt()
-        coreBorder = 2126605840.toInt()
+        coreBackgroundPrimary = -31647720
+        coreAccentPrimary = 2117583233
+        coreTextPrimary = -4605511
+        coreBorder = 2117976462
         coreButtonBackground = 20987968
 
-        coreStatusSuccess = 743223120
+        coreStatusSuccess = 743210671
         coreStatusWarning = 452958208
         coreStatusError = 468992565
 
-        buttonOutlineColor = 2126605840.toInt()
-        buttonOutlineHoverColor = -6315615
+        buttonOutlineColor = 2114896241
+        buttonOutlineHoverColor = -13524631
 
         enableTextShadow = false
         useMinecraftFont = true
