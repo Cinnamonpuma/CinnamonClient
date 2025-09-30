@@ -1,5 +1,7 @@
 package code.cinnamon.gui.screens
 
+import code.cinnamon.gui.components.CinnamonSlider
+import code.cinnamon.gui.components.CinnamonTextField
 import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.modules.BooleanSetting
 import code.cinnamon.modules.LookAtHudSetting
@@ -22,7 +24,9 @@ object SettingsHelper {
         settings: List<Setting<*>>,
         scaledMouseX: Int,
         scaledMouseY: Int,
-        delta: Float
+        delta: Float,
+        sliders: MutableMap<DoubleSetting, CinnamonSlider>,
+        textFields: MutableMap<DoubleSetting, CinnamonTextField>
     ): Int {
         var currentY = y
         for (setting in settings) {
@@ -36,7 +40,30 @@ object SettingsHelper {
                     currentY += 14
                 }
                 is DoubleSetting -> {
-                    val text = "${setting.name}: %.1f".format(setting.value)
+                    val slider = sliders.getOrPut(setting) {
+                        CinnamonSlider(x, currentY + 12, width - 60, 16, setting.value, setting.min, setting.max, setting.step) {
+                            setting.value = it
+                            textFields[setting]?.text = "%.2f".format(it)
+                        }
+                    }
+                    slider.setPosition(x, currentY + 12)
+                    slider.render(context, scaledMouseX, scaledMouseY, delta)
+
+                    val textField = textFields.getOrPut(setting) {
+                        CinnamonTextField(mc.textRenderer, x + width - 50, currentY, 50, 16).apply {
+                            text = "%.2f".format(setting.value)
+                            setChangedListener {
+                                it.toDoubleOrNull()?.let { newV ->
+                                    setting.value = newV
+                                    slider.setValue(newV)
+                                }
+                            }
+                        }
+                    }
+                    textField.setPosition(x + width - 50, currentY)
+                    textField.render(context, scaledMouseX, scaledMouseY, delta)
+
+                    val text = "${setting.name}"
                     context.drawText(
                         mc.textRenderer,
                         Text.literal(text).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
@@ -45,12 +72,7 @@ object SettingsHelper {
                         CinnamonTheme.primaryTextColor,
                         CinnamonTheme.enableTextShadow
                     )
-                    val buttonWidth = 16
-                    val buttonHeight = 12
-                    val buttonsX = x + width - 40
-                    drawSettingButton(context, buttonsX, currentY - 1, buttonWidth, buttonHeight, "-", false)
-                    drawSettingButton(context, buttonsX + 20, currentY - 1, buttonWidth, buttonHeight, "+", false)
-                    currentY += 14
+                    currentY += 40
                 }
                 is ColorSetting -> {
                     val text = "${setting.name}: #${String.format("%08X", setting.value)}"
@@ -157,7 +179,9 @@ object SettingsHelper {
         y: Int,
         width: Int,
         height: Int,
-        settings: List<Setting<*>>
+        settings: List<Setting<*>>,
+        sliders: MutableMap<DoubleSetting, CinnamonSlider>,
+        textFields: MutableMap<DoubleSetting, CinnamonTextField>
     ): Boolean {
         var currentY = y
         for (setting in settings) {
@@ -183,20 +207,9 @@ object SettingsHelper {
                     currentY += 14
                 }
                 is DoubleSetting -> {
-                    val buttonWidth = 16
-                    val buttonHeight = 12
-                    val buttonsX = x + width - 40
-                    if (mouseY >= currentY - 1 && mouseY < currentY - 1 + buttonHeight) {
-                        if (mouseX >= buttonsX && mouseX < buttonsX + buttonWidth) {
-                            setting.value = (setting.value - setting.step).coerceIn(setting.min, setting.max)
-                            return true
-                        }
-                        if (mouseX >= buttonsX + 20 && mouseX < buttonsX + 20 + buttonWidth) {
-                            setting.value = (setting.value + setting.step).coerceIn(setting.min, setting.max)
-                            return true
-                        }
-                    }
-                    currentY += 14
+                    sliders[setting]?.let { if (it.mouseClicked(mouseX, mouseY, 0)) return true }
+                    textFields[setting]?.let { if (it.mouseClicked(mouseX, mouseY, 0)) return true }
+                    currentY += 40
                 }
                 is ColorSetting -> {
                     val buttonText = "[Set]"
@@ -310,4 +323,33 @@ object SettingsHelper {
 
     private val mc
         get() = net.minecraft.client.MinecraftClient.getInstance()
+
+    fun handleMouseRelease(
+        mouseX: Double,
+        mouseY: Double,
+        button: Int,
+        sliders: Map<DoubleSetting, CinnamonSlider>
+    ): Boolean {
+        sliders.values.forEach { if (it.mouseReleased(mouseX, mouseY, button)) return true }
+        return false
+    }
+
+    fun handleKeyPress(
+        keyCode: Int,
+        scanCode: Int,
+        modifiers: Int,
+        textFields: Map<DoubleSetting, CinnamonTextField>
+    ): Boolean {
+        textFields.values.forEach { if (it.keyPressed(keyCode, scanCode, modifiers)) return true }
+        return false
+    }
+
+    fun handleCharTyped(
+        chr: Char,
+        modifiers: Int,
+        textFields: Map<DoubleSetting, CinnamonTextField>
+    ): Boolean {
+        textFields.values.forEach { if (it.charTyped(chr, modifiers)) return true }
+        return false
+    }
 }

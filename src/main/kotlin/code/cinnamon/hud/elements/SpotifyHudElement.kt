@@ -312,4 +312,5 @@ class SpotifyHudElement(x: Float, y: Float) : HudElement(x, y) {
     }
 
     override fun getName(): String = "Spotify"
+    override val description: String = "Displays the currently playing song on Spotify"
 }

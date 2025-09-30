@@ -30,9 +30,18 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
     var buttonOutlineColor: Int = 2126605840.toInt()
 
     init {
-        settings.add(code.cinnamon.modules.ColorSetting("Button Color", buttonColor) { value -> buttonColor = value })
-        settings.add(code.cinnamon.modules.ColorSetting("Button Hover Color", buttonHoverColor) { value -> buttonHoverColor = value })
-        settings.add(code.cinnamon.modules.ColorSetting("Button Outline Color", buttonOutlineColor) { value -> buttonOutlineColor = value })
+        settings.add(code.cinnamon.modules.ColorSetting("Button Color", buttonColor) { value ->
+            buttonColor = value
+            HudManager.saveHudConfig()
+        })
+        settings.add(code.cinnamon.modules.ColorSetting("Button Hover Color", buttonHoverColor) { value ->
+            buttonHoverColor = value
+            HudManager.saveHudConfig()
+        })
+        settings.add(code.cinnamon.modules.ColorSetting("Button Outline Color", buttonOutlineColor) { value ->
+            buttonOutlineColor = value
+            HudManager.saveHudConfig()
+        })
     }
 
     private fun createStyledText(text: String): Text =
@@ -93,9 +102,16 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
 
 
     fun applyConfig(config: HudElementConfig) {
-        if (config.buttonColor != null) buttonColor = config.buttonColor
-        config.buttonHoverColor?.let { this.buttonHoverColor = it }
-        config.buttonOutlineColor?.let { this.buttonOutlineColor = it }
+        config.buttonColor?.let { color ->
+            (settings.find { it.name == "Button Color" } as? code.cinnamon.modules.ColorSetting)?.set(color)
+        }
+        config.buttonHoverColor?.let { color ->
+            (settings.find { it.name == "Button Hover Color" } as? code.cinnamon.modules.ColorSetting)?.set(color)
+        }
+        config.buttonOutlineColor?.let { color ->
+            (settings.find { it.name == "Button Outline Color" } as? code.cinnamon.modules.ColorSetting)?.set(color)
+        }
+
         this.setX(config.x)
         this.setY(config.y)
         this.scale = config.scale
@@ -213,6 +229,7 @@ class PacketHandlerHudElement(initialX: Float, initialY: Float) : HudElement(ini
         internalButtons.size * (baseButtonHeight + baseButtonMargin) + baseButtonMargin
 
     override fun getName(): String = "PacketHandler"
+    override val description: String = "Provides tools for advanced packet manipulation"
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!shouldRender() || HudManager.isEditMode() || !isEnabled) return false

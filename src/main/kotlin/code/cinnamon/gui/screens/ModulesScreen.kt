@@ -31,6 +31,7 @@ import code.cinnamon.modules.Setting
 import code.cinnamon.modules.all.ChatPrefixModule
 import code.cinnamon.util.MinecraftColorCodes
 
+import code.cinnamon.gui.components.CinnamonSlider
 import code.cinnamon.gui.components.CinnamonTextField
 
 class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPTY.withFont(CinnamonScreen.CINNA_FONT))) {
@@ -44,12 +45,14 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     private var searchQuery = ""
     private lateinit var searchBar: CinnamonTextField
     internal val expandedStates = mutableMapOf<String, Boolean>()
+    private val doubleSettingSliders = mutableMapOf<DoubleSetting, CinnamonSlider>()
+    private val doubleSettingTextFields = mutableMapOf<DoubleSetting, CinnamonTextField>()
     private val baseModuleHeight = 60
     private fun getSettingHeight(setting: Setting<*>): Int {
         return when (setting) {
             is code.cinnamon.modules.LookAtHudSetting -> 14
             is BooleanSetting -> 14
-            is DoubleSetting -> 14
+            is DoubleSetting -> 40
             is ColorSetting -> 14
             is ModeSetting -> {
                 if (setting.name == "Prefix Color") {
@@ -196,6 +199,15 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             CinnamonTheme.enableTextShadow
         )
 
+        context.drawText(
+            textRenderer,
+            Text.literal(element.description).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
+            x + 12,
+            y + 22,
+            CinnamonTheme.secondaryTextColor,
+            CinnamonTheme.enableTextShadow
+        )
+
         val toggleWidth = 30
         val toggleHeight = 16
         val headerContentHeight = baseModuleHeight
@@ -255,7 +267,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         )
         currentY += 15
 
-        var newY = SettingsHelper.renderSettings(context, x, currentY, width, height, element.settings, scaledMouseX, scaledMouseY, delta)
+        var newY = SettingsHelper.renderSettings(context, x, currentY, width, height, element.settings, scaledMouseX, scaledMouseY, delta, doubleSettingSliders, doubleSettingTextFields)
 
         if (element is KeystrokesHudElement) {
             currentY = newY
@@ -282,49 +294,30 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         settingsX: Int,
         settingsY: Int,
         settingsWidth: Int,
+        settingsHeight: Int,
         element: HudElement
     ): Boolean {
-        var currentY = settingsY
-        currentY += 15
+        var currentY = settingsY + 15
         val textElementHeight = textRenderer.fontHeight
 
-        if (SettingsHelper.handleMouseClick(this, scaledMouseX, scaledMouseY, settingsX, currentY, settingsWidth, height, element.settings)) {
+        if (SettingsHelper.handleMouseClick(this, scaledMouseX, scaledMouseY, settingsX, currentY, settingsWidth, settingsHeight, element.settings, doubleSettingSliders, doubleSettingTextFields)) {
             return true
         }
+
+        currentY += element.settings.sumOf { getSettingHeight(it) }
 
         if (element is KeystrokesHudElement) {
             val setKeyPressedTextColorButtonText = "[Set]"
             val setKeyPressedTextColorButtonWidth = textRenderer.getWidth(setKeyPressedTextColorButtonText)
             val setKeyPressedTextColorButtonX = settingsX + settingsWidth - setKeyPressedTextColorButtonWidth
-            val setKeyPressedTextColorButtonY = currentY
             if (scaledMouseX >= setKeyPressedTextColorButtonX && scaledMouseX < setKeyPressedTextColorButtonX + setKeyPressedTextColorButtonWidth &&
-                scaledMouseY >= setKeyPressedTextColorButtonY && scaledMouseY < setKeyPressedTextColorButtonY + textElementHeight
+                scaledMouseY >= currentY && scaledMouseY < currentY + textElementHeight
             ) {
                 CinnamonGuiManager.openScreen(ColorPickerScreen(
                     initialColor = element.keypressedTextColor,
                     onPick = { pickedColor ->
                         element.keypressedTextColor = pickedColor
-                        HudManager.markChangesForSave()
-                        CinnamonGuiManager.openScreen(this)
-                    },
-                    onCancel = { CinnamonGuiManager.openScreen(this) }
-                ))
-                return true
-            }
-            currentY += 18
-
-            val setKeyPressedBgColorButtonText = "[Set]"
-            val setKeyPressedBgColorButtonWidth = textRenderer.getWidth(setKeyPressedBgColorButtonText)
-            val setKeyPressedBgColorButtonX = settingsX + settingsWidth - setKeyPressedBgColorButtonWidth
-            val setKeyPressedBgColorButtonY = currentY
-            if (scaledMouseX >= setKeyPressedBgColorButtonX && scaledMouseX < setKeyPressedBgColorButtonX + setKeyPressedBgColorButtonWidth &&
-                scaledMouseY >= setKeyPressedBgColorButtonY && scaledMouseY < setKeyPressedBgColorButtonY + textElementHeight
-            ) {
-                CinnamonGuiManager.openScreen(ColorPickerScreen(
-                    initialColor = element.keypressedBackgroundColor,
-                    onPick = { pickedColor ->
-                        element.keypressedBackgroundColor = pickedColor
-                        HudManager.markChangesForSave()
+                        HudManager.saveHudConfig()
                         CinnamonGuiManager.openScreen(this)
                     },
                     onCancel = { CinnamonGuiManager.openScreen(this) }
@@ -332,6 +325,24 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                 return true
             }
             currentY += 14
+
+            val setKeyPressedBgColorButtonText = "[Set]"
+            val setKeyPressedBgColorButtonWidth = textRenderer.getWidth(setKeyPressedBgColorButtonText)
+            val setKeyPressedBgColorButtonX = settingsX + settingsWidth - setKeyPressedBgColorButtonWidth
+            if (scaledMouseX >= setKeyPressedBgColorButtonX && scaledMouseX < setKeyPressedBgColorButtonX + setKeyPressedBgColorButtonWidth &&
+                scaledMouseY >= currentY && scaledMouseY < currentY + textElementHeight
+            ) {
+                CinnamonGuiManager.openScreen(ColorPickerScreen(
+                    initialColor = element.keypressedBackgroundColor,
+                    onPick = { pickedColor ->
+                        element.keypressedBackgroundColor = pickedColor
+                        HudManager.saveHudConfig()
+                        CinnamonGuiManager.openScreen(this)
+                    },
+                    onCancel = { CinnamonGuiManager.openScreen(this) }
+                ))
+                return true
+            }
         }
 
         return false
@@ -451,7 +462,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
     private fun renderModuleSettings(context: DrawContext, x: Int, y: Int, width: Int, height: Int, module: Module, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
         if (module.settings.isNotEmpty()) {
-            SettingsHelper.renderSettings(context, x, y, width, height, module.settings, scaledMouseX, scaledMouseY, delta)
+            SettingsHelper.renderSettings(context, x, y, width, height, module.settings, scaledMouseX, scaledMouseY, delta, doubleSettingSliders, doubleSettingTextFields)
         } else {
             context.drawText(
                 textRenderer,
@@ -652,7 +663,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                         if (expandedStates[item.name] == true) {
                             val settingsContentX = cardX + 12
                             val settingsContentY = intY + 40 + 5
-                            if (SettingsHelper.handleMouseClick(this, scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, cardWidth - 24, settingsAreaHeight, item.settings)) {
+                            if (SettingsHelper.handleMouseClick(this, scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, cardWidth - 24, settingsAreaHeight, item.settings, doubleSettingSliders, doubleSettingTextFields)) {
                                 return true
                             }
                         }
@@ -673,6 +684,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
                         if (scaledMouseX >= toggleXHud && scaledMouseX < toggleXHud + toggleWidth &&
                             scaledMouseY >= toggleYHud && scaledMouseY < toggleYHud + toggleHeight) {
                             item.isEnabled = !item.isEnabled
+                            HudManager.saveHudConfig()
                             return true
                         }
 
@@ -693,7 +705,7 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
                             if (scaledMouseY >= settingsContentY && scaledMouseY < settingsContentY + settingsAreaActualHeight) {
 
-                                if (handleHudElementSettingsClick(scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, settingsContentWidth, item)) {
+                                if (handleHudElementSettingsClick(scaledMouseX, scaledMouseY, settingsContentX, settingsContentY, settingsContentWidth, settingsAreaActualHeight, item)) {
                                     return true
                                 }
                             }
@@ -705,6 +717,32 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
         }
 
+        return false
+    }
+
+    override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (super.mouseReleased(mouseX, mouseY, button)) return true
+        val scaledMouseX = scaleMouseX(mouseX)
+        val scaledMouseY = scaleMouseY(mouseY)
+        if (SettingsHelper.handleMouseRelease(scaledMouseX, scaledMouseY, button, doubleSettingSliders)) {
+            return true
+        }
+        return false
+    }
+
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) return true
+        if (SettingsHelper.handleKeyPress(keyCode, scanCode, modifiers, doubleSettingTextFields)) {
+            return true
+        }
+        return false
+    }
+
+    override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        if (super.charTyped(chr, modifiers)) return true
+        if (SettingsHelper.handleCharTyped(chr, modifiers, doubleSettingTextFields)) {
+            return true
+        }
         return false
     }
 

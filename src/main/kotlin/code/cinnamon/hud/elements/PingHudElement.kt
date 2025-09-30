@@ -113,4 +113,5 @@ class PingHudElement(x: Float, y: Float) : HudElement(x, y) {
 
     override fun getHeight(): Int = mc.textRenderer.fontHeight
     override fun getName(): String = "Ping"
+    override val description: String = "Displays your current latency to the server"
 }

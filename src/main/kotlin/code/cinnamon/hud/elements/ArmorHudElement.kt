@@ -158,4 +158,5 @@ class ArmorHudElement(x: Float, y: Float) : HudElement(x, y) {
     }
 
     override fun getName(): String = "Armor"
+    override val description: String = "Displays your currently equipped armor"
 }

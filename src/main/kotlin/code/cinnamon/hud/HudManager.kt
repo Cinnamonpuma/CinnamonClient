@@ -29,10 +29,7 @@ object HudManager {
         editMode = enabled
         if (!editMode) {
             selectedElement = null
-            if (hasUnsavedChanges) {
-                saveHudConfig()
-                hasUnsavedChanges = false
-            }
+            saveHudConfig()
         }
     }
 
@@ -40,7 +37,6 @@ object HudManager {
 
     private val hudElements = mutableListOf<HudElement>()
     private var selectedElement: HudElement? = null
-    private var hasUnsavedChanges = false
 
     val packetHandlerHudElement = PacketHandlerHudElement(10f, 90f)
 
@@ -66,7 +62,12 @@ object HudManager {
     }
 
     fun render(context: DrawContext, tickDelta: Float) {
-        hudElements.filter { it.isEnabled }.forEach { it.renderElement(context, tickDelta) }
+        val elementsToRender = if (isEditMode()) {
+            hudElements
+        } else {
+            hudElements.filter { it.isEnabled }
+        }
+        elementsToRender.forEach { it.renderElement(context, tickDelta) }
 
         val mc = MinecraftClient.getInstance()
         val currentScreen = mc.currentScreen
@@ -107,7 +108,7 @@ object HudManager {
         if (!isEditMode()) return false
         selectedElement?.let {
             it.updateDragging(scaledMouseX, scaledMouseY, screenScaledWidth, screenScaledHeight)
-            hasUnsavedChanges = true
+            saveHudConfig()
         }
         return selectedElement != null
     }
@@ -126,16 +127,15 @@ object HudManager {
         if (!isEditMode()) return false
         hudElements.firstOrNull { it.isMouseOver(mouseX, mouseY) }?.let { element ->
             element.scale += (delta * 0.1).toFloat()
-            hasUnsavedChanges = true
+            saveHudConfig()
             return true
         }
         return false
     }
 
     fun toggleEditMode() {
-        if (editMode && hasUnsavedChanges) {
+        if (editMode) {
             saveHudConfig()
-            hasUnsavedChanges = false
         }
         editMode = !editMode
         if (!editMode) {
@@ -144,18 +144,11 @@ object HudManager {
     }
 
     fun onEditMenuClosed() {
-        if (hasUnsavedChanges) {
-            saveHudConfig()
-            hasUnsavedChanges = false
-            println("[HudManager] HUD configuration saved on menu close")
-        }
+        saveHudConfig()
+        println("[HudManager] HUD configuration saved on menu close")
     }
 
     fun getElements(): List<HudElement> = hudElements.toList()
-
-    fun markChangesForSave() {
-        this.hasUnsavedChanges = true
-    }
 
     fun saveHudConfig() {
         try {

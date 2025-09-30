@@ -110,4 +110,5 @@ class CoordinatesHudElement(x: Float, y: Float) : HudElement(x, y) {
     }
 
     override fun getName(): String = "Coordinates"
+    override val description: String = "Shows your current in-game coordinates"
 }

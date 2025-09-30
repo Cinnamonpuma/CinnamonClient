@@ -2,6 +2,7 @@ package code.cinnamon.hud.elements
 
 import code.cinnamon.gui.theme.CinnamonTheme
 import code.cinnamon.hud.HudElement
+import code.cinnamon.hud.HudManager
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Style
@@ -16,7 +17,9 @@ import code.cinnamon.modules.BooleanSetting
 import kotlin.math.sqrt
 
 class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
-    private val showNameSetting = BooleanSetting("Show Name", true)
+    private val showNameSetting = BooleanSetting("Show Name", true) {
+        HudManager.saveHudConfig()
+    }
 
     init {
         settings.add(showNameSetting)
@@ -258,4 +261,5 @@ class LookAtHudElement(x: Float, y: Float) : HudElement(x, y) {
     override fun getHeight(): Int = cachedHeight
 
     override fun getName(): String = "Look At"
+    override val description: String = "Shows what block or entity you're looking at"
 }

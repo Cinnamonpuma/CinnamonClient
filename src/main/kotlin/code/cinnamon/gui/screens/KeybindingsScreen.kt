@@ -51,15 +51,6 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             Text.literal("Reset All").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
             { _, _ -> resetAllKeybindings() }
         ))
-        addButton(CinnamonButton(
-            guiX + guiWidth - PADDING - 170,
-            getFooterY() + 8,
-            80,
-            CinnamonTheme.BUTTON_HEIGHT_SMALL,
-            Text.literal("Save").setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-            { _, _ -> saveKeybindings() },
-            false
-        ))
     }
 
     override fun renderContent(context: DrawContext, scaledMouseX: Int, scaledMouseY: Int, delta: Float) {
@@ -290,6 +281,8 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         KeybindingManager.updateKeybinding("cinnamon.toggle_speed", GLFW.GLFW_KEY_V)
         KeybindingManager.updateKeybinding("cinnamon.toggle_flight", GLFW.GLFW_KEY_F)
         KeybindingManager.updateKeybinding("cinnamon.toggle_nofall", GLFW.GLFW_KEY_N)
+
+        KeybindingManager.saveKeybindings()
 
         selectedKeybinding = null
         isListening = false

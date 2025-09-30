@@ -21,6 +21,10 @@ class CinnamonButton(
     var isPrimary: Boolean = false
 ) : Element, Drawable, Selectable {
 
+    companion object {
+        private const val CORNER_RADIUS = 4f
+    }
+
     var alpha: Float = 1.0f
     private var isHovered = false
     private var isPressed = false
@@ -67,7 +71,7 @@ class CinnamonButton(
         val backgroundColor = GraphicsUtils.multiplyAlpha(getBackgroundColor(), this.alpha)
         val textColor = GraphicsUtils.multiplyAlpha(getTextColor(), this.alpha)
 
-        drawRoundedRect(context, 0, 0, width, height, backgroundColor)
+        GraphicsUtils.drawFilledRoundedRect(context, 0f, 0f, width.toFloat(), height.toFloat(), CORNER_RADIUS, backgroundColor)
 
         val baseBorderColor = if (isHovered || isPressed) {
             CinnamonTheme.buttonOutlineHoverColor
@@ -76,7 +80,7 @@ class CinnamonButton(
         }
         val borderColor = GraphicsUtils.multiplyAlpha(baseBorderColor, this.alpha)
 
-        drawBorder(context, 0, 0, width, height, borderColor)
+        GraphicsUtils.drawRoundedRectBorder(context, 0f, 0f, width.toFloat(), height.toFloat(), CORNER_RADIUS, borderColor)
 
         val textWidth = client.textRenderer.getWidth(text)
         val textX = (width - textWidth) / 2
@@ -95,7 +99,7 @@ class CinnamonButton(
             val baseHoverColor = 0x1AFFFFFF // White with 10% alpha
             val animatedHoverColor = GraphicsUtils.multiplyAlpha(baseHoverColor, animationProgress)
             val finalHoverColor = GraphicsUtils.multiplyAlpha(animatedHoverColor, this.alpha)
-            context.fill(0, 0, width, height, finalHoverColor)
+            GraphicsUtils.drawFilledRoundedRect(context, 0f, 0f, width.toFloat(), height.toFloat(), CORNER_RADIUS, finalHoverColor)
         }
 
         context.matrices.popMatrix()
@@ -124,18 +128,6 @@ class CinnamonButton(
             isPrimary -> CinnamonTheme.titleColor
             else -> CinnamonTheme.primaryTextColor
         }
-    }
-
-    private fun drawRoundedRect(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
-        context.fill(x + 1, y, x + width - 1, y + height, color)
-        context.fill(x, y + 1, x + width, y + height - 1, color)
-    }
-
-    private fun drawBorder(context: DrawContext, x: Int, y: Int, width: Int, height: Int, color: Int) {
-        context.fill(x + 1, y, x + width - 1, y + 1, color)
-        context.fill(x + 1, y + height - 1, x + width - 1, y + height, color)
-        context.fill(x, y + 1, x + 1, y + height - 1, color)
-        context.fill(x + width - 1, y + 1, x + width, y + height - 1, color)
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {

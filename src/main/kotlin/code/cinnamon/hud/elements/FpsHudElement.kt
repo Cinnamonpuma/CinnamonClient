@@ -109,4 +109,5 @@ class FpsHudElement(x: Float, y: Float) : HudElement(x, y) {
 
     override fun getHeight(): Int = mc.textRenderer.fontHeight
     override fun getName(): String = "FPS"
+    override val description: String = "Displays your current frames per second"
 }

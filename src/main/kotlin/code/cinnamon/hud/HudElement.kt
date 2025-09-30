@@ -23,9 +23,15 @@ abstract class HudElement(
 
     var isEnabled: Boolean = true
 
-    private val textColorSetting = ColorSetting("Text Color", 0xFFFFFFFF.toInt())
-    private val backgroundColorSetting = ColorSetting("Background Color", 0x00000000.toInt())
-    private val textShadowEnabledSetting = BooleanSetting("Text Shadow", false)
+    private val textColorSetting = ColorSetting("Text Color", 0xFFFFFFFF.toInt()) {
+        HudManager.saveHudConfig()
+    }
+    private val backgroundColorSetting = ColorSetting("Background Color", 0x00000000.toInt()) {
+        HudManager.saveHudConfig()
+    }
+    private val textShadowEnabledSetting = BooleanSetting("Text Shadow", false) {
+        HudManager.saveHudConfig()
+    }
 
     val settings = mutableListOf<Setting<*>>()
 
@@ -37,13 +43,19 @@ abstract class HudElement(
 
     var textColor: Int
         get() = textColorSetting.value
-        set(value) { textColorSetting.value = value }
+        set(value) {
+            textColorSetting.set(value)
+        }
     var backgroundColor: Int
         get() = backgroundColorSetting.value
-        set(value) { backgroundColorSetting.value = value }
+        set(value) {
+            backgroundColorSetting.set(value)
+        }
     var textShadowEnabled: Boolean
         get() = textShadowEnabledSetting.value
-        set(value) { textShadowEnabledSetting.value = value }
+        set(value) {
+            textShadowEnabledSetting.set(value)
+        }
 
     private var isDragging: Boolean = false
     private var dragOffsetX: Float = 0f
@@ -57,6 +69,7 @@ abstract class HudElement(
     abstract fun getWidth(): Int
     abstract fun getHeight(): Int
     abstract fun getName(): String
+    abstract val description: String
 
     open fun isMouseOver(scaledMouseX: Double, scaledMouseY: Double): Boolean {
         val elementScaledWidth = getWidth() * this.scale
