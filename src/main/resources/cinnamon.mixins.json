@@ -4,16 +4,19 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"AutoClickerMixin",
-		"client.TitleScreenMixin",
+		"ClientPlayNetworkHandlerMixin",
+		"LightmapTextureManagerMixin",
+		"PacketHandlerMixin",
+		"client.HudMixin",
+		"client.PacketHandlerHudHandledScreenMixin",
 		"client.PanoramaRendererMixin",
 		"client.ScreenMixin",
-		"PacketHandlerMixin",
-		"client.PacketHandlerHudHandledScreenMixin",
-		"client.HudMixin",
-		"ClientPlayNetworkHandlerMixin",
-		"LightmapTextureManagerMixin"
+		"client.TitleScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
-	}
+	},
+	"client": [
+		"client.PacketHandlerInventoryScreenMixin"
+	]
 }

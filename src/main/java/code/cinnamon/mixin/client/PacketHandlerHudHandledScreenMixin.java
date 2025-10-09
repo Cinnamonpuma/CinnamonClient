@@ -50,8 +50,10 @@ public abstract class PacketHandlerHudHandledScreenMixin {
         }
 
         if (shouldRender && getHudElement().isEnabled()) {
+
             double scaledMouseX = scaleMouseX(mouseX);
             double scaledMouseY = scaleMouseY(mouseY);
+
 
 
             getHudElement().setCurrentMousePosition(scaledMouseX, scaledMouseY);
