@@ -45,6 +45,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
     private var searchQuery = ""
     private lateinit var searchBar: CinnamonTextField
     internal val expandedStates = mutableMapOf<String, Boolean>()
+    private val toggleAnimationProgress = mutableMapOf<String, Float>()
+    private val expandAnimationProgress = mutableMapOf<String, Float>()
     private val doubleSettingSliders = mutableMapOf<DoubleSetting, CinnamonSlider>()
     private val doubleSettingTextFields = mutableMapOf<DoubleSetting, CinnamonTextField>()
     private val baseModuleHeight = 60
@@ -90,11 +92,16 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             val items = getFilteredModules()
             if (items.isEmpty()) return 0.0
             val totalHeightIncludingSpacing = items.sumOf { item ->
-                when (item) {
-                    is Module -> (if (expandedStates[item.name] == true) settingsModuleHeight(item) else baseModuleHeight) + moduleSpacing
-                    is HudElement -> (if (expandedStates[item.getName()] == true) settingsHudElementHeight else baseModuleHeight) + moduleSpacing
-                    else -> 0
+                val name = if (item is Module) item.name else if (item is HudElement) item.getName() else ""
+                val progress = expandAnimationProgress.getOrPut(name) { if (expandedStates[name] == true) 1.0f else 0.0f }
+                val baseHeight = baseModuleHeight
+                val expandedHeight = when (item) {
+                    is Module -> settingsModuleHeight(item)
+                    is HudElement -> settingsHudElementHeight
+                    else -> baseHeight
                 }
+                val itemHeight = baseHeight + ((expandedHeight - baseHeight) * progress).toInt()
+                itemHeight + moduleSpacing
             }
             val effectiveTotalHeight = totalHeightIncludingSpacing
             val categoryAreaHeight = 66
@@ -133,6 +140,31 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             dropdownAnimationProgress = max(0.0f, dropdownAnimationProgress - deltaTime * 6f)
         }
 
+        val animationSpeed = deltaTime * 6f
+        toggleAnimationProgress.keys.forEach { key ->
+            val target = if (isModuleEnabled(key)) 1.0f else 0.0f
+            val current = toggleAnimationProgress.getOrPut(key) { target }
+            if (current != target) {
+                toggleAnimationProgress[key] = if (target > current) {
+                    min(target, current + animationSpeed)
+                } else {
+                    max(target, current - animationSpeed)
+                }
+            }
+        }
+
+        expandAnimationProgress.keys.forEach { key ->
+            val target = if (expandedStates[key] == true) 1.0f else 0.0f
+            val current = expandAnimationProgress.getOrPut(key) { target }
+            if (current != target) {
+                expandAnimationProgress[key] = if (target > current) {
+                    min(target, current + animationSpeed)
+                } else {
+                    max(target, current - animationSpeed)
+                }
+            }
+        }
+
         val scrollInertia = 8.0f
         scrollOffset += (targetScrollOffset - scrollOffset) * (deltaTime * scrollInertia)
 
@@ -156,11 +188,18 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
         context.enableScissor(x, y, x + width, y + height)
         items.forEach { item ->
-            val itemHeight = when (item) {
-                is Module -> if (expandedStates[item.name] == true) settingsModuleHeight(item) else baseModuleHeight
-                is HudElement -> if (expandedStates[item.getName()] == true) settingsHudElementHeight else baseModuleHeight
-                else -> 0
+            val name = if (item is Module) item.name else if (item is HudElement) item.getName() else ""
+            val progress = expandAnimationProgress.getOrPut(name) { if (expandedStates[name] == true) 1.0f else 0.0f }
+
+            val baseHeight = baseModuleHeight
+            val expandedHeight = when (item) {
+                is Module -> settingsModuleHeight(item)
+                is HudElement -> settingsHudElementHeight
+                else -> baseHeight
             }
+
+            val itemHeight = baseHeight + ((expandedHeight - baseHeight) * progress).toInt()
+
             if (currentY + itemHeight >= y && currentY <= y + height) {
                 if (item is Module) {
                     renderModuleCard(context, x, currentY.toInt(), width, itemHeight, item, scaledMouseX, scaledMouseY, delta)
@@ -218,7 +257,8 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         val expandButtonX = x + width - expandButtonWidth - 12
         val toggleX = expandButtonX - toggleWidth - 8
 
-        renderToggleSwitch(context, toggleX, toggleY, toggleWidth, toggleHeight, element.isEnabled, scaledMouseX, scaledMouseY)
+        val toggleProgress = toggleAnimationProgress.getOrPut(element.getName()) { if (element.isEnabled) 1.0f else 0.0f }
+        renderToggleSwitch(context, toggleX, toggleY, toggleWidth, toggleHeight, element.isEnabled, scaledMouseX, scaledMouseY, toggleProgress)
 
         context.drawText(
             textRenderer,
@@ -229,21 +269,31 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             CinnamonTheme.enableTextShadow
         )
 
-        if (expandedStates[element.getName()] == true) {
+        val name = element.getName()
+        val expandProgress = expandAnimationProgress.getOrPut(name) { if (expandedStates[name] == true) 1.0f else 0.0f }
+
+        if (expandProgress > 0) {
             val settingsY = y + baseModuleHeight
             val settingsContentHeight = height - baseModuleHeight - 8
-            context.fill(x + 8, settingsY - 4, x + width - 8, settingsY - 3, CinnamonTheme.borderColor)
-            renderHudElementSettings(
-                context,
-                x + 12,
-                settingsY,
-                width - 24,
-                settingsContentHeight,
-                element,
-                scaledMouseX,
-                scaledMouseY,
-                delta
-            )
+            val totalSettingsHeight = settingsHudElementHeight - baseModuleHeight - 8
+
+            if (settingsContentHeight > 0) {
+                context.fill(x + 8, settingsY - 4, x + width - 8, settingsY - 3, CinnamonTheme.borderColor)
+
+                context.enableScissor(x, settingsY, x + width, y + height)
+                renderHudElementSettings(
+                    context,
+                    x + 12,
+                    settingsY,
+                    width - 24,
+                    totalSettingsHeight,
+                    element,
+                    scaledMouseX,
+                    scaledMouseY,
+                    delta
+                )
+                context.disableScissor()
+            }
         }
     }
 
@@ -421,42 +471,50 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             CinnamonTheme.enableTextShadow
         )
 
-        val bottomSectionY = if (expandedStates[module.name] == true) {
-            y + settingsModuleHeight(module) - 30
+        val toggleWidth = 30
+        val toggleHeight = 16
+        val headerContentHeight = baseModuleHeight
+        val toggleY = y + (headerContentHeight - toggleHeight) / 2
+
+        val toggleX: Int
+
+        if (module.settings.isNotEmpty()) {
+            val expandButtonText = if (expandedStates[module.name] == true) "-" else "+"
+            val expandButtonWidth = textRenderer.getWidth(expandButtonText)
+            val expandButtonX = x + width - expandButtonWidth - 12
+            toggleX = expandButtonX - toggleWidth - 8
         } else {
-            y + baseModuleHeight - 30
+            toggleX = x + width - toggleWidth - 12
         }
 
-        renderToggleSwitch(context, x + width - 50, bottomSectionY + 6, 30, 16, module.isEnabled, scaledMouseX, scaledMouseY)
+        val toggleProgress = toggleAnimationProgress.getOrPut(module.name) { if (module.isEnabled) 1.0f else 0.0f }
+        renderToggleSwitch(context, toggleX, toggleY, toggleWidth, toggleHeight, module.isEnabled, scaledMouseX, scaledMouseY, toggleProgress)
 
-        val keybindText = getModuleKeybind(module.name)
-        if (keybindText.isNotEmpty()) {
-            val keybindWidth = textRenderer.getWidth(keybindText)
-            context.drawText(
-                textRenderer,
-                Text.literal(keybindText).setStyle(Style.EMPTY.withFont(CinnamonTheme.getCurrentFont())),
-                x + width - keybindWidth - 60,
-                bottomSectionY + 16,
-                CinnamonTheme.secondaryTextColor,
-                CinnamonTheme.enableTextShadow
-            )
-        }
+        val name = module.name
+        val expandProgress = expandAnimationProgress.getOrPut(name) { if (expandedStates[name] == true) 1.0f else 0.0f }
 
-        if (expandedStates[module.name] == true) {
+        if (expandProgress > 0) {
             val settingsY = y + 40
-            val settingsHeight = settingsAreaHeight
-            context.fill(x + 8, settingsY, x + width - 8, settingsY + 1, CinnamonTheme.borderColor)
-            renderModuleSettings(
-                context,
-                x + 12,
-                settingsY + 5,
-                width - 24,
-                settingsHeight - 10,
-                module,
-                scaledMouseX,
-                scaledMouseY,
-                delta
-            )
+            val settingsContentHeight = moduleHeight - baseModuleHeight
+            val totalSettingsHeight = settingsModuleHeight(module) - baseModuleHeight
+
+            if (settingsContentHeight > 10) {
+                context.fill(x + 8, settingsY, x + width - 8, settingsY + 1, CinnamonTheme.borderColor)
+
+                context.enableScissor(x, settingsY + 5, x + width, y + moduleHeight)
+                renderModuleSettings(
+                    context,
+                    x + 12,
+                    settingsY + 5,
+                    width - 24,
+                    totalSettingsHeight - 10,
+                    module,
+                    scaledMouseX,
+                    scaledMouseY,
+                    delta
+                )
+                context.disableScissor()
+            }
         }
     }
 
@@ -494,18 +552,22 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
         )
     }
 
-    private fun renderToggleSwitch(context: DrawContext, x: Int, y: Int, width: Int, height: Int, enabled: Boolean, scaledMouseX: Int, scaledMouseY: Int) {
+    private fun renderToggleSwitch(context: DrawContext, x: Int, y: Int, width: Int, height: Int, enabled: Boolean, scaledMouseX: Int, scaledMouseY: Int, progress: Float) {
         val isHovered = scaledMouseX >= x && scaledMouseX < x + width && scaledMouseY >= y && scaledMouseY < y + height
-        val switchBg = if (enabled) {
-            if (isHovered) CinnamonTheme.accentColorHover else CinnamonTheme.accentColor
-        } else {
-            if (isHovered) CinnamonTheme.buttonBackgroundHover else CinnamonTheme.buttonBackground
-        }
+
+        val offColor = if (isHovered) CinnamonTheme.buttonBackgroundHover else CinnamonTheme.buttonBackground
+        val onColor = if (isHovered) CinnamonTheme.accentColorHover else CinnamonTheme.accentColor
+
+        val switchBg = GraphicsUtils.interpolateColor(offColor, onColor, progress)
         GraphicsUtils.drawFilledRoundedRect(context, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), 4f, switchBg)
+
         val knobSize = height - 4
-        val knobX = if (enabled) x + width - knobSize - 2 else x + 2
+        val startX = x + 2
+        val endX = x + width - knobSize - 2
+        val knobX = startX + (endX - startX) * progress
+
         val knobY = y + 2
-        GraphicsUtils.drawFilledRoundedRect(context, knobX.toFloat(), knobY.toFloat(), knobSize.toFloat(), knobSize.toFloat(), 4f, CinnamonTheme.titleColor)
+        GraphicsUtils.drawFilledRoundedRect(context, knobX, knobY.toFloat(), knobSize.toFloat(), knobSize.toFloat(), 4f, CinnamonTheme.titleColor)
     }
 
 
@@ -554,6 +616,18 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
             }
         }
         return "None"
+    }
+
+    private fun isModuleEnabled(name: String): Boolean {
+        val module = ModuleManager.getModule(name)
+        if (module != null) {
+            return module.isEnabled
+        }
+        val hudElement = HudManager.getElements().find { it.getName() == name }
+        if (hudElement != null) {
+            return hudElement.isEnabled
+        }
+        return false
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
@@ -629,17 +703,23 @@ class ModulesScreen : CinnamonScreen(Text.literal("Modules").setStyle(Style.EMPT
 
                 if (scaledMouseY >= intY && scaledMouseY < intY + itemHeight) {
                     if (item is Module) {
-                        val bottomSectionYModule = if (expandedStates[item.name] == true) {
-                            intY + settingsModuleHeight(item) - 30
+                        val toggleWidth = 30
+                        val toggleHeight = 16
+                        val headerContentHeight = baseModuleHeight
+                        val toggleY = intY + (headerContentHeight - toggleHeight) / 2
+
+                        val toggleX: Int
+                        if (item.settings.isNotEmpty()) {
+                            val expandButtonTextModule = if (expandedStates[item.name] == true) "-" else "+"
+                            val expandButtonWidthModule = textRenderer.getWidth(expandButtonTextModule)
+                            val expandButtonXModule = cardX + cardWidth - expandButtonWidthModule - 12
+                            toggleX = expandButtonXModule - toggleWidth - 8
                         } else {
-                            intY + baseModuleHeight - 30
+                            toggleX = cardX + cardWidth - toggleWidth - 12
                         }
-                        val toggleXModule = cardX + cardWidth - 50
-                        val toggleYModule = bottomSectionYModule + 6
 
-
-                        if (scaledMouseX >= toggleXModule && scaledMouseX < toggleXModule + 30 &&
-                            scaledMouseY >= toggleYModule && scaledMouseY < toggleYModule + 16) {
+                        if (scaledMouseX >= toggleX && scaledMouseX < toggleX + toggleWidth &&
+                            scaledMouseY >= toggleY && scaledMouseY < toggleY + toggleHeight) {
                             ModuleManager.toggleModule(item.name)
                             return true
                         }

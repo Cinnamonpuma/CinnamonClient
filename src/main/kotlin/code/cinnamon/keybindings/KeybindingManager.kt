@@ -78,6 +78,7 @@ object KeybindingManager {
     fun saveKeybindings() {
         try {
             configDir.mkdirs()
+            println("[KeybindingManager] Saved keybindings")
             val configs = keybindings.map { (name, keyBinding) ->
                 KeybindingConfig(name, KeyBindingHelper.getBoundKeyOf(keyBinding).code)
             }

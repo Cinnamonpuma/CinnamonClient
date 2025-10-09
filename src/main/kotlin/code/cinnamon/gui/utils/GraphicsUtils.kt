@@ -5,6 +5,27 @@ import kotlin.math.sqrt
 
 object GraphicsUtils {
 
+    fun interpolateColor(color1: Int, color2: Int, progress: Float): Int {
+        val alpha1 = (color1 shr 24) and 0xFF
+        val red1 = (color1 shr 16) and 0xFF
+        val green1 = (color1 shr 8) and 0xFF
+        val blue1 = color1 and 0xFF
+
+        val alpha2 = (color2 shr 24) and 0xFF
+        val red2 = (color2 shr 16) and 0xFF
+        val green2 = (color2 shr 8) and 0xFF
+        val blue2 = color2 and 0xFF
+
+        val p = progress.coerceIn(0f, 1f)
+
+        val newAlpha = (alpha1 + (alpha2 - alpha1) * p).toInt()
+        val newRed = (red1 + (red2 - red1) * p).toInt()
+        val newGreen = (green1 + (green2 - green1) * p).toInt()
+        val newBlue = (blue1 + (blue2 - blue1) * p).toInt()
+
+        return (newAlpha shl 24) or (newRed shl 16) or (newGreen shl 8) or newBlue
+    }
+
     fun withAlpha(color: Int, alpha: Int): Int {
         return (color and 0x00FFFFFF) or (alpha shl 24)
     }

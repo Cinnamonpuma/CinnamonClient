@@ -31,7 +31,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val keyBinding: net.minecraft.client.option.KeyBinding
     )
     override fun close() {
-
+        saveKeybindings()
         CinnamonGuiManager.openModulesScreen()
     }
     override fun initializeComponents() {
