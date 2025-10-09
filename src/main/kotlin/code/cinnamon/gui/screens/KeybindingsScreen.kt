@@ -27,7 +27,8 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
         val name: String,
         val displayName: String,
         val description: String,
-        val currentKey: Int
+        val currentKey: Int,
+        val keyBinding: net.minecraft.client.option.KeyBinding
     )
     override fun close() {
 
@@ -170,7 +171,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
             CinnamonTheme.enableTextShadow
         )
 
-        val keyName = getKeyName(entry.currentKey)
+        val keyName = entry.keyBinding.boundKeyLocalizedText.string
         val keyWidth = textRenderer.getWidth(keyName)
         val keyButtonWidth = maxOf(keyWidth + 20, 60)
         val keyButtonX = x + width - keyButtonWidth - 10
@@ -238,33 +239,24 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
                 name = name,
                 displayName = getDisplayName(name),
                 description = getDescription(name),
-                currentKey = KeyBindingHelper.getBoundKeyOf(keyBinding).code
+                currentKey = KeyBindingHelper.getBoundKeyOf(keyBinding).code,
+                keyBinding = keyBinding
             )
         }
     }
 
     private fun getDisplayName(name: String): String {
-        return when (name) {
-            "cinnamon.toggle_speed" -> "Toggle Speed"
-            "cinnamon.toggle_flight" -> "Toggle Flight"
-            "cinnamon.toggle_nofall" -> "Toggle No Fall"
-            else -> name.replace("cinnamon.", "").replace("_", " ").replaceFirstChar { it.uppercase() }
-        }
+        return name.substringAfter("cinnamon.").split('_').joinToString(" ") { it.replaceFirstChar(Char::titlecase) }
     }
 
     private fun getDescription(name: String): String {
         return when (name) {
-            "cinnamon.toggle_speed" -> "Toggles the speed module on/off"
-            "cinnamon.toggle_flight" -> "Toggles the flight module on/off"
-            "cinnamon.toggle_nofall" -> "Toggles the no fall damage module on/off"
-            else -> "Custom keybinding"
-        }
-    }
-
-    private fun getKeyName(keyCode: Int): String {
-        return when (keyCode) {
-            GLFW.GLFW_KEY_UNKNOWN -> "None"
-            else -> InputUtil.fromKeyCode(keyCode, 0).localizedText.string
+            "cinnamon.toggle_autoclicker" -> "Toggles the Autoclicker module"
+            "cinnamon.toggle_fullbright" -> "Toggles the Fullbright module"
+            "cinnamon.toggle_calculator" -> "Toggles the Calculator module"
+            "cinnamon.toggle_chatprefix" -> "Toggles the ChatPrefix module"
+            "cinnamon.open_saved_gui" -> "Opens a saved GUI screen"
+            else -> "A keybinding for Cinnamon Client"
         }
     }
 
@@ -278,12 +270,7 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
     }
 
     private fun resetAllKeybindings() {
-        KeybindingManager.updateKeybinding("cinnamon.toggle_speed", GLFW.GLFW_KEY_V)
-        KeybindingManager.updateKeybinding("cinnamon.toggle_flight", GLFW.GLFW_KEY_F)
-        KeybindingManager.updateKeybinding("cinnamon.toggle_nofall", GLFW.GLFW_KEY_N)
-
-        KeybindingManager.saveKeybindings()
-
+        KeybindingManager.resetAll()
         selectedKeybinding = null
         isListening = false
     }
@@ -370,14 +357,10 @@ class KeybindingsScreen : CinnamonScreen(Text.literal("Keybindings").setStyle(St
 
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         if (isListening && selectedKeybinding != null) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                isListening = false
-                selectedKeybinding = null
-            } else {
-                KeybindingManager.updateKeybinding(selectedKeybinding!!, keyCode)
-                isListening = false
-                selectedKeybinding = null
-            }
+            val newKey = if (keyCode == GLFW.GLFW_KEY_ESCAPE) GLFW.GLFW_KEY_UNKNOWN else keyCode
+            KeybindingManager.updateKeybinding(selectedKeybinding!!, newKey)
+            isListening = false
+            selectedKeybinding = null
             return true
         }
 

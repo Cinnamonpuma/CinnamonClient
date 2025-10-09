@@ -65,6 +65,14 @@ object Cinnamon : ModInitializer {
                 ModuleManager.toggleModule("Fullbright")
             }
 
+            if (KeybindingManager.wasPressed("cinnamon.toggle_calculator")) {
+                ModuleManager.toggleModule("Calculator")
+            }
+
+            if (KeybindingManager.wasPressed("cinnamon.toggle_chatprefix")) {
+                ModuleManager.toggleModule("ChatPrefix")
+            }
+
             if (KeybindingManager.wasPressed("cinnamon.open_saved_gui")) {
                 val storedScreen = code.cinnamon.SharedVariables.storedScreen
                 if (storedScreen is Screen) {
