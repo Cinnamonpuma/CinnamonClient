@@ -14,8 +14,7 @@ public class PanoramaRendererMixin {
 
     @Inject(
         method = "render(Lnet/minecraft/client/gui/DrawContext;IIZ)V",
-        at = @At("HEAD"),
-        cancellable = true
+        at = @At("HEAD")
     )
     private void cinnamon$cancelPanoramaRender(
         DrawContext context,
@@ -24,8 +23,5 @@ public class PanoramaRendererMixin {
         boolean rotate,
         CallbackInfo ci
     ) {
-        if (MinecraftClient.getInstance().currentScreen instanceof TitleScreen) {
-            ci.cancel();
-        }
     }
 }
